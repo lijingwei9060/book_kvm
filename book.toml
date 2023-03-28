@@ -1,0 +1,5 @@
+[book]
+authors = ["casoul<lijingwei9060@qq.com>"]
+language = "zh_CN"
+multilingual = false
+src = "src"
