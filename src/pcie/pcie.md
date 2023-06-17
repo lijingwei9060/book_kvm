@@ -10,6 +10,32 @@
 
 总之，内核中的PCIe管理框架提供了一系列的子系统和工具，以帮助开发人员管理和优化PCIe设备的性能，并确保PCIe设备与内核之间的协议兼容性。
 
+## pci设备配置空间
+
+- Device ID和Vendor ID寄存器： 这两个寄存器只读，Vendor ID代表PCI设备的生产厂商，而Device ID代表这个厂商所生产的具体设备。如Intel公司的82571EB芯片网卡，其中Vendor ID为0x8086，Device为0x105E。
+
+- Revision ID和Class Code寄存器：这两个寄存器只读。其中Revision ID寄存器记载PCI设备的版本号。该寄存器可以被认为是Device ID的寄存器的扩展。Class Code寄存器记载PCI设备的分类，该寄存器由三个字段组成，分别是Base Class Code、Sub Class Code和Interface。其中Base Class Code讲PCI设备分类为显卡、网卡、PCI桥等设备；Sub Class Code对这些设备进一步细分。Interface定义编程接口。除此之外硬件逻辑设计也需要使用寄存器识别不同的设备。当Base Class Code寄存器为0x06，Sub Class Code寄存器为0x04时，表示当前PCI设备为一个标准的PCI桥。
+
+- Header Type寄存器：该寄存器只读，由8位组成。第7位为1表示当前PCI设备是多功能设备，为0表示为单功能设备。第0~6位表示当前配置空间的类型，为0表示该设备使用PCI Agent设备的配置空间，普通PCI设备都是用这种配置头；为1表示使用PCI桥的配置空间，PCI桥使用这种配置头。系统软件需要使用该寄存器区分不同类型的PCI配置空间。
+
+- Cache Line Size寄存器：该寄存器记录处理器使用的Cache行长度。在PCI总线中和cache相关的总线事务，如存储器写无效等需要使用这个寄存器。该寄存器由系统软件设置，硬件逻辑使用。
+
+- (5)Expansion ROM base address寄存器：有些PCI设备在处理器还没有运行操作系统前，就需要完成基本的初始化。为了实现这个"预先执行"功能，PCI设备需要提供一段ROM程序，而处理器在初始化过程中将运行这段ROM程序，初始化这些PCI设备。Expansion ROM base address寄存器记载这段ROM程序的基地址。
+
+- (6)Capabilities Pointer寄存器：在PCI设备中，该寄存器是可选的，但是在PCIe设备中必须支持这个寄存器，Capabilities Pointer寄存器存放Capabilitise寄存器组的基地址，利用Capabilities寄存器组存放一些与PCI设备相关的扩展配置信息。
+
+- Base Address Register 0~5寄存器：该组寄存器简称为BAR寄存器，BAR寄存器保存PCI设备使用的地址空间的基地址，该基地址保存的是该设备在PCI总线域中的地址。在PCI设备复位之后，该寄存器存放PCI设备需要使用的基址空间大小，这段空间是I/O空间还是存储器空间。系统软件可以使用该寄存器，获取PCI设备使用的BAR空间的长度，其方法是向BAR寄存器写入0xFFFFFFFF，之后在读取该寄存器。
+
+PCIe扩展了配置空间大小，最大支持到4K。其中：
+
+1) 0 - 3Fh 是基本配置空间，PCI和PCIe都支持
+
+2) PCI Express Capability Structure ，PCI可选支持，PCIe支持
+
+3) PCI Express Extended Capability Structure，PCI不支持，PCIe支持
+
+利用IO的访问方式只能访问256Byte空间，所以为了访问4K Byte，支持通过mmio的方式访问配置空间，但是为了兼容性，保留了I/O访问方式。
+
 ## 重要概念
 
 BAR（Base Address Registers）和MMIO（Memory Mapped IO）是两个非常重要的概念。
