@@ -306,7 +306,27 @@ PCI总线扫描结束：PCI总线扫描结束后，系统就可以正确地访�
 - struct pci_driver：这个结构体代表PCIe设备的驱动，其中包含这个驱动支持的设备ID列表、驱动的名称、probe函数和remove函数等。当内核检测到一个PCIe设备时，会遍历所有已注册的驱动，找到匹配的驱动进行设备驱动的注册和初始化。
 - struct pci_bus：这个结构体代表PCIe总线，其中包含了这个总线上所有设备的枚举信息和资源分配信息。
 - struct pci_dev_resource：这个结构体代表PCIe设备的资源，如IO空间、内存空间、中断等。此外，这个结构体还包含一些函数指针，如request和release，用于资源的申请和释放。资源的起始地址和长度：pci_dev_resource结构中的start和end字段描述了该资源的物理地址范围。在x86架构中，这些地址通常是I/O地址或内存地址。length字段描述了该资源的长度。资源的描述符：res字段是指向该资源的描述符的指针。该描述符包含有关资源的详细信息，例如资源的类型、寻址模式和访问权限等。硬件资源类型：pci_dev_resource结构中的flags字段描述了该资源的类型，例如I/O端口、内存空间或中断线。
-- struct pci_host_bridge：这个结构体代表PCIe主机桥，这是一个虚拟设备，用于管理整个PCIe总线。它包含一些与PCIe总线相关的信息和函数指针，如add_bus和remove_bus，用于扩展和移除PCIe总线上的设备。
+- struct pci_host_bridge：这个结构体代表PCIe主机桥，这是一个虚拟设备，用于管理整个PCIe总线。它包含一些与PCIe总线相关的信息和函数指针，如add_bus和remove_bus，用于扩展和移除PCIe总线上的设备。一般由Host驱动负责来初始化创建,指向root bus，也就是编号为0的总线，在该总线下，可以挂接各种外设或物理slot，也可以通过PCI桥去扩展总线；
+
+
+bus_type
+device  -> pci_dev
+device_driver -> pci_driver
+
+pci_device_id
+
+pci_bus_match:设备或者驱动注册后，触发pci_bus_match函数的调用，实际会去比对vendor和device等信息，这个都是厂家固化的，在驱动中设置成PCI_ANY_ID就能支持所有设备；一旦匹配成功后，就会去触发pci_device_probe的执行；
+pci_device_probe: `to_pci_dev` 获取到要匹配的设备; `to_pci_driver` 获取要匹配的驱动，`pci_assign_irq` `pci_find_host_bridge` `hbrg->map_irq() => of_irq_parse_and_map_pic` 分配pci设备使用的中断；`pci_match_device` -> `pci_call_porbe` ->`local_pci_probe` -> `pci_drv->probe()`加载驱动。 
+
+设备枚举：
+枚举的入口函数：pci_host_probe
+
+设备的扫描从`pci_scan_root_bus_bridge`开始，首先需要先向系统注册一个host bridge，在注册的过程中需要创建一个root bus，也就是bus 0，在`pci_register_host_bridge`函数中，主要是一系列的初始化和注册工作，此外还为总线分配资源，包括地址空间等；
+
+1. pci_scan_child_bus开始，从bus 0向下扫描并添加设备，这个过程由pci_scan_child_bus_extend来完成；
+2. 从pci_scan_child_bus_extend的流程可以看出，主要有两大块：
+- PCI设备扫描，从循环也能看出来，每条总线支持32个设备，每个设备支持8个功能，扫描完设备后将设备注册进系统，pci_scan_device的过程中会去读取PCI设备的配置空间，获取到BAR的相关信息，细节不表了；
+- PCI桥设备扫描，PCI桥是用于连接上一级PCI总线和下一级PCI总线的，当发现有下一级总线时，创建子结构，并再次调用pci_scan_child_bus_extend的函数来扫描下一级的总线，从这个过程看，就是一个递归过程。
 
 
 
