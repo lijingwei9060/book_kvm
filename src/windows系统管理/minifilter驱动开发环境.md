@@ -109,3 +109,19 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Debug Print Filter] 
 "DEFAULT"=dword:0000000f
 ```
+
+
+
+## Reference
+
+github上微软的demo[minifilter](https://github.com/Microsoft/Windows-driver-samples/tree/main/filesys/miniFilter)
+
+[How to Develop a Windows Minifilter Driver to Back Up Data](https://www.apriorit.com/dev-blog/678-driver-development-minifilter-backup)
+
+以下是一些使用minifilter的常见灾备软件：
+    Veeam Backup & Replication
+    Dell EMC RecoverPoint
+    Veritas NetBackup
+    Acronis Backup
+    Arcserve UDP
+    Commvault
