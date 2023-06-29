@@ -2,7 +2,7 @@
 
 1. 安装内核源码 `dnf install -y kernel-source`
 2. 安装编译依赖包： `dnf install -y rpm-build openssl-devel bc rsync gcc gcc-c++ flex bison m4 elfutils-libelf-devel`
-3. 打补丁: `patch -d /usr/src/ linux-4.19.90-2202.1.0.0136.oe1.x86_64 -p1 < patch_file`, 4.19版本支持vGPU补丁为[vfio/mdev: Add iommu related member in mdev_device](https://patchwork.kernel.org/project/kvm/patch/20190213040301.23021-8-baolu.lu@linux.intel.com/)。
+3. 打补丁: `patch -d /usr/src/linux-4.19.90-2106.3.0.0095.oe1.x86_64 -p1 < patch_file`, 4.19版本支持vGPU补丁为[vfio/mdev: Add iommu related member in mdev_device](https://patchwork.kernel.org/project/kvm/patch/20190213040301.23021-8-baolu.lu@linux.intel.com/)。
 4. 修改内核版本号，避免安装的时候版本冲突
 ```shell
 #cd /usr/src/linux-4.19.90-2202.1.0.0136.oe1.x86_64/
