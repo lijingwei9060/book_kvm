@@ -12,9 +12,24 @@ Mediated core driver也提供注册总线驱动的接口。比如，一个mediat
 
 ## 架构图
 
-vfio interface: 提供用户太的统一访问接口，使用ioctl
+模块：
+vfio_mdev
+mdev: vfio_mdev
+vfio_pci
+vfio_virqfd: vfio_pci
+vfio_iommu_type1:
+vfio: vfio_mdev, vfio_iommu_type1, vfio_pci
+irqbypass: vfio_pci, kvm
+
+
+vfio.io: vfio interface, 提供用户太的统一访问接口，提供/dev/vfio在内核给用户态提供api， qemu 和dpdk通过api和内核交互，使用ioctl进行访问。
 vfio_iommu：对iiommu层统一封装提供DMA remapping的功能，及管理iommu页表的能力
-vfio_pci：对pci设备统一封装，包括pci配置空间模拟，pci bar空间重定向， interrupt remapping
+vfio_pci：对pci设备统一封装，包括pci配置空间模拟，pci bar空间重定向， interrupt remapping。vfio-pci是内核驱动，网卡和NVME盘等设备就可以使用这个驱动，使用vfio-pci就会调用到vfio-pci的probe。vfio-pci用于标准的pci设备，如果多个虚拟机想用这个pci设备就开启这个pci设备的sr-iov功能，这个pci设备就变成多个标准的pci设备，每个虚拟机用一个。sr-iov是硬件资源的一种切分方法，不但DMA queue这样的数据面切分，pci config space等控制面也切分，硬件实现过于复杂，GPU和NVME这些设备很难实现控制面的切分，但数据面有其它方法切分，不同虚拟机可以共享数据面功能又能保证隔离，把这种设备叫做mdev设备，就是严格mediated下能做虚拟化的设备。例如`ll /sys/class/vfio/81/dev`。
+
+mdev.ko给用户提供接口创建虚拟的mdev设备，把虚拟mdev和真实mdev关联，把真实的mdev叫做父设备，同时把虚拟mdev和驱动vfio-mdev匹配，vfio-mdev就开始probe
+
+vfio-pci和mdev-vfio的probe都调用vfio_add_group_dev添加自己的ops，同时生成一个dev，qemu通过/dev/vfio获取这个dev，再操作这个dev时就调用到vfio-pci和vfio-mdev的ops函数，vfio-pci干活，vfio-mdev基本上什么也不干，一转手就调用父设备的ops干活，相当于调用到GPU或者NVME的驱动。sr-iov是pci标准的设备虚拟化方案，mdev就厂商私有的设备虚拟化方案，驱动是厂商实现的，硬件也是厂商搞的，驱动和硬件配合能达到虚拟化的效果就行
+
 iommu driver：硬件平台相关的iommu模块，有 intel iommu， amd iommu 和 ppc iommu，arm smmu。
 
 pci_bus driver
@@ -337,7 +352,27 @@ err_virqfd:
 }
 
 ```
+## 初始化
 
+vfio group不是凭空造出的一个概念，vfio group和IOMMU硬件的group紧密相关，所以vfio还有一个重要的函数就是vfio_register_iommu_driver，vfio_iommu_type1.ko就调用这个函数给vfio注册了操作IOMMU的ops，一个设备DMA用到的pagetable就可以通过这个ops配置到IOMMU中。
+
+qemu调用memory_region_init_io注册vfio-pci设备的config space，虚拟机里驱动写config space，qemu拦截然后模拟。
+
+pci_host_data_write->pci_data_write->pci_host_config_write_common->vfio_pci_write_config->vfio_msi_enable
+
+qemu调用内核vfio，irqbypass用于把vfio和kvm连接起来。
+
+vfio_msi_enable->vfio_enable_vectors(qemu代码)->vfio_pci_set_irqs_ioctl(内核vfio代码)->vfio_pci_set_msi_trigger->vfio_msi_set_block->vfio_msi_set_vector_signal->irq_bypass_register_producer->pi_update_irte
+
+qemu同时调用到内核kvm。
+
+vfio_msi_enable->vfio_add_kvm_msi_virq->kvm_irqchip_add_irqfd_notifier_gsi->kvm_irqchip_assign_irqfd(qemu代码)->kvm_vm_ioctl(kvm代码)->kvm_irqfd->kvm_irqfd_assign->irq_bypass_register_consumer
+
+外设中断来了，vfio处理，signal kvm，kvm再把虚拟中断注入虚拟机。
+
+vfio_msihandler->eventfd_signal wakeup了irqfd_wakeup->schedule_work
+
+irqfd_inject->kvm_set_irq中断就注册了
 
 ## demo
 
