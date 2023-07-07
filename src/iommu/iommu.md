@@ -4,9 +4,12 @@ IOMMU(IO Memory management Unit)将总线域地址转成存储器地址的设备
 
 
 - DMAR使用虚拟地址，屏蔽物理地址，起到保护作用。典型应用包括两个：一是实现用户态驱动，由于IOMMU的映射功能，使HPA对用户空间不可见，在vfio部分还会举例。二是将设备透传给虚机，使HPA对虚机不可见，IOMMU将GPA映射为HPA，避免虚拟机之间IO空间冲突.
+- 扩展buffer空间到4G以上。
 - IOMMU可以将连续的虚拟地址映射到不连续的多个物理内存片段，这部分功能于MMU类似，对于没有IOMMU的情况，设备访问的物理空间必须是连续的，IOMMU可有效的解决这个问题。
 
 IOMMU 通常是实现在北桥之中，现在北桥通常被集成进SOC中了，所以IOMMU通常都放在SOC内部了，也就是说一台服务器可能有多个IOMMU设备。不同芯片厂商的实现大同小异，可是名字却不太一样。Intel的芯片上叫做 VT-d （Virtualization Technology for Directed I/O ），AMD还是叫做IOMMU， ARM叫做SMMU。最开始针对的设备只是显卡。在 VTd 中，dmar (DMA remapping) 就是那个 IOMMU 设备，通过中断的方式实现类似 page fault 一样的内存分配行为。
+
+iommu就是上图所展示的DMA Remapping Unit，通常一台硬件服务器上会有多个DMA Remapping Unit，它下面可以对接pcie设备，也可以对接ioapic, HPET设备。在后面的行文当中统一简称为DMAR，通常DMA Remapping Unit集成在Root Complex当中，系统当中所有的外设的DMA操作理论上都要经过DMAR(例外就是在p2p通信的场景下且pcie switch 开了ATS功能那就不用再到DMAR转一圈了）。
 
 DMA 传输是由 CPU 发起的：CPU 会告诉 DMA 控制器，帮忙将 xxx 地方的数据搬到 xxx 地方。CPU 发完指令之后，就当甩手掌柜了。IOMMU 有点像 MMU 是一个将设备地址翻译到内存地址的页表体系，也会有对应的页表，这个东西在虚拟化中也非常有用，可以将原本有软件模拟的设备，用直接的硬件替代，而原本的隔离通过 IOMMU 来完成。原本需要通过软件模拟的驱动设备可以通过 IOMMU 以安全的方式来直接把硬件设备分配个用户态的 Guest OS。
 
