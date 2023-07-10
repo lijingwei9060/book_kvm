@@ -14,6 +14,13 @@
 
 PCIe的架构主要由五个部分组成：Root Complex，PCIe Bus，Endpoint，Port and Bridge，Switch。其整体架构呈现一个树状结构。
 
+1. Root Complex： 是PCIe的树的跟设备，一般实现了主桥设备(host bridge), 一条内部PCIe总线(Bus 0),以及通过融甘个PCI bridge 扩展出来的root port。host bridge完成cpu地址到pci地址的转换，pci bridge用于系统的扩咱，没有地址转换的功能。IOMMU设备是不是在这里？
+2. Switch是转接器设备，目的是扩展pcie总线。switch中有一个upstream port和若干个downstream port， 每个port相当于一个pci bridge。
+3. pcie endpoint device是叶子节点设备，比如网卡，显卡，nvme等。
+
+
+分别介绍一下各个硬件模块：
+
 1. Root Complex是整个PCIe设备树的根节点，CPU通过它与PCIe的总线相连，并最终连接到所有的PCIe设备上。由于Root Complex是管理外部IO设备的，所以在早期的CPU上，Root Complex其实是放在了北桥（MCU）上 [5]，后来随着技术的发展，现在已经都集成进了CPU内部了 [8]。（注意下图的System Agent的部分，他就是PCIe Root Complex所在的位置。）虽然是根节点，但是系统里面可以存在不只一个Root Complex。随着PCIe Lane的增加，PCIe控制器和Root Complex的数量也随之增加。比如，我的台式机的CPU是i9-10980xe，上面就有4个Root Complex，而我的笔记本是i7-9750H，上面就只有一个Root Complex。我们在Windows上可以通过设备管理器来查看
 
 可以通过lspci命令来查看所有的Root Complex：
@@ -26,7 +33,7 @@ $ lspci -t -v
  ```
 2. PCIe总线（Bus）PCIe上的设备通过PCIe总线互相连接。虽然PCIe是从PCI发展而来的，并且甚至有很多地方是兼容的，但是它与老式的PCI和PCI-X有两点特别重要的不同：PCIe的总线并不是我们传统意义上共享线路的总线（Bus），而是一个点对点的网络，我们如果把PCI比喻成网络中的集线器（Hub），那么PCIe对应的就是交换机了。换句话说，当Root Complex或者PCIe上的设备之间需要通信的时候，它们会与对方直接连接或者通过交换电路进行点对点的信号传输。[7]老式的PCI使用的是单端并行信号进行连接，但是由于干扰过大导致频率无法提升，所以后来就演变成PCIe之后就开始使用了高速串行信号。这也导致了PCI设备和PCIe设备无法兼容，只能通过PCI-PCIe桥接器来进行连接。当然这些我们都不需要再去关心了，因为现在已经很少看见PCI的设备了.
 
-3. CIe Device
+3. PCIe Device
 PCIe上连接的设备可以分为两种类型：
 
 Type 0：它表示一个PCIe上最终端的设备，比如我们常见的显卡，声卡，网卡等等。
@@ -283,21 +290,25 @@ MMIO（Memory Mapped IO）：MMIO是一种通过内存地址来访问I/O设备�
 
 数据返回的流程和请求的流程非常类似，只不过是从设备出发，返回给CPU，这里就不再赘述了。
 
+# 模块架构
+
+arch ：架构相关pcie
+acpi：acpi扫描是所涉及到的pcie代码，包括host bridge的解析初始化，pcie bus的创建，ecam的映射等。
+core： pcie枚举，资源分配，中断流程
+bus driver： dpc pme hotplug aer 服务
+ep：endpoint 驱动，如显卡网卡，nvme等
 ## 初始化
 
-PCI子系统初始化：PCI子系统的初始化是通过调用pci_init()函数完成的。这个函数主要是对PCI总线进行初始化，包括创建根总线、设置PCI驱动器程序、初始化PCI设备树等。
+PCI子系统初始化：
 
-PCI驱动程序注册：当PCI子系统初始化完成后，PCI驱动程序开始进行注册。每个PCI驱动程序都是一个结构体，其中包含了所支持的设备ID、对应的设备的操作函数等信息。调用pci_register_driver()函数完成PCI驱动程序的注册。
-
-PCI设备枚举：PCI设备枚举是PCI框架中非常重要的一个环节，它通过PCI总线上扫描每个设备的配置寄存器，以便确定设备的类型、功能、资源需求等信息。在这个过程中，PCI框架会调用PCI驱动程序的probe()函数，该函数会检测设备是否支持该驱动程序，并初始化设备（例如设备的I/O、内存、中断等资源）。
-
-PCI设备树建立：在PCI设备枚举的过程中，PCI框架会根据设备的PCI地址（包括总线号、设备号、函数号）建立PCI设备树。每个设备节点包含了该设备的PCI地址、资源分配情况和驱动程序等信息。
-
-PCI驱动程序初始化：当PCI设备枚举和设备树建立完成后，PCI框架会调用PCI驱动程序的初始化函数init()，该函数对设备进行进一步的初始化操作。例如，设备的中断注册、DMA设置等。
-
-PCI设备注册：当PCI驱动程序初始化完成后，PCI框架会将该设备注册到系统中。注册完成后，系统就可以对设备进行正确的使用和管理。
-
-PCI总线扫描结束：PCI总线扫描结束后，系统就可以正确地访问PCI设备和它们的资源了。此时，系统可以通过读写PCI设备的配置空间进行设备的操作，也可以应用系统提供的API来访问设备的资源。
+1. PCI子系统的初始化是通过调用pci_init()函数完成的。这个函数主要是对PCI总线进行初始化，包括创建根总线、设置PCI驱动器程序、初始化PCI设备树，注册pci_bus class，创建/sys/class/pci_bus目录等。
+2. PCI驱动程序注册：当PCI子系统初始化完成后，PCI驱动程序开始进行注册`pci_driver_init`。每个PCI驱动程序都是一个结构体，其中包含了所支持的设备ID、对应的设备的操作函数等信息。调用pci_register_driver()函数完成PCI驱动程序的注册, 注册pci_bus_type, 完成后创建了/sys/bus/pci目录。
+3. PCI设备枚举：PCI设备枚举是PCI框架中非常重要的一个环节，它通过PCI总线上扫描每个设备的配置寄存器，以便确定设备的类型、功能、资源需求等信息。在这个过程中，PCI框架会调用PCI驱动程序的probe()函数，该函数会检测设备是否支持该驱动程序，并初始化设备（例如设备的I/O、内存、中断等资源）。
+4. acpi电源管理相关操作初始化： 注册apci_pci_bus, 使用了apci_init()。 
+6. PCI设备树建立：在PCI设备枚举的过程中，PCI框架会根据设备的PCI地址（包括总线号、设备号、函数号）建立PCI设备树。每个设备节点包含了该设备的PCI地址、资源分配情况和驱动程序等信息。
+7. PCI驱动程序初始化：当PCI设备枚举和设备树建立完成后，PCI框架会调用PCI驱动程序的初始化函数init()，该函数对设备进行进一步的初始化操作。例如，设备的中断注册、DMA设置等。
+8. PCI设备注册：当PCI驱动程序初始化完成后，PCI框架会将该设备注册到系统中。注册完成后，系统就可以对设备进行正确的使用和管理。
+9. PCI总线扫描结束：PCI总线扫描结束后，系统就可以正确地访问PCI设备和它们的资源了。此时，系统可以通过读写PCI设备的配置空间进行设备的操作，也可以应用系统提供的API来访问设备的资源。
 
 
 ## 数据结构
@@ -330,5 +341,26 @@ pci_device_probe: `to_pci_dev` 获取到要匹配的设备; `to_pci_driver` 获�
 
 
 
-ref: http://r12f.com/posts/pcie-2-config
+## 枚举过程
+
+PCI设备的枚举只是ACPI要实现的一个功能之一。
+
+在acpi初始化`acpi_scan_init`过程中:
+1. acpi_pci_root_init完成PCI设备的相关操作（包括PCI主桥，PCI桥、PCI设备的枚举，配置空间的设置，总线号的分配等）,定义pcie host bridge device的attach函数, ACPI的Definition Block中使用PNP0A03表示一个PCI Host Bridge。
+2. acpi_pci_link_init注册`pci_link_handler`， 完成PCI中断的相关操作
+3. acpi_bus_scan(), 会通过acpi_walk_namespace()会遍历system中所有的device，并为这些acpi device创建数据结构，执行对应device的attatch函数。根据ACPI spec定义，pcie host bridge device定义在DSDT表中，acpi在扫描过程中扫描DSDT，如果发现了pcie host bridge, 就会执行device对应的attach函数，调用到acpi_pci_root_add()。
+4. acpi_pci_root_add：(1)通过ACPI的_SEG参数, 获取host bridge使用的segment号， segment指的就是pcie domain, 主要目的是为了突破pcie最大256条bus的限制。(2)通过ACPI的_CRS里的BusRange类型资源取得该Host Bridge的Secondary总线范围，保存在root->secondary这个resource中。(3)通过ACPI的_BNN参数获取host bridge的根总线号。执行到这里如果没有返回失败，硬件设备上会有如下打印：ACPI: PCI Root Bridge [PCI0](domain 0000 [bus 00-7f])。(3) pci_acpi_scan_root, pcie枚举流程的入口。
+5. pci_acpi_scan_root： 枚举PCI入口
+6. acpi_pci_root_create函数去对这条PCI总线进行遍历，在这里我们需注意一个结构就是acpi_pci_root_ops，它是新版本的内核提供给我们对于PCI信息的一些接口函数的集合（这其中就包括对配置空间的读写方法）
+7. pci_scan_child_bus扫描子总线
+8. pci_scan_single_device/pci_scan_device扫描一个的设备，分配pci_device，初始化vendor、device id;
+9. pci_setup_device读取pcie设备的头部信息，读取中断，读取寄存器的基地址，标准设备（6个bar），pcie桥设备（2个bar），cardbus桥（1个bar），ide控制器配置，最终初始化pci_dev结构。
+10. pci_device_add将扫描到的pci_device添加到pci_bus上。
+11. pci_scan_bridge本函数调用了两次（通过for循环），原因是：在不同架构的对于PCI设备的枚举实现是不同的，例如在x86架构中有BIOS为我们提前去遍历一遍PCI设备，但是在ARM或者powerPC中uboot是没有这种操作的，所以为了兼容这两种情况，这里就执行两次对应于两种不同的情况，当pci_scan_slot函数执行完了后，我们就得到了一个当前PCI总线的设备链表，在执行pci_scan_bridge函数前，会遍历这个设备链表，如果存在PCI桥设备，就调用pci_scan_bridge函数，而在本函数内部会再次调用pci_scan_child_bus函数，去遍历子PCI总线设备（注意：这时的BUS就已经不是PCI BUS 0了）就是通过这种一级一级的递归调用，在遍历总PCI总线下的每一条PCI子总线。直到某条PCI子总线下无PCI桥设备，就停止递归，并修改subbordinate参数，（最大PCI总线号）返回。
+
+
+
+## reference 
+http://r12f.com/posts/pcie-2-config
 http://r12f.com/posts/pcie-1-basics/
+https://blog.csdn.net/qq_39376747/article/details/112723705?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-8-112723705-blog-106676548.235^v38^pc_relevant_anti_vip_base&spm=1001.2101.3001.4242.5&utm_relevant_index=11
