@@ -22,3 +22,26 @@ cache aligned，由提供内存者保证，不aligned一些外设可能搞不定
 由于直通设备进行DMA操作的时候guest驱动直接使用gpa来访问内存的，这就导致如果不加以隔离和地址翻译必然会访问到其他VM的物理内存或者破坏Host内存，因此必须有一套机制能够将gpa转换为对应的hpa这样直通设备的DMA操作才能够顺利完成。
 
 VT-d DMA Remapping的引入就是为了解决直通设备DMA隔离和DMA地址翻译的问题，下面我们将对其原理进行分析，主要参考资料是Intel VT-d SPEC Chapter 3。
+
+
+## 数据结构
+
+- struct dma_map_ops: 
+  - map_page:  => intel_map_page
+- dma_addr_t 
+
+## 管理
+
+dma_map_single_attrs
+
+### Intel IOMMU在DMA Coherent 
+
+设备发起DMA Coherent Mapping申请`dma_alloc_coherent`， 请求分配DMA Buffer
+- 获取设备或者平台提供的dma操作函数`get_dma_ops`, 传统的申请路程`dma_direct_alloc`，iommu申请流程`iommu_dma_alloc`
+- Intel IOMMU是否已经启动，没有启动进入传统的DMA Coherent Mapping 流程，如果开启进入IOMMU的申请过程
+  - 申请DMA buffer，地址为PA
+  - 从slab中申请一个IOVA，在IO页表中建立从IOVA到PA映射的关系
+  - 将IOVA作为DMA地址返回给设备
+- 传统的DMA Coherent Mapping 流程：
+  - 申请DMA Buffer，物理地址为PA，将PA作为DMA地址返回给设备。
+  - 

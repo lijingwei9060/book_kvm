@@ -97,24 +97,51 @@ dmar_fault_do_one()会报告fault的具体信息，包括对应设备的物理�
 过去的AMD64芯片也提供一个功能有限的地址转译模块——GART (Graphics Address Remapping Table)，有时候它也可以充当IOMMU，这导致了人们对GART和新的IOMMU的混淆。最初设计GART是为了方便图形芯片直接读取内存：使用地址转译功能将收集到内存中的数据映射到一个图形芯片可以“看”到的地址。后来GART被Linux kernel用来帮助传统的32位PCI设备访问可寻址范围之外的内存区域。这件事新的IOMMU当然也可以做到，而且没有GART的局限性（它仅限于显存的范围之内），IOMMU可以将I/O设备的任何DMA地址转换为物理内存地址。
 
 
-### IO MMU 工作模式
 
-intel vt-d iommu可以工作于legacy和scale模式。
-
-legacy mode： Root Table Address Register指向root table，translation Table Mode是00b，root table和conext table是真正的物理地址。legacy mode采用Requests without address-space-identifier，DMA中带有bus/dev/function，bus查root table，dev和function查context table，context table结果指向second level pagetable，查pagetable得到最终的物理地址。
-
-scale mode： Root Table Address Register指向root table，translation Table Mode是01b，root/context/PASID-directory/PASID-tables是真正的物理地址。scale mode同时支持Requests without address-space-identifier和Requests with address-space-identifier，如果没有PASID，那么就取context table中默认的RID_PASID。bus查root table，dev和function查context table，context table的结果指向PASID directory，PASID directory的结果指向PASID table，PASID table的结果同时包含first level pagetable, second level pagetable和PASID Granular Translation Type (PGTT)，PGTT中指明进行first level/second level/nested/passthrough translation。
 
 ## RFIR： Remappable format interrupt request
 
-## 数据结构
+# DMAR框架
 
-- iommu_group
+全局变量
+iommu_buses：？
+iommu_device_list： 所有iommu_device列表
+
+- bus_type： 
+- iommu_group：iommu 的组对象，多个dev 可以用同一个组，他是iommu管理的最小单元。
+- iommu_resv_region ----保留区域，不需要iommu映射的区域。
 - iommu_fwspec
-- iommu_device
-  - smmu_device：IOMMU的一种实现 
-- iommu_domain
-  - arm_smmu_domain(ARM架构)来管理驱动和设备之间的关联的，它为每个domain申请了一个独立的asid（和进程的asid完全无关）。也就是说，ARM认为，一个group只能服务一个进程。
+- iommu_device： iommu 设备，指的是提供iommu功能的设备，所有的IOMMU设备都嵌入了一个 struct iommu_device
+- smmu_device：IOMMU的一种实现 
+- iommu_domain：iommu 的domain 对象，可以关联一个 group，
+- arm_smmu_domain(ARM架构)来管理驱动和设备之间的关联的，它为每个domain申请了一个独立的asid（和进程的asid完全无关）。也就是说，ARM认为，一个group只能服务一个进程。
+- dev_iommu： 代表具体的IOMMU设备
+- iommu_resv_region：
+- iommu_ops: iommu硬件对内必须实现的ops
+  - capable: 该iommu 设备的能力，这里写为设备而不是硬件，是因为完成iommu的可能是软件，如swiotlb
+  - domain_alloc/domain_free: 分配iommu_domain
+  - 
+  - probe_device/release_device/probe_finalize:
+- dma_map_ops：dma函数操作指针，Intel
+
+
+## DMAR管理过程
+
+- iommu_device_register(iommu_device, iommu_ops, device)： 注册iommu硬件设备,ops 应该是driver module，简单挂一下管理链表
+- iommu_device_unregister ---iommu 设备注销，这个注销主要就是注册的逆操作，从管理链表中摘除
+- iommu_insert_resv_region(iommu_resv_region, struct list_head *regions)：保留区域在某个位置插入，相同类型则合并，不同类型不能合并
+- iommu_get_group_resv_regions(struct iommu_group *group, struct list_head *head)//caq:获取一个iommu_group 的resv_regions
+- iommu_group_show_resv_regions(struct iommu_group *group, char *buf)//caq:展示某个group的resv_regions
+- iommu_group_show_type(struct iommu_group *group, char *buf)//caq:iommu_domain 类型对应的字符串
+- iommu_group_release(struct kobject *kobj)//caq:释放一个iommu_group
+- iommu_group_alloc(void)//caq:申请内存，初始化一个iommu_group,它是iommu管理的最小单元
+- iommu_group_get_by_id(int id)//caq:根据id获取到iommu_group
+- iommu_group_set_name(struct iommu_group *group, const char *name)//caq:过来的一个name，设置一下,一般来说是  给group 分配一个名字，常见的就是1,2,3等，比如 /sys/kernel/iommu_groups/1,这个1就是一个iommu_group的name
+- iommu_group_add_device(struct iommu_group *group, struct device *dev)//caq:将dev加入到iommu_group
+- iommu_group_remove_device(struct device *dev)//caq:和加入group对应,从iommu_group中移除
+- iommu_group_device_count(struct iommu_group *group)//caq:统计多少个device在此group中
+- __iommu_group_for_each_dev(struct iommu_group *group, void *data, int (*fn)(struct device *, void *))//caq:对group中device进行迭代并执行fn
+- generic_device_group(struct device *dev)//caq:申请一个iommu_group
 
 
 ## VFIO：todo——move
