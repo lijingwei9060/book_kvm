@@ -21,9 +21,9 @@ PCIe的架构主要由五个部分组成：Root Complex，PCIe Bus，Endpoint，
 
 分别介绍一下各个硬件模块：
 
-1. Root Complex是整个PCIe设备树的根节点，CPU通过它与PCIe的总线相连，并最终连接到所有的PCIe设备上。由于Root Complex是管理外部IO设备的，所以在早期的CPU上，Root Complex其实是放在了北桥（MCU）上 [5]，后来随着技术的发展，现在已经都集成进了CPU内部了 [8]。（注意下图的System Agent的部分，他就是PCIe Root Complex所在的位置。）虽然是根节点，但是系统里面可以存在不只一个Root Complex。随着PCIe Lane的增加，PCIe控制器和Root Complex的数量也随之增加。比如，我的台式机的CPU是i9-10980xe，上面就有4个Root Complex，而我的笔记本是i7-9750H，上面就只有一个Root Complex。我们在Windows上可以通过设备管理器来查看
+1. Root Complex是整个PCIe设备树的根节点，CPU通过它与PCIe的总线相连，并最终连接到所有的PCIe设备上。由于Root Complex是管理外部IO设备的，所以在早期的CPU上，Root Complex其实是放在了北桥（MCU）上 [5]，后来随着技术的发展，现在已经都集成进了CPU内部了 [8]。（注意下图的System Agent的部分，他就是PCIe Root Complex所在的位置。）虽然是根节点，但是系统里面可以存在不只一个Root Complex。随着PCIe Lane的增加，PCIe控制器和Root Complex的数量也随之增加。比如，我的台式机的CPU是i9-10980xe，上面就有4个Root Complex，而我的笔记本是i7-9750H，上面就只有一个Root Complex。我们在Windows上可以通过设备管理器来查看。
 
-可以通过lspci命令来查看所有的Root Complex：
+在liunx上可以通过lspci命令来查看所有的Root Complex：
 ```shell
 $ lspci -t -v
 -+-[0000:c0]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex
@@ -31,7 +31,15 @@ $ lspci -t -v
  +-[0000:40]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex
  \-[0000:00]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex
  ```
-2. PCIe总线（Bus）PCIe上的设备通过PCIe总线互相连接。虽然PCIe是从PCI发展而来的，并且甚至有很多地方是兼容的，但是它与老式的PCI和PCI-X有两点特别重要的不同：PCIe的总线并不是我们传统意义上共享线路的总线（Bus），而是一个点对点的网络，我们如果把PCI比喻成网络中的集线器（Hub），那么PCIe对应的就是交换机了。换句话说，当Root Complex或者PCIe上的设备之间需要通信的时候，它们会与对方直接连接或者通过交换电路进行点对点的信号传输。[7]老式的PCI使用的是单端并行信号进行连接，但是由于干扰过大导致频率无法提升，所以后来就演变成PCIe之后就开始使用了高速串行信号。这也导致了PCI设备和PCIe设备无法兼容，只能通过PCI-PCIe桥接器来进行连接。当然这些我们都不需要再去关心了，因为现在已经很少看见PCI的设备了.
+
+ Root Complex有RCRB寄存器，这个寄存器保存什么呢？
+
+
+2. PCIe总线（Bus）PCIe上的设备通过PCIe总线互相连接。虽然PCIe是从PCI发展而来的，并且甚至有很多地方是兼容的，但是它与老式的PCI和PCI-X有两点特别重要的不同：PCIe的总线并不是我们传统意义上共享线路的总线（Bus），而是一个点对点的网络，我们如果把PCI比喻成网络中的集线器（Hub），那么PCIe对应的就是交换机了。换句话说，当Root Complex或者PCIe上的设备之间需要通信的时候，它们会与对方直接连接或者通过交换电路进行点对点的信号传输。[7]老式的PCI使用的是单端并行信号进行连接，但是由于干扰过大导致频率无法提升，所以后来就演变成PCIe之后就开始使用了高速串行信号。这也导致了PCI设备和PCIe设备无法兼容，只能通过PCI-PCIe桥接器来进行连接。当然这些我们都不需要再去关心了，因为现在已经很少看见PCI的设备了。
+
+0号总线为初始总线，P2P桥床啊进一个新的总线。一个switch里面其实就是p2p的 upstream/downstream port。
+
+bus总线的数据位8bit，总共256哥特总线号。
 
 3. PCIe Device
 PCIe上连接的设备可以分为两种类型：
@@ -79,7 +87,7 @@ $ lspci -t -v
 在Root Complex上，有很多的Root Port，这些Port每一个都可以连接一个PCIe设备（Type 0或者Type 1）。本质上，所有这些连接其他设备用的部件都是由桥（Bridge）来实现的，这些桥的两端连接着两个不同的PCIe Bus（Bus Number不同）。比如，一个Root Port其实是靠两个Bridge来实现的：一个（共享的）Host Bridge（上游连接着CPU，下游连接着Bus 0）和一个PCI Bridge用来连接下游设备（上游连着的是Bus 0（Root Complex），下游连着的PCIe的设备（Bus Number在启动过程中自动分配）） [1]。
 
 通过lspci命令可以看到这些桥的存在（注意设备详情中的Kernel driver in use: pcieport）：
-```
+```shell
  +-[0000:80]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex
              # This is the Host bridge that connects to the root port and CPU:
  |           +-01.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse PCIe Dummy Host Bridge
@@ -106,7 +114,7 @@ $ sudo lspci -s 80:01.1 -v
         Kernel driver in use: pcieport
 ```
 注意：是否使用PCIe Bridge和是否通过插槽连接不能直接划等号，这取决于你系统的硬件实现，比如，从上面RCIE的截图中我们可以看到USB Controller作为RCIE存在，而下面EPYC的CPU则不同，USB控制器是通过Root Port连接的，但是它在主板上并没有插槽。
-```
+```shell
 $ lspci -t -v
  +-[0000:40]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex
              +-03.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse PCIe Dummy Host Bridge
@@ -120,9 +128,9 @@ $ lspci -t -v
 
 PCIe Switch内部主要有三个部分：
 
-一个Upstream Port和Bridge：用于连接到上游的Port，比如，Root Port或者上游Switch的Downstream Port
-一组Downstream Port和Bridge：用于连接下游的设备，比如，显卡，网卡，或者下游Switch的Upstream Port
-一根虚拟总线：用于将上游和下游的所有端口连接起来，这样，上游的Port就可以访问下游的设备了
+1. 一个Upstream Port和Bridge：用于连接到上游的Port，比如，Root Port或者上游Switch的Downstream Port
+2. 一组Downstream Port和Bridge：用于连接下游的设备，比如，显卡，网卡，或者下游Switch的Upstream Port
+3. 一根虚拟总线：用于将上游和下游的所有端口连接起来，这样，上游的Port就可以访问下游的设备了
 
 
 另外，这里再说明一次 —— 由于PCIe的信号传输是点对点的，所以Switch中间的这个总线只是一个逻辑上的虚拟的总线，其实并不存在，里面真正的结构是一套用于转发的交换电路 [9]。
@@ -133,30 +141,18 @@ PCIe Switch内部主要有三个部分：
 
 PCIe中有两类设备：Type 0表示终端设备，和Type 1表示Switch。
 
-- Device ID和Vendor ID寄存器： 这两个寄存器只读，Vendor ID代表PCI设备的生产厂商，而Device ID代表这个厂商所生产的具体设备。如Intel公司的82571EB芯片网卡，其中Vendor ID为0x8086，Device为0x105E。
-
+- Device ID和Vendor ID寄存器： 这两个寄存器只读，Vendor ID代表PCI设备的生产厂商，而Device ID代表这个厂商所生产的具体设备。如Intel公司的82571EB芯片网卡，其中Vendor ID为0x8086，Device为0x105E。device ID全部为F的表示无效设备，需要跳过。
 - Revision ID和Class Code寄存器：这两个寄存器只读。其中Revision ID寄存器记载PCI设备的版本号。该寄存器可以被认为是Device ID的寄存器的扩展。Class Code寄存器记载PCI设备的分类，该寄存器由三个字段组成，分别是Base Class Code、Sub Class Code和Interface。其中Base Class Code讲PCI设备分类为显卡、网卡、PCI桥等设备；Sub Class Code对这些设备进一步细分。Interface定义编程接口。除此之外硬件逻辑设计也需要使用寄存器识别不同的设备。当Base Class Code寄存器为0x06，Sub Class Code寄存器为0x04时，表示当前PCI设备为一个标准的PCI桥。
-
 - Header Type寄存器：该寄存器只读，由8位组成。第7位为1表示当前PCI设备是多功能设备，为0表示为单功能设备。第0~6位表示当前配置空间的类型，为0表示该设备使用PCI Agent设备的配置空间，普通PCI设备都是用这种配置头；为1表示使用PCI桥的配置空间，PCI桥使用这种配置头。系统软件需要使用该寄存器区分不同类型的PCI配置空间。
-
 - Cache Line Size寄存器：该寄存器记录处理器使用的Cache行长度。在PCI总线中和cache相关的总线事务，如存储器写无效等需要使用这个寄存器。该寄存器由系统软件设置，硬件逻辑使用。
-
-- (5)Expansion ROM base address寄存器：有些PCI设备在处理器还没有运行操作系统前，就需要完成基本的初始化。为了实现这个"预先执行"功能，PCI设备需要提供一段ROM程序，而处理器在初始化过程中将运行这段ROM程序，初始化这些PCI设备。Expansion ROM base address寄存器记载这段ROM程序的基地址。
-
-- (6)Capabilities Pointer寄存器：在PCI设备中，该寄存器是可选的，但是在PCIe设备中必须支持这个寄存器，Capabilities Pointer寄存器存放Capabilitise寄存器组的基地址，利用Capabilities寄存器组存放一些与PCI设备相关的扩展配置信息。
-
+- Expansion ROM base address寄存器：有些PCI设备在处理器还没有运行操作系统前，就需要完成基本的初始化。为了实现这个"预先执行"功能，PCI设备需要提供一段ROM程序，而处理器在初始化过程中将运行这段ROM程序，初始化这些PCI设备。Expansion ROM base address寄存器记载这段ROM程序的基地址。
+- Capabilities Pointer寄存器：在PCI设备中，该寄存器是可选的，但是在PCIe设备中必须支持这个寄存器，Capabilities Pointer寄存器存放Capabilitise寄存器组的基地址，利用Capabilities寄存器组存放一些与PCI设备相关的扩展配置信息。
 - Base Address Register 0~5寄存器：该组寄存器简称为BAR寄存器，BAR寄存器保存PCI设备使用的地址空间的基地址，该基地址保存的是该设备在PCI总线域中的地址。在PCI设备复位之后，该寄存器存放PCI设备需要使用的基址空间大小，这段空间是I/O空间还是存储器空间。系统软件可以使用该寄存器，获取PCI设备使用的BAR空间的长度，其方法是向BAR寄存器写入0xFFFFFFFF，之后在读取该寄存器。
 
 
-这块空间的大小是4096字节，其中头部和PCI3.0保持兼容，有64个字节，这块空间的大小是固定的，不会随着设备的类型或者系统的重启而改变。
-
-PCIe扩展了配置空间大小，最大支持到4K。其中：
-
-1) 0 - 3Fh 是基本配置空间，PCI和PCIe都支持，pci3.0 conpatible configuration space header
-
-2) PCI Express Capability Structure ，PCI可选支持，PCIe支持
-
-3) PCI Express Extended Capability Structure，PCI不支持，PCIe支持
+PCIe设备兼容PCI，配置空间的大小是4K：
+1. 256byte PCI 兼容空间(pci caompatible space), 其中头部和PCI3.0保持兼容，有64个字节header space，这块空间的大小是固定的，不会随着设备的类型或者系统的重启而改变。header space部分区分type0和type1。剩下的192字节是功能相关的配置空间Function-Specific Configuration Header space。
+2. 256-4K：pcie扩展空间(pcie extended configration space)
 
 利用IO的访问方式只能访问256Byte空间，所以为了访问4K Byte，支持通过mmio的方式访问配置空间，但是为了兼容性，保留了I/O访问方式。
 
@@ -174,7 +170,8 @@ $ iasl ./mcfg.dat; cat mcfg.dsl
 [02Ch 0044   8]                 Base Address : 00000000E0000000
 ```
 
-而为了方便访问，PCIe使用BDF来构造每个配置空间相对于ECAM的偏移。由于每个空间都是4096个字节，所以PCIe将BDF向左移位了12位，对其进行预留。打个比方，如果某个设备的BDF是46:00.1，ECAM基址是0xE0000000，那么其配置空间起始地址就是：0xE0000000 + (0x46 << 20) | (0x00 << 15) | (0x01 << 12) = 0xE46001000。或者简单的记忆就是BDF的Hex后面跟三个0。我们这里也可以通过lspci和/dev/mem进行直接的物理内存访问来验证.
+而为了方便访问，PCIe使用BDF来构造每个配置空间相对于ECAM的偏移。由于每个空间都是4096个字节，所以PCIe将BDF向左移位了12位，对其进行预留。打个比方，如果某个设备的BDF是46:00.1，ECAM基址是0xE0000000，那么其配置空间起始地址就是：0xE0000000 + (0x46 << 20) | (0x00 << 15) | (0x01 << 12) = 0xE46001000。或者简单的记忆就是BDF的Hex后面跟三个0。我们这里也可以通过lspci和`/dev/mem`进行直接的物理内存访问来验证.
+
 ```shell
 $ lspci -s 46:00.1  -nn
 46:00.1 Ethernet controller [0200]: Broadcom Inc. and subsidiaries NetXtreme BCM5720 Gigabit Ethernet PCIe [14e4:165f]
@@ -183,9 +180,8 @@ $ sudo hexdump -x --skip 0xe4601000 /dev/mem | head
 e4601000    14e4    165f    0406    0010    0000    0200    0010    0080
 ```
 
-这段内存的前面几个数字14e4和165f就是这个设备的Vendor ID和Device ID，这和我们通过lspci看到的完全一致：[14e4:165f]。
+这段内存的前面几个数字14e4和165f就是这个设备的Vendor ID和Device ID，这和我们通过lspci看到的完全一致：[14e4:165f]。当然，每次这样进行计算和转换来查看原始的配置空间是非常麻烦的，所以我们可以通过setpci来直接访问：
 
-当然，每次这样进行计算和转换来查看原始的配置空间是非常麻烦的，所以我们可以通过setpci来直接访问：
 ```shell
 $ setpci -s 46:00.1 00.w
 14e4
