@@ -14,11 +14,55 @@
 
 PCIe的架构主要由五个部分组成：Root Complex，PCIe Bus，Endpoint，Port and Bridge，Switch。其整体架构呈现一个树状结构。
 
-1. Root Complex： 是PCIe的树的跟设备，一般实现了主桥设备(host bridge), 一条内部PCIe总线(Bus 0),以及通过融甘个PCI bridge 扩展出来的root port。host bridge完成cpu地址到pci地址的转换，pci bridge用于系统的扩咱，没有地址转换的功能。IOMMU设备是不是在这里？
-2. Switch是转接器设备，目的是扩展pcie总线。switch中有一个upstream port和若干个downstream port， 每个port相当于一个pci bridge。
+1. Root Complex： 是PCIe的树的跟设备，一般实现了主桥设备(host bridge), 一条内部PCIe总线(Bus 0),以及通过多个PCI bridge 扩展出来的root port。host bridge完成cpu地址到pci地址的转换(?如何实现)，pci bridge用于系统的扩展，没有地址转换的功能。IOMMU设备是不是在这里？
+2. Switch是转接器设备，作用是扩展pcie总线。switch中有一个upstream port和若干个downstream port， 每个port相当于一个pci bridge(乔是总线到总线的链接，所以是双口的)。
 3. pcie endpoint device是叶子节点设备，比如网卡，显卡，nvme等。
 
+### CPU Bus
 
+- Integrated IO(device: 5)
+  - Vt-d 
+  - Intel MM/Vt-d Configuration Registers
+  - Integrated Memory Controller
+  - LM Channel
+  - LMS Channel
+  - LMDP Channel
+  - DESC Channel
+  - KIT
+  - UPI Register
+  - M3KTI Register
+  - RAS
+  - RAS Configuration Registers
+  - IOAPIC
+  - IOxAPIC Configuration Registers
+  - CHA Registers
+  - PCU Registers
+- DMA Engine(device 4)
+  - CMDMA Registers(F# 0-7)：Crystal Beach DMA(CBDMA)是一个8-channel DMA device call crystal beach DMA， 其实就是Intel® QuickData Technology，说白了就是offload memory copy to DMA engine，DSA代替了该技术。
+- DMI3 Host Bridge or PCIe Root Port (device)
+- Unbox Registers
+
+Windows：
+- PCIE 跟端口*6
+- pcie 根复合起
+- pic isa 桥
+- pci ram 控制器
+- pci 主机CPU 桥
+
+### CMDMA 
+CBDMA支持两种工作模式，一种是同步模式，一种是异步模式。
+- 在同步模式下面，CPU触发CBDMA内存拷贝之后，等待它完成工作，这种工作模式下提升的性能有限。
+- 在异步模式下面，CPU出发CBDMA内存拷贝之后，不等待它完成工作，继续去执行别的任务，直到内存拷贝完成。这种模式就特别适合网络流量这种大并发的处理，不需要顺序的等待，而是多并发处理不同的数据包。可见这个技术能够有效的提高NFV的执行效率。
+
+当CBDMA设备跟内存在同一个NUMA节点的时候，它平均提升4%～13%的性能，但是从实际的情况来看，只有当需要拷贝的数据比较大的时候，CBDMA才有比较好的表现，可能数据太小的话交互的消耗更大。从下图中可以看到，只有当拷贝的数据大于1024B的时候，才有更好的效果。跨NUMA的拷贝在2048B的时候才有更好的效果。
+
+### DSA：Intel Data Streaming Accelerator
+
+取代Intel quickdata tecknology.
+1. enables high performance data mover capability to/from volatile memory, persistent memory, memory-mapped I/O, and through a Non-Transparent Bridge (NTB) device to/from remote volatile and persistent memory on another node in a cluster. Enumeration and configuration is done with a PCI Express compatible programming interface to the Operating System (OS) and can be controlled through a device driver.
+2. Generate and test CRC checksum, or Data Integrity Field (DIF) to support storage and networking applications.
+3. Memory Compare and delta generate/merge to support VM migration, VM Fast check-pointing and software managed memory deduplication usages.
+#### 标准硬件
 分别介绍一下各个硬件模块：
 
 1. Root Complex是整个PCIe设备树的根节点，CPU通过它与PCIe的总线相连，并最终连接到所有的PCIe设备上。由于Root Complex是管理外部IO设备的，所以在早期的CPU上，Root Complex其实是放在了北桥（MCU）上 [5]，后来随着技术的发展，现在已经都集成进了CPU内部了 [8]。（注意下图的System Agent的部分，他就是PCIe Root Complex所在的位置。）虽然是根节点，但是系统里面可以存在不只一个Root Complex。随着PCIe Lane的增加，PCIe控制器和Root Complex的数量也随之增加。比如，我的台式机的CPU是i9-10980xe，上面就有4个Root Complex，而我的笔记本是i7-9750H，上面就只有一个Root Complex。我们在Windows上可以通过设备管理器来查看。
@@ -39,7 +83,7 @@ $ lspci -t -v
 
 0号总线为初始总线，P2P桥床啊进一个新的总线。一个switch里面其实就是p2p的 upstream/downstream port。
 
-bus总线的数据位8bit，总共256哥特总线号。
+bus总线的数据位8bit，总共256个总线号。
 
 3. PCIe Device
 PCIe上连接的设备可以分为两种类型：

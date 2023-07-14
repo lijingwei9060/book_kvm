@@ -49,3 +49,4 @@ address register bits 19:5 表示的是interrupt_index的0~14位，bit 2表示�
 ## Reference
 
 https://zhuanlan.zhihu.com/p/479988393
+https://www.eet-china.com/mp/a118067.html
