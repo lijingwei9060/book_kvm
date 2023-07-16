@@ -1,0 +1,43 @@
+digraph PCIE {
+    graph [rankdir = "LR";];
+    subgraph acpi {
+        node [color = "#61c2c5"; fontcolor = "#61c2c5"; fontsize = 20; shape = "record";];
+        edge [color = "#61c2c5";];
+        acpi_pci_root;
+        acpi_pci_root_ops;
+        acpi_handle;
+        acpi_buffer;
+        acpi_object;
+        acpi_status;
+        acpi_device_status;
+        acpi_device_flags;
+        acpi_device_pnp;
+        acpi_device_power;
+        acpi_device_wakeup;
+        acpi_device_perf;
+        acpi_device_dir;
+        acpi_device_data;
+        acpi_scan_handler;
+        acpi_hotplug_context;
+        "acpi_device" [label = "<f0> struct acpi_device| <f1>";];
+    }
+    
+    subgraph pci {
+        node [color = "#b5d1d2"; fontcolor = "#b5d1d2"; fontsize = 20; shape = "record";];
+        edge [color = "#b5d1d2";];
+        pci_dev [label = "struct pci_dev | <f0> bus | <f1> subordinate | <f2> driver | <f3> slot | <f4> link_state |<f5> resource";];
+        pci_bus [label = "struct pci_bus | <f0> resource |<f1> ops | <f2> device";];
+        pci_dev:f0 -> pci_bus;
+        pci_bus:f2 -> pci_dev;
+        pci_driver;
+        pci_ops;
+        pci_slot;
+        pcie_link_state;
+        pci_channel_state_t;
+        pci_vpd;
+        pci_sriov;
+        pci_p2pdma;
+    }
+    
+    # "acpi_device":f0 -> "node1":f0 [id = 0;];
+}
