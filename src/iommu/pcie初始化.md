@@ -64,7 +64,10 @@ acpi_buffer
 - acpi_scan_handler: id代表次handler支持的扫描对象，list_node是全局的列表保存handler列表，指向`acpi_scan_handlers_list`, 有attach（找到设备病初始化）、detach和hotplug函数
 - acpi_handle
 - acpi_pci_root_ops
-- pci_bus
+- pci_bus： 表示PCI总线的数据结构，用于存储和管理PCI设备的信息，包括该总线上的设备列表、子总线等。
+- pci_device_id：用于表示一个PCI设备的标识信息，包括设备的厂商ID、设备ID、子系统厂商ID、子系统ID等，用于在内核中匹配和识别PCI设备。
+- pci_dev: 表示一个PCI设备的数据结构，用于存储和管理PCI设备的属性信息，包括设备的地址、中断号、资源分配等。
+- resource：表示一个设备的资源，包括IO地址空间、内存地址空间等，用于描述和管理设备的资源分配情况。
 - pci_sysdata
 - pci_root_info
 - pci_host_bridge
@@ -101,22 +104,22 @@ acpi_scan_init
 1. `acpi_pci_root_init`完成PCI设备的相关操作（包括PCI主桥，PCI桥、PCI设备的枚举，配置空间的设置，总线号的分配等）,定义pcie主桥的`pci_root_handler->attach`函数, ACPI的Definition Block中使用PNP0A03表示一个PCI Host Bridge。
    1. `pci_acpi_crs_quirks`检查Bios日期是否是2008年以后的，如果不是则kernel将pci_use_crs变量置为false(默认是true)。用户也可以在cmd_line中加入“pci=use_crs”表示将使用ACPI提供的`PCI Host Bridge Windows Info`(即Bar资源)，或者“pci=nocrs”表示将不使用ACPI提供的`PCI Host Bridge Windows Info`。
    2. 如果是2023以后，`pci_use_e820=false`，这是bios有bug，爆出来的内存有问题，参考[Add pci=no_e820 cmdline option to ignore E820 reservations for bridge windows](https://lore.kernel.org/all/20211005150956.303707-1-hdegoede@redhat.com/T/)。
-   3. `acpi_scan_add_handler`向全局变量`acpi_scan_handlers_list`中插入pci host bridge的attach处理函数。root_device_ids的值是“PNP0A03”,而在ACPI spec中ACPI_ID值为PNP0A03表示PCI Host Bridge。
+   3. `acpi_scan_add_handler`向全局变量`acpi_scan_handlers_list`中插入pci host bridge的`pci_root_handler->attach`处理函数。root_device_ids的值是“PNP0A03”,而在ACPI spec中ACPI_ID值为PNP0A03表示PCI Host Bridge。
    4. `acpi_sysfs_add_hotplug_profile`向sysfs追加hotplug处理函数。
    5. 后面在`acpi_bus_scan(ACPI_ROOT_OBJECT)`中会通过遍历system中所有的acpi dev,并为这些acpi dev创建数据结构。之后会将acpi dev的acpi Id值与注册的device handler中的acpi Id值匹配，如果匹配成功则执行相应的handler->attach函数。
 2. acpi_pci_link_init注册`pci_link_handler`， 完成PCI中断的相关操作
 3. `acpi_bus_scan`会通过`acpi_walk_namespace`会遍历system中所有的device，并为这些acpi device创建数据结构，执行对应device的attatch函数。根据ACPI spec定义，pcie host bridge device定义在`DSDT`表中，acpi在扫描过程中扫描DSDT，如果发现了pcie host bridge, 就会执行device对应的attach函数，调用到`acpi_pci_root_add`()。
 4. `acpi_pci_root_add`开始PCIE/PCI设备的枚举
-   1. 系统调用kzalloc分配acpi_pci_root结构体，用来表示Host Bridge信息。
+   1. 系统调用kzalloc分配`acpi_pci_root`结构体，用来表示Host Bridge信息。
    2. 通过`acpi_evaluate_integer`函数获取acpi table中acpi Host Bridge dev `METHOD_NAME__SEG=="_SEG"`保存到root->segment。通过ACPI的_SEG参数, 获取host bridge使用的segment号， segment指的就是pcie domain, 主要目的是为了突破pcie最大256条bus的限制。
    3. 通过`try_get_root_bridge_busnr`查询ACPI的_CRS里的BusRange类型资源取得该Host Bridge的Secondary总线范围，保存在root->secondary这个resource中。
    4. 上一步失败 => 通过`acpi_evaluate_integer`获取ACPI的_BNN参数获取host bridge的根总线号。执行到这里如果没有返回失败，硬件设备上会有如下打印：ACPI: PCI Root Bridge [PCI0](domain 0000 [bus 00-7f])。
    5. 设置`device.pnp.device_name = "PCI Root Bridge"`, `device.pnp.device_class = "pci_bridge"`。
    6. 设置`device.driver_data = root(acpi_pci_root)`
    7. 如果是hostplug，调用`dmar_device_add(handle)`
-   8. 调用acpi_pci_root_get_mcfg_addr函数获取acpi host bridge dev节点中的mcfg (Memory mapped Configuration Base Address)地址并保存到root->mcfg_addr中
-   9. 判断device->pnp.ids->id是否等于"PNP0A08"，如果相等则`root->bridge_type = ACPI_BRIDGE_TYPE_PCIE`, 表示acpi host bridge dev支持PCIE Root Bridge。
-   10. 判断device->pnp.ids->id是否等于"ACPI0016"，如果相等`root->bridge_type = ACPI_BRIDGE_TYPE_CXL`, 表示acpi host bridge dev支持CXL。
+   8. 调用acpi_pci_root_get_mcfg_addr函数获取acpi host bridge dev节点中的mcfg (Memory mapped Configuration Base Address)地址并保存到root->mcfg_addr中,实现就是查询ACPI表中的METHOD_NAME__CBA字段。
+   9. 判断硬件类型acpi_hardware_id，判断device->pnp.ids->id是否等于"PNP0A08"，如果相等则`root->bridge_type = ACPI_BRIDGE_TYPE_PCIE`, 表示acpi host bridge dev支持PCIE Root Bridge。
+   10. 判断device->pnp.ids->id是否等于"ACPI0016"，如果相等`root->bridge_type = ACPI_BRIDGE_TYPE_CXL`, 表示acpi host bridge dev支持CXL。(这个地方有点没太明白，明明是PCI设备，怎么)
    11. 调用函数`negotiate_os_control`通过acpi _osc method协商Bios和OS对PCIE Feature的控制权。相关打印信息如下：
    acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
    acpi PNP0A08:00: _OSC: OS now controls [PCIeHotplug SHPCHotplug PME AER PCIeCapability LTR]
