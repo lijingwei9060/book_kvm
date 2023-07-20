@@ -115,6 +115,24 @@ Node 驱逐: 默认情况下，Kubelet 每隔 10s (--node-status-update-frequenc
 
 ## Node Controller
 
+节点状态包括：
+1. 地址（Addresses）
+   1. HostName：由节点的内核报告。可以通过 kubelet 的 --hostname-override 参数覆盖。
+   2. ExternalIP：通常是节点的可外部路由（从集群外可访问）的 IP 地址。
+   3. InternalIP：通常是节点的仅可在集群内部路由的 IP 地址
+2. 状况（Condition）: 所有 Running 节点的状况
+   1. Ready: 如节点是健康的并已经准备好接收 Pod 则为 True；False 表示节点不健康而且不能接收 Pod；Unknown 表示节点控制器在最近 node-monitor-grace-period 期间（默认 40 秒）没有收到节点的消息
+   2. DiskPressure	True 表示节点存在磁盘空间压力，即磁盘可用量低, 否则为 False
+   3. MemoryPressure	True 表示节点存在内存压力，即节点内存可用量低，否则为 False
+   4. PIDPressure	True 表示节点存在进程压力，即节点上进程过多；否则为 False
+   5. NetworkUnavailable	True 表示节点网络配置不正确；否则为 False
+   6. SchedulingDisabled 不是 Kubernetes API 中定义的 Condition，被保护起来的节点在其规约中被标记为不可调度（Unschedulable）
+3. 容量与可分配（Capacity）: CPU、内存和可以调度到节点上的 Pod 的个数上限。
+4. 信息（Info）: 节点的一般信息，如内核版本、Kubernetes 版本（kubelet 和 kube-proxy 版本）、 容器运行时详细信息，以及节点使用的操作系统。 kubelet 从节点收集这些信息并将其发布到 Kubernetes API。
+5. 心跳, 对于节点，有两种形式的心跳:更新节点的 .status;kube-node-lease 名字空间中的 Lease（租约）对象。 每个节点都有一个关联的 Lease 对象。与 Node 的 .status 更新相比，Lease 是一种轻量级资源。 使用 Lease 来表达心跳在大型集群中可以减少这些更新对性能的影响。kubelet 负责创建和更新节点的 .status，以及更新它们对应的 Lease。
+   1. 当节点状态发生变化时，或者在配置的时间间隔内没有更新事件时，kubelet 会更新 .status。 .status 更新的默认间隔为 5 分钟（比节点不可达事件的 40 秒默认超时时间长很多）。
+   2. kubelet 会创建并每 10 秒（默认更新间隔时间）更新 Lease 对象。 Lease 的更新独立于 Node 的 .status 更新而发生。 如果 Lease 的更新操作失败，kubelet 会采用指数回退机制，从 200 毫秒开始重试， 最长重试间隔为 7 秒钟。
+
 
 v1.16 版本中 NodeController 已经分为了 NodeIpamController 与 NodeLifecycleController。
 NodeLifecycleController 主要功能是定期监控 node 的状态并根据 node 的 condition 添加对应的 taint 标签或者直接驱逐 node 上的 pod。
