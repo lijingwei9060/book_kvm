@@ -124,7 +124,22 @@ iommu_device_list： 所有iommu_device列表
   - probe_device/release_device/probe_finalize:
 - dma_map_ops：dma函数操作指针，Intel
 
-
+```C
+static const struct dma_map_ops intel_dma_ops = {
+	.alloc = intel_alloc_coherent, // Intel IOMMU用于实现DMA Coherent Mapping的函数
+	.free = intel_free_coherent,
+	.map_sg = intel_map_sg,
+	.unmap_sg = intel_unmap_sg,
+	.map_page = intel_map_page,
+	.unmap_page = intel_unmap_page,
+	.map_resource = intel_map_resource,
+	.unmap_resource = intel_unmap_resource,
+	.dma_supported = dma_direct_supported,
+	.mmap = dma_common_mmap,
+	.get_sgtable = dma_common_get_sgtable,
+	.get_required_mask = intel_get_required_mask,
+}
+```
 ## DMAR管理过程
 
 - iommu_device_register(iommu_device, iommu_ops, device)： 注册iommu硬件设备,ops 应该是driver module，简单挂一下管理链表

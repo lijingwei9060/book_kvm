@@ -411,7 +411,16 @@ for_each_online_node(nid) {
 }
 ```
 
-bus_set_iommu(&pci_bus_type, &intel_iommu_ops):这个函数主要是为pci_bus设置intel_iommu_ops，并通过iommu_bus_init做一些初化的工作。具体的工作包括为bus注册通知回调函数，还有就是通过add_iommu_group给每个设备创建iommu_group，一个iommu_group可以对一个设备也可以对应多个设备，至于具体是如何分组我们看一下具体的函数实现，这段逻辑最终会调用到pci_device_group函数。这个函数的核心逻辑在于pci_acs_path_enabled，简单来说如果是pcie的设备则检查该设备到root complex的路径上如果都开启了ACS则这个设备就单独成一个iommu_group，如果不是则找到它的alias group就行了比如如果这个是传统的pci bus(没有pcie这些ACS的特性)则这个pci bus下面的所有设备就组合成一个iommu_group。
+bus_set_iommu(&pci_bus_type, &intel_iommu_ops):这个函数主要是为pci_bus设置intel_iommu_ops，并通过iommu_bus_init做一些初化的工作。具体的工作包括
+1. 为bus注册通知回调函数
+2. 还有就是通过add_iommu_group给每个设备创建iommu_group，一个iommu_group可以对一个设备也可以对应多个设备，至于具体是如何分组我们看一下具体的函数实现，这段逻辑最终会调用到pci_device_group函数。这个函数的核心逻辑在于`pci_acs_path_enabled`，简单来说如果是pcie的设备则检查该设备到root complex的路径上如果都开启了ACS则这个设备就单独成一个iommu_group，如果不是则找到它的alias group就行了比如如果这个是传统的pci bus(没有pcie这些ACS的特性)则这个pci bus下面的所有设备就组合成一个iommu_group。
+
+那么为什么要对设备进行分组呢？
+
+我们知道PCIe允许peer-to-peer通信，即PCIe设备发出的数据包可以不一直往上提交到PCIe的根节点，而是在中间的PCIe Switch直接进行转发，转发到其他PCIe设备上。不经过根节点这样就会导致IOMMU无法控制到这种peer-to-peer的数据传输，达不到设备隔离的目的。例如p2p的两个设备一个在虚拟机内，或一个在物理机上或者另一个虚拟机内，不经过IOMMU的话，地址完全乱了。如果不希望P2P直接通信则可以使用PCIe的ACS特性。ACS是PCIe的访问控制服务，控制PCIe数据流向的。ACS可以将peer-to-peer转发的功能关闭，强制将其下所有设备通信送到RootComplex。ACS可以应用于PCIe Switch以及带有VF的PF等所有具有调度功能的节点。所以iommu分组的依据就是ACS。这个从其设备分组实现函数pci_device_group中也可以看出。
+
+这个函数的核心逻辑在于`pci_acs_path_enabled`，从PCIe设备向上通往PCIe根节点的路径上，所有downstream port和multi-function device都要具有ACS特性，若某个downstream port或multi-function的ACS特性关闭，则下面的所有设备都必须归到同一个iommu group，否则该PCIe设备就可以独立成一个iommu group。另外PCI总线上的设备都归一个iommu group。最后同一个iommu group中所有的设备将会共享一个IOVA地址空间。因此，一个iommu group里可能有一个或多个设备。设备透传的时候一个group里面的设备必须都给一个虚拟机，不能给不同的VM，也不能部分被分配到给虚拟机。
+
 
 ```C
 struct iommu_group *pci_device_group(struct device *dev)
@@ -573,8 +582,8 @@ bus_set_iommu
 
 - struct inte_iommu：iommu硬件在驱动层所对应的概念
 - struct iommu_group: 一个group下面可以对应多个或者一个硬件设备
-- struct dmar_domain: dmar_domain里面存储的是iova->hpa的转换页表，一个dmar_domain可以为多个或者一个设备服务。
-- struct iommu_domain: 一个iommu_domain里面可以有多个iommu_group，然后每个iommu_group通过iommu_domain最终找到dmar_domain进行转换。
+- struct dmar_domain: dmar_domain里面存储的是iova->hpa的转换页表（即一个IOVA映射空间），一个dmar_domain可以为多个或者一个设备服务。
+- struct iommu_domain: iommu_domain作为dmar_domain的成员，主要存放iommu核心层的通用数据信息，如iommu_ops，同时作为group和dmar_domain的关联，一个iommu_domain里面可以有多个iommu_group，然后每个iommu_group通过iommu_domain最终找到dmar_domain进行转换。
 
 
 
@@ -586,3 +595,5 @@ https://zhuanlan.zhihu.com/p/479988393
 https://www.eet-china.com/mp/a118067.html
 
 https://www.owalle.com/2021/11/01/iommu-code/
+
+

@@ -379,3 +379,5 @@ irqfd_inject->kvm_set_irq中断就注册了
 https://blog.csdn.net/alex_mianmian/article/details/119428351?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&utm_relevant_index=2
 
 https://rtoax.blog.csdn.net/article/details/110843839
+
+https://terenceli.github.io/%E6%8A%80%E6%9C%AF/2019/08/21/vfio-driver-analysis
