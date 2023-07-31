@@ -34,9 +34,9 @@ klet:
 - readinessManager
 - startupManager
 - podCache
-- podManager
+- podManager：负责内存中pod及mirrorPod的维护，任何在本节点上创建或删除操作都会同步更新podManager，即可以认为podManager中存储了本节点上运行的pod的信息。保存UID到Pod映射，mirrorPod映射。
 - podKiller：用于pod销毁的goRoutine
-- statusManager：负责将Pod状态及时更新到Api-Server
+- statusManager：负责将Pod状态(pod状态以及容器的状态， versionedPodStatus)及时更新到Api-Server
 - resourceAnalyzer
 - runtimeService
 - containerLogManager
@@ -53,7 +53,7 @@ klet:
 - containerDeletor
 - imageManager
 - serverCertificateManager
-- probeManager：主要涉及liveness和readiness的逻辑
+- probeManager：主要涉及liveness和readiness的逻辑，livenessProber: 用来检测容器中的程序是否健康并确定何时重启容器；readinessProber: 用来检测容器中的程序是否就绪，就绪意味着该容器可以接收处理流量。目前支持HTTP, TCP, EXEC(执行命令或脚本)三种检测方式。
 - volumePluginMgr
 - volumeManager： 容器的镜像挂载、解绑等逻辑，保障存储与容器状态一致
 - pluginManager
@@ -83,7 +83,7 @@ SyncPod：主要执行sync操作使得运行的pod达到期望状态的pod
 
 HandlePodAdditions: 新增pod
 
-mirror pod?
+mirror pod? 在kubernetes中，如果是static pod，则由kubelet直接创建，这时系统很难管理这部分pod；所以系统会在kubelet中创建一个static pod对应的mirrorPod，来表示static pod。
 
 
 # Reference
