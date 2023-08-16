@@ -1,4 +1,8 @@
-# 网络
+# 网络模型
+
+- 全模拟：通常指由虚拟化层（通常是Qemu）完全模拟一个设备给虚拟机用。
+- virtio驱动半虚拟化：将设备虚拟的工作一拆为二，一部分挪到虚拟机内核中作为前端驱动，一部分放到虚拟化层(通常是Qemu)作为后端，前后端共享Ring环协同完成任务。
+- 设备直通、SRIOV：借助硬件技术，如intel的VT-d技术实现PCI设备直接挂载给虚拟机。
 
 网络包含：virtio-net Driver 和 virtio-net Device（由 QEMU 模拟的后端）。
 前端：虚拟机的中的内核驱动模块， 接受用户态的IO请求，转发后端的io请求。
@@ -71,12 +75,13 @@ Front-end 和 Back-end 之间存在 2 个 Virtqueues，对应到 NIC 的 Rx/Tx Q
 TAPState： tap设备状态，只有一个NetClientState
 NICState: 虚拟网卡，有多个NetClientState，对应多个queue，最终数据流都是经过一个tap设备
 NetClientState
-VHostNetState:  
+VHostNetState:  vhost-net内核态虚拟网卡状态
 NetClientInfo 
 NetQueue 
 NICPeers [tap.NetClientState - nic.NetClientState]
 NICConf 
 VirtIODevice
+VirtIONet
 PCIDevice
 
 虚拟设备： 
@@ -217,3 +222,286 @@ start_xmit{
     virtqueue_kick_prepare(sq->vq) && virtqueue_notify(sq->vq) // kick通知qemu后端
 }
 当虚拟机写入一个 I/O 会使得 qemu 触发 VM exit 。接下来进入 qemu 做 virtio-net 相关处理。
+
+
+## vhost-net(后端/内核态)
+
+vhost_net运行在宿主机的内核中，有两个比较重要文件，vhost.c和vhost-net.c。其中前者实现的是脱离具体功能的vhost核心实现，后者实现网络方面的功能。
+vhost-net注册为misc device，其file_operations 为 vhost_net_fops。
+
+```C
+static const struct file_operations vhost_net_fops = {
+    .owner          = THIS_MODULE,
+    .release        = vhost_net_release,
+    .read_iter      = vhost_net_chr_read_iter,
+    .write_iter     = vhost_net_chr_write_iter,
+    .poll           = vhost_net_chr_poll,
+    .unlocked_ioctl = vhost_net_ioctl,
+#ifdef CONFIG_COMPAT
+    .compat_ioctl   = vhost_net_compat_ioctl,
+#endif
+    .open           = vhost_net_open,
+    .llseek     = noop_llseek,
+};
+
+static struct miscdevice vhost_net_misc = {
+    .minor = VHOST_NET_MINOR,
+    .name = "vhost-net",
+    .fops = &vhost_net_fops,
+};
+
+static int vhost_net_init(void)
+{
+    if (experimental_zcopytx)
+        vhost_net_enable_zcopy(VHOST_NET_VQ_TX);
+    return misc_register(&vhost_net_misc);
+}
+```
+
+
+### qemu初始化
+
+1. struct vhost_net：用于描述Vhost-Net设备。它包含几个关键字段：
+   1. struct vhost_dev，通用的vhost设备，可以类比struct device结构体内嵌在其他特定设备的结构体中;
+   2. struct vhost_net_virtqueue，实际上对struct vhost_virtqueue进行了封装，用于网络包的数据传输;
+   3. struct vhost_poll，用于socket的poll，以便在数据包接收与发送时进行任务调度;
+2. struct vhost_dev：描述通用的vhost设备，可内嵌在基于vhost机制的其他设备结构体中，比如struct vhost_net，struct vhost_scsi等。
+   1. vqs指针，指向已经分配好的struct vhost_virtqueue，对应数据传输;
+   2. work_list，任务链表，用于放置需要在vhost_worker内核线程上执行的任务;
+   3. worker，用于指向创建的内核线程，执行任务列表中的任务;
+3. vhost_net_virtqueue: 用于描述Vhost-Net设备对应的virtqueue，封装的struct vhost_virtqueue。
+4. struct vhost_virtqueue：用于描述vhost设备对应的virtqueue，这部分内容可以参考之前virtqueue机制分析，本质上是将Qemu中virtqueue处理机制下沉到了Kernel中。
+
+qemu的代码中，创建tap设备时会调用到net_init_tap()函数。net_init_tap()其中会检查选项是否指定vhost=on，如果指定，则会调用到vhost_net_init()进行初始化，其中通过open(“/dev/vhost-net”, O_RDWR)打开了vhost-net driver；并通过ioctl(vhost_fd)进行了一系列的初始化。而open(“/dev/vhost-net”, O_RDWR)，则会调用到vhost-net驱动的vhost_net_fops->open函数，即vhost_net_openc初始化 vhost设备。
+
+```C
+struct vhost_net {
+    struct vhost_dev dev;
+    struct vhost_net_virtqueue vqs[VHOST_NET_VQ_MAX];
+    struct vhost_poll poll[VHOST_NET_VQ_MAX];
+    /* Number of TX recently submitted.
+     * Protected by tx vq lock. */
+    unsigned tx_packets;
+    /* Number of times zerocopy TX recently failed.
+     * Protected by tx vq lock. */
+    unsigned tx_zcopy_err;
+    /* Flush in progress. Protected by tx vq lock. */
+    bool tx_flush;
+};
+
+struct vhost_dev {
+    /* Readers use RCU to access memory table pointer
+     * log base pointer and features.
+     * Writers use mutex below.*/
+    struct vhost_memory __rcu *memory;
+    struct mm_struct *mm;
+    struct mutex mutex;
+    unsigned acked_features;
+    struct vhost_virtqueue **vqs;
+    int nvqs;
+    struct file *log_file;
+    struct eventfd_ctx *log_ctx;
+    spinlock_t work_lock;
+    struct list_head work_list;
+    struct task_struct *worker;
+};
+
+
+struct vhost_net_virtqueue {
+    struct vhost_virtqueue vq;
+    /* hdr is used to store the virtio header.
+     * Since each iovec has >= 1 byte length, we never need more than
+     * header length entries to store the header. */
+    struct iovec hdr[sizeof(struct virtio_net_hdr_mrg_rxbuf)];
+    size_t vhost_hlen;
+    size_t sock_hlen;
+    /* vhost zerocopy support fields below: */
+    /* last used idx for outstanding DMA zerocopy buffers */
+    int upend_idx;
+    /* first used idx for DMA done zerocopy buffers */
+    int done_idx;
+    /* an array of userspace buffers info */
+    struct ubuf_info *ubuf_info;
+    /* Reference counting for outstanding ubufs.
+     * Protected by vq mutex. Writers must also take device mutex. */
+    struct vhost_net_ubuf_ref *ubufs;
+};
+
+/* The virtqueue structure describes a queue attached to a device. */
+struct vhost_virtqueue {
+    struct vhost_dev *dev;
+
+    /* The actual ring of buffers. */
+    struct mutex mutex;
+    unsigned int num;
+    struct vring_desc __user *desc;
+    struct vring_avail __user *avail;
+    struct vring_used __user *used;
+    struct file *kick;
+    struct file *call;
+    struct file *error;
+    struct eventfd_ctx *call_ctx;
+    struct eventfd_ctx *error_ctx;
+    struct eventfd_ctx *log_ctx;
+
+    struct vhost_poll poll;
+
+    /* The routine to call when the Guest pings us, or timeout. */
+    vhost_work_fn_t handle_kick;
+
+    /* Last available index we saw. */
+    u16 last_avail_idx;
+
+    /* Caches available index value from user. */
+    u16 avail_idx;
+
+    /* Last index we used. */
+    u16 last_used_idx;
+
+    /* Used flags */
+    u16 used_flags;
+
+    /* Last used index value we have signalled on */
+    u16 signalled_used;
+
+    /* Last used index value we have signalled on */
+    bool signalled_used_valid;
+
+    /* Log writes to used structure. */
+    bool log_used;
+    u64 log_addr;
+
+    struct iovec iov[UIO_MAXIOV];
+    struct iovec *indirect;
+    struct vring_used_elem *heads;
+    /* We use a kind of RCU to access private pointer.
+     * All readers access it from worker, which makes it possible to
+     * flush the vhost_work instead of synchronize_rcu. Therefore readers do
+     * not need to call rcu_read_lock/rcu_read_unlock: the beginning of
+     * vhost_work execution acts instead of rcu_read_lock() and the end of
+     * vhost_work execution acts instead of rcu_read_unlock().
+     * Writers use virtqueue mutex. */
+    void __rcu *private_data;
+    /* Log write descriptors */
+    void __user *log_base;
+    struct vhost_log *log;
+};
+
+struct vhost_poll {
+    poll_table                table;
+    wait_queue_head_t        *wqh;
+    wait_queue_entry_t              wait;
+    struct vhost_work     work;
+    __poll_t          mask;
+    struct vhost_dev     *dev;
+};
+```
+
+### vhost_net设备初始化 vhost_net_open
+
+创建vhost_net，完成一系列初始化，vhost_net 和 vhost_net_virtqueue 是描述vhost-net设备的，vhost_dev和vhost_virtqueue则用于通用的vhost设备，在vhost_dev_init中完成vhost_dev的初始化以及和vhost_virtqueue关联（vhost_dev的vhost_virtqueue指向vhost_net的vhost_virtqueue）。
+
+初始化vhost_poll，理解vhost poll机制对读懂vhost_net 实现非常重要，见数据结构章节vhost_poll的介绍，vhost_net报文收发，前后端事件通知都需要vhost_poll机制；
+
+关联file和vhost_net，file->private_data=vhost_net。
+
+```C
+static int vhost_net_open(struct inode *inode, struct file *f)
+{
+    struct vhost_net *n;
+    struct vhost_dev *dev;
+    struct vhost_virtqueue **vqs;
+    void **queue;
+    int i;
+
+    n = kvmalloc(sizeof *n, GFP_KERNEL | __GFP_RETRY_MAYFAIL);
+    if (!n)
+        return -ENOMEM;
+    vqs = kmalloc_array(VHOST_NET_VQ_MAX, sizeof(*vqs), GFP_KERNEL);
+    if (!vqs) {
+        kvfree(n);
+        return -ENOMEM;
+    }
+
+    queue = kmalloc_array(VHOST_RX_BATCH, sizeof(void *),
+                  GFP_KERNEL);
+    if (!queue) {
+        kfree(vqs);
+        kvfree(n);
+        return -ENOMEM;
+    }
+    n->vqs[VHOST_NET_VQ_RX].rxq.queue = queue;
+
+    dev = &n->dev;
+    vqs[VHOST_NET_VQ_TX] = &n->vqs[VHOST_NET_VQ_TX].vq;
+    vqs[VHOST_NET_VQ_RX] = &n->vqs[VHOST_NET_VQ_RX].vq;
+    n->vqs[VHOST_NET_VQ_TX].vq.handle_kick = handle_tx_kick;
+    n->vqs[VHOST_NET_VQ_RX].vq.handle_kick = handle_rx_kick;
+    for (i = 0; i < VHOST_NET_VQ_MAX; i++) {
+        n->vqs[i].ubufs = NULL;
+        n->vqs[i].ubuf_info = NULL;
+        n->vqs[i].upend_idx = 0;
+        n->vqs[i].done_idx = 0;
+        n->vqs[i].vhost_hlen = 0;
+        n->vqs[i].sock_hlen = 0;
+        n->vqs[i].rx_ring = NULL;
+        vhost_net_buf_init(&n->vqs[i].rxq);
+    }
+    vhost_dev_init(dev, vqs, VHOST_NET_VQ_MAX);
+
+    vhost_poll_init(n->poll + VHOST_NET_VQ_TX, handle_tx_net, EPOLLOUT, dev);
+    vhost_poll_init(n->poll + VHOST_NET_VQ_RX, handle_rx_net, EPOLLIN, dev);
+
+    f->private_data = n;
+
+    return 0;
+}
+
+void vhost_dev_init(struct vhost_dev *dev,
+            struct vhost_virtqueue **vqs, int nvqs)
+{
+    struct vhost_virtqueue *vq;
+    int i;
+
+    dev->vqs = vqs;
+    dev->nvqs = nvqs;
+    mutex_init(&dev->mutex);
+    dev->log_ctx = NULL;
+    dev->umem = NULL;
+    dev->iotlb = NULL;
+    dev->mm = NULL;
+    dev->worker = NULL;
+    init_llist_head(&dev->work_list);
+    init_waitqueue_head(&dev->wait);
+    INIT_LIST_HEAD(&dev->read_list);
+    INIT_LIST_HEAD(&dev->pending_list);
+    spin_lock_init(&dev->iotlb_lock);
+
+
+    for (i = 0; i < dev->nvqs; ++i) {
+        vq = dev->vqs[i];
+        vq->log = NULL;
+        vq->indirect = NULL;
+        vq->heads = NULL;
+        vq->dev = dev;
+        mutex_init(&vq->mutex);
+        vhost_vq_reset(dev, vq);
+        if (vq->handle_kick)
+            vhost_poll_init(&vq->poll, vq->handle_kick,
+                    EPOLLIN, dev);
+    }
+}
+
+/* Init poll structure */
+void vhost_poll_init(struct vhost_poll *poll, vhost_work_fn_t fn,
+             __poll_t mask, struct vhost_dev *dev)
+{
+    init_waitqueue_func_entry(&poll->wait, vhost_poll_wakeup);
+    init_poll_funcptr(&poll->table, vhost_poll_func);
+    poll->mask = mask;
+    poll->dev = dev;
+    poll->wqh = NULL;
+
+    vhost_work_init(&poll->work, fn);
+}
+```
