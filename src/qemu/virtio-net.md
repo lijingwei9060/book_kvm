@@ -505,3 +505,48 @@ void vhost_poll_init(struct vhost_poll *poll, vhost_work_fn_t fn,
     vhost_work_init(&poll->work, fn);
 }
 ```
+
+
+## e1000
+
+e1000_tx_desc
+e1000_rx_desc
+iovec
+
+初始化pci网卡：
+1. 创建pci设备， pci_new(devfn, model), 创建DeviceState， 设置addr为bfd， multifunction为false， 设置mac地址， netdev属性，vectors？
+2. 调用注册网卡的realize函数pci_e1000_realize(),
+   1. 注册config space 的write函数e1000_write_config, 注入config
+   2. 注入mmio bar， 和io bar
+   3. 配置mac地址
+   4. 注入eeprom
+   5. 创建NICState，qemu_new_nic
+   6. 配置autoneg、mig、flush_queue时钟
+
+
+收报：
+1. tap_update_fd_handler下，当tun收包可读时，调用tap_send。
+2. 从tun中读取数据：tap_read_packet
+3. 想qemu发送数据：qemu_send_packet_async -> qemu_net_queue_send
+   1. 现在能收报吗： qemu_can_send_packet，
+   2. 不能则将起放到队列中等待： qemu_net_queue_append(queue, sender, flags, data, size, sent_cb);
+   3. 可以：qemu_net_queue_deliver(queue, sender, flags, data, size) -> queue->deliver(sender, flags, &iov, 1, queue->opaque);
+e1000_receive_iov: 虚拟机通过tap收报：
+1. flush_queue_timer正在干活，退出
+2. oversized？LPE、SBP, 丢包
+3. receive_filter
+4. vlan
+5. 循环：pci_dma_read/pci_dma_write
+6. set_ics-> mit_timer/pci_set_irq 发出中断，kick虚拟机
+
+
+发包：
+
+1. e1000_mmio_write通过mmio写入网卡的地址，通过计算写入位移，确定触发set_tctl， 调用start_xmit
+2. tx.busy = true
+3. 循环： 
+   1. 获取发送ring的首地址gpa： base = tx_desc_base(s) + sizeof(struct e1000_tx_desc) * s->mac_reg[TDH];
+   2. pci_dma_read从guest中读取desc的内容
+   3. prcess_tx_desc 组装包开始收发包，获得buffer地址，循环通过pci_dma_read读取网络数据，调用xmit_seg继续组装IP协议头部，使用e1000_send_packet进行发包,最终调用net_tap_info的tap_receive，其实就是len = writev(s->fd, iov, iovcnt)向/dev/net/tun进行写入
+   4. txdesc_writeback
+4. set_ics触发中断
