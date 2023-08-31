@@ -40,6 +40,64 @@ pc_q35_init(machine);
 										|-kvm_init_cpu_signals
 										|-kvm_cpu_exec //每个vcpu对应一个线程，该线程循环执行
 
+## x86
+
+
+保护模式：
+1. 设置gdt(global description table).cs(segment descriptor)
+2. cr0
+
+```C
+static void setup_protected_mode(struct kvm_sregs *sregs) {
+    struct kvm_segment seg = {
+        .base = 0,
+        .limit = 0xffffffff,
+        .selector = 1 << 3,
+        .present = 1,
+        .type = 11, /* Code: execute, read, accessed */
+        .dpl = 0,
+        .db = 1,
+        .s = 1, /* Code/data */
+        .l = 0,
+        .g = 1, /* 4KB granularity */
+    };
+
+    sregs->cr0 |= CR0_PE; /* enter protected mode */
+
+    sregs->cs = seg;
+
+    seg.type = 3; /* Data: read/write, accessed */
+    seg.selector = 2 << 3;
+    sregs->ds = sregs->es = sregs->fs = sregs->gs = sregs->ss = seg;
+
+    if (ioctl(vcpu->fd, KVM_SET_SREGS, &sregs) < 0) {
+        perror("KVM_SET_SREGS");
+        exit(1);
+    }    
+}
+```
+
+分页：
+```C
+static void setup_paged_32bit_mode(struct vm *vm, struct kvm_sregs *sregs) {
+    uint32_t pd_addr = 0x2000;
+    uint32_t *pd = (void *)(vm->mem + pd_addr);
+
+    /* A single 4MB page to cover the memory region */
+    pd[0] = PDE32_PRESENT | PDE32_RW | PDE32_USER | PDE32_PS;
+    /* Other PDEs are left zeroed, meaning not present. */
+
+    sregs->cr3 = pd_addr;
+    sregs->cr4 = CR4_PSE;
+    sregs->cr0 = CR0_PE | CR0_MP | CR0_ET | CR0_NE | CR0_WP | CR0_AM | CR0_PG;
+    sregs->efer = 0;
+
+    if (ioctl(vcpu->fd, KVM_SET_SREGS, &sregs) < 0) {
+        perror("KVM_SET_SREGS");
+        exit(1);
+    }
+}
+```
 ## ARMv8 cpu状态
 
 通用寄存器：
