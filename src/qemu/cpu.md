@@ -23,8 +23,8 @@ pc_q35_init(machine);
 					|-device_set_realized
 						|-x86_cpu_realizefn   //vcpu初始化的实现，先初始化struct X86CPU再初始化struct CPUState 
 							|-qemu_init_vcpu  //struct CPUState
-								|-qemu_kvm_start_vcpu
-									|-qemu_kvm_cpu_thread_fn
+								|-kvm_start_vcpu_thread
+									|-kvm_vcpu_thread_fn
 										|-kvm_init_vcpu
 											|-kvm_get_vcpu        //通知kvm创建一个vcpu，返回一个kvm_fd，在kvm的内核中，vpu的操作函数kvm_x86_ops指向(intel)vmx_x86_ops或者(amd)svm_x86_ops
 											|-kvm_ioctl           //从kvm获取映射mmap_size(KVM_GET_VCPU_MMAP_SIZE)
@@ -57,6 +57,154 @@ pc_q35_init(machine);
 - ELR_EL1: 保存从EL1异常返回的地址
 
 
+
+## vpu的生命周期管理
+
+```C
+static void kvm_accel_ops_class_init(ObjectClass *oc, void *data)
+{
+    AccelOpsClass *ops = ACCEL_OPS_CLASS(oc);
+
+    ops->create_vcpu_thread = kvm_start_vcpu_thread;
+    ops->cpu_thread_is_idle = kvm_vcpu_thread_is_idle;
+    ops->cpus_are_resettable = kvm_cpus_are_resettable;
+    ops->synchronize_post_reset = kvm_cpu_synchronize_post_reset;
+    ops->synchronize_post_init = kvm_cpu_synchronize_post_init;
+    ops->synchronize_state = kvm_cpu_synchronize_state;
+    ops->synchronize_pre_loadvm = kvm_cpu_synchronize_pre_loadvm;
+
+#ifdef KVM_CAP_SET_GUEST_DEBUG
+    ops->update_guest_debug = kvm_update_guest_debug_ops;
+    ops->supports_guest_debug = kvm_supports_guest_debug;
+    ops->insert_breakpoint = kvm_insert_breakpoint;
+    ops->remove_breakpoint = kvm_remove_breakpoint;
+    ops->remove_all_breakpoints = kvm_remove_all_breakpoints;
+#endif
+}
+```
+### 初始化vCPU
+
+```C
+struct CPUState {
+    DeviceState parent_obj;
+    CPUClass *cc;
+    int nr_cores;
+    int nr_threads;
+    struct QemuThread *thread;
+    QemuSemaphore sem;
+    int thread_id;
+    bool running, has_waiter;
+    struct QemuCond *halt_cond;
+    bool thread_kicked;
+    bool created;
+    bool stop;
+    bool stopped;    
+    bool start_powered_off;
+    bool unplug;
+    bool crash_occurred;
+    bool exit_request;
+    int exclusive_context_count;
+    uint32_t cflags_next_tb;
+    /* updates protected by BQL */
+    uint32_t interrupt_request;
+    int singlestep_enabled;
+    int64_t icount_budget;
+    int64_t icount_extra;
+    uint64_t random_seed;
+    sigjmp_buf jmp_env;
+
+    QemuMutex work_mutex;
+    QSIMPLEQ_HEAD(, qemu_work_item) work_list;
+
+    CPUAddressSpace *cpu_ases;
+    int num_ases;
+    AddressSpace *as;
+    MemoryRegion *memory;
+
+    CPUArchState *env_ptr;
+    IcountDecr *icount_decr_ptr;
+
+    CPUJumpCache *tb_jmp_cache;
+
+    struct GDBRegisterState *gdb_regs;
+    int gdb_num_regs;
+    int gdb_num_g_regs;
+    QTAILQ_ENTRY(CPUState) node;
+
+    /* ice debug support */
+    QTAILQ_HEAD(, CPUBreakpoint) breakpoints;
+
+    QTAILQ_HEAD(, CPUWatchpoint) watchpoints;
+    CPUWatchpoint *watchpoint_hit;
+
+    void *opaque;
+    uintptr_t mem_io_pc;
+    int kvm_fd;
+    struct KVMState *kvm_state;
+    struct kvm_run *kvm_run;
+    struct kvm_dirty_gfn *kvm_dirty_gfns;
+    uint32_t kvm_fetch_index;
+    uint64_t dirty_pages;
+    int kvm_vcpu_stats_fd;
+
+    QemuLockCnt in_ioctl_lock;
+    DECLARE_BITMAP(plugin_mask, QEMU_PLUGIN_EV_MAX);
+
+    GArray *plugin_mem_cbs;
+    SavedIOTLB saved_iotlb;
+
+    int cpu_index;
+    int cluster_index;
+    uint32_t tcg_cflags;
+    uint32_t halted;
+    uint32_t can_do_io;
+    int32_t exception_index;
+
+    AccelCPUState *accel;
+    bool vcpu_dirty;
+    bool throttle_thread_scheduled;
+
+
+    int64_t throttle_us_per_full;
+    bool ignore_memory_transaction_failures;
+    bool prctl_unalign_sigbus;
+    GArray *iommu_notifiers;
+};
+
+```
+
+kvm_start_vcpu_thread(CPUState *cpu)
+	qemu_thread_create(cpu->thread, thread_name, kvm_vcpu_thread_fn, .cpu, QEMU_THREAD_JOINABLE);
+		kvm_init_vcpu(cpu, &error_fatal)
+			|-kvm_get_vcpu => kvm_vm_ioctl(s, KVM_CREATE_VCPU, (void *)vcpu_id)   // 先从KVMState->kvm_parked_vcpus列表中查找cpu id，如果有就返回cpu的kvm_fd, 如果没有通过kvm创建一个vcpu，返回一个kvm_fd。 这个操作会进入内核态，会调用kvm的内核中vpu的操作函数kvm_x86_ops指向(intel)vmx_x86_ops或者(amd)svm_x86_ops。
+			|-kvm_ioctl           //从kvm获取映射mmap_size(KVM_GET_VCPU_MMAP_SIZE), 这个映射的内存区域用于qemu 和kvm进行数据交换，比如IO地址，kvm退出原因等。这个大小包含kvm_run, pio data page, coalesced mmio ring page, 有可能是3*page size。这个大小有点不太明白，好像他意思是支持多个ring的，但是返回的mmpa大小最大只有3个page、
+			|-mmap                //对kvm_fd进行以一个mmap_size大小映射,映射到CPUState->kvm_run,每次vm_exit都可以通过kvm_run->exit_reason判断退出原因。qemu和kvm建立映射，便于信息同步。所以kvm_run是不是就是4k的vmcs？
+			|-kvm_dirty_gfns： kvm和qemu共享，用于统计vcpu级别的脏也跟踪
+			|-kvm_arch_init_vcpu  //前面vcpu创建成功之后现在来真正的初始化
+				|-kvm_arch_set_tsc_khz      //时钟设置
+				|-kvm_vcpu_ioctl            //KVM_GET_TSC_KHZ时钟可以用户设置和从kvm获取，这里从KVM获取再保存下来
+				|-hyperv_handle_properties  //设置cpuids
+				|-cpu_x86_cpuid             //获取所有的CPUID信息，填充结构体，设置到寄存器中
+				|-kvm_vcpu_ioctl            //前面构造KVM需要的cpuid_data数据，再通过KVM_SET_CPUID2给kvm设置cpuid
+				|-kvm_init_msrs             //通知kvm设置msr寄存器
+				|-hyperv_init_vcpu          //Hyper-V初始化vcpu保存一些信息在后续迁移时候恢复使用
+
+		kvm_init_cpu_signals(cpu)
+		cpu_thread_signal_created(cpu);
+    	qemu_guest_random_seed_thread_part2(cpu->random_seed);
+		loop : cpu_can_run(cpu)) =>  r = kvm_cpu_exec(cpu)  / qemu_wait_io_event(cpu)
+		kvm_destroy_vcpu(cpu)
+		cpu_thread_signal_destroyed(cpu)
+
+### coalesced_mmio_ring
+
+正常每次访问mmio都回导致虚拟机退出到qemu，将多个mmio操作保存起来然后一起退出到qemu中，这个就叫coalesced_mmio(合并mmio)。 目前只支持写操作的coalesced mmio。
+对pio和mmio写区分位deferred和非deferred，如果非deferred就会退出。
+
+qemu这边的api，增删改查：
+1. 增加： void memory_region_add_coalescing(MemoryRegion *mr, hwaddr offset, uint64_t size)
+2. 删除： void memory_region_clear_coalescing(MemoryRegion *mr)
+3. 刷入： void memory_region_set_flush_coalesced(MemoryRegion *mr)
 
 
 ## vCPU运行
