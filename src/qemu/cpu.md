@@ -239,18 +239,45 @@ kvm_start_vcpu_thread(CPUState *cpu)
 			|-mmap                //对kvm_fd进行以一个mmap_size大小映射,映射到CPUState->kvm_run,每次vm_exit都可以通过kvm_run->exit_reason判断退出原因。qemu和kvm建立映射，便于信息同步。所以kvm_run是不是就是4k的vmcs？
 			|-kvm_dirty_gfns： kvm和qemu共享，用于统计vcpu级别的脏也跟踪
 			|-kvm_arch_init_vcpu  //前面vcpu创建成功之后现在来真正的初始化
+                |-KVM_CAP_XSAVE2：
 				|-kvm_arch_set_tsc_khz      //时钟设置
-				|-kvm_vcpu_ioctl            //KVM_GET_TSC_KHZ时钟可以用户设置和从kvm获取，这里从KVM获取再保存下来
+				|-kvm_vcpu_ioctl            //KVM_GET_TSC_KHZ、KVM_SET_TSC_KHZ时钟可以用户设置和从kvm获取，这里从KVM获取再保存下来，涉及到tsc scaling(?)。这个部分会修改CPUState的tsc_khz
+                |-apic_bus_freq = KVM_APIC_BUS_FREQUENCY // apic 总线频率
+                |-kvm_hyperv_expand_features
+                |-hyperv_enabled(cpu) => hyperv_init_vcpu(cpu) // KVM支持hyperv并且传入了hyperv参数
+                    |-HV_X64_MSR_VP_INDEX
+                    |-KVM_CAP_HYPERV_SYNIC/KVM_CAP_HYPERV_SYNIC2 => kvm_vcpu_enable_cap(cs, synic_cap, 0)
+                    |-cpu->hyperv_synic_kvm_only ==false =>  hyperv_x86_synic_add(cpu) // 添加合成中断控制器SyncIC
+                    |-HYPERV_FEAT_EVMCS =>  kvm_vcpu_enable_cap(cs, KVM_CAP_HYPERV_ENLIGHTENED_VMCS) 
+                    |-cpu->hyperv_enforce_cpuid => kvm_vcpu_enable_cap(cs, KVM_CAP_HYPERV_ENFORCE_CPUID)
 				|-hyperv_handle_properties  //设置cpuids
+                |-cpu->expose_kvm => ?
 				|-cpu_x86_cpuid             //获取所有的CPUID信息，填充结构体，设置到寄存器中
+                |-cpu->kvm_pv_enforce_cpuid => kvm_vcpu_enable_cap(cs, KVM_CAP_ENFORCE_PV_FEATURE_CPUID)
 				|-kvm_vcpu_ioctl            //前面构造KVM需要的cpuid_data数据，再通过KVM_SET_CPUID2给kvm设置cpuid
+                |-kvm_init_xsave(env)       // 支持xsave指令集
+                |-嵌套支持svm|vmx
 				|-kvm_init_msrs             //通知kvm设置msr寄存器
-				|-hyperv_init_vcpu          //Hyper-V初始化vcpu保存一些信息在后续迁移时候恢复使用
 
 		kvm_init_cpu_signals(cpu)
-		cpu_thread_signal_created(cpu);
+            |- SIG_IPI => kvm_ipi_signal
+		cpu_thread_signal_created(cpu) // 通知县城cpu已经创建
     	qemu_guest_random_seed_thread_part2(cpu->random_seed);
-		loop : cpu_can_run(cpu)) =>  r = kvm_cpu_exec(cpu)  / qemu_wait_io_event(cpu)
+		loop : cpu_can_run(cpu)) =>  
+            |-kvm_cpu_exec(cpu)
+                |-kvm_arch_process_async_events(cpu)
+                |-qemu_mutex_unlock_iothread();
+                |-cpu_exec_start(cpu)
+                |-vcpu_dirty => kvm_arch_put_registers(cpu, KVM_PUT_RUNTIME_STATE);
+                |-kvm_arch_pre_run(cpu, run)
+                |-exit_request => kvm_cpu_kick_self()
+                |-kvm_vcpu_ioctl(cpu, KVM_RUN, 0)
+                |-kvm_arch_post_run(cpu, run)
+                |-KVM_EXIT_IO => kvm_handle_io
+                |-KVM_EXIT_MMIO => address_space_rw
+                KVM_EXIT_DIRTY_RING_FULL
+                KVM_EXIT_SYSTEM_EVENT
+            |-qemu_wait_io_event(cpu)
 		kvm_destroy_vcpu(cpu)
 		cpu_thread_signal_destroyed(cpu)
 
@@ -264,6 +291,27 @@ qemu这边的api，增删改查：
 2. 删除： void memory_region_clear_coalescing(MemoryRegion *mr)
 3. 刷入： void memory_region_set_flush_coalesced(MemoryRegion *mr)
 
+
+
+### intel cpu
+
+#### 控制寄存器
+
+CR0： 包含系统控制标志用于控制操作模式和处理器状态。
+CR1
+CR2： 存储page-fault 线性地址（即引起缺页的线性地址）
+CR3：包含分页使用的物理地址载始的位置和两个标志（PCD和PWT）。只有基地址高bit位（12 bit位前的）指定，低12 bit位才假定为0，这样分页的大小就是4Kbytes。PCD和PWT标志控制分页在处理器内部缓存中的使用。
+CR4： 包含的标志可用于开启架构扩展和处理器特定能力。CR4中的标志不是在所有处理器上都实现了，使用带有PCE标志的CPUID指令可以判断在当前CPU上是否实现。
+CR8： 用于读写Task Priority Register(TPR)，它指定了外部中断生效的优先级阈值。CR8只对Intel 64架构可用。
+XCR0： 
+
+#### 指令集：
+
+(aes)AES-NI指令集：高级加密标准指令集（或称英特尔高级加密标准新指令，简称AES-NI）是一个x86指令集架构的扩展，用于Intel和AMD微处理器，由Intel在2008年3月提出。该指令集的目的是改进应用程序使用高级加密标准（AES）执行加密和解密的速度。
+
+AVX(Advanced Vector Extensions，高级矢量扩展)是Intel 和AMD的x86 架构指令集的一个扩展，2011年Intel 发布Sandy Bridge处理器时开始第一次正式支持 AVX. AVX 中的新特性有：将向量化宽度从128位提升到256位，且将 XMM0~XMM15寄存器重命名为 YMM0~YMM15；引入了三操作数、四操作数的 SIMD 指令格式；弱化了对 SIMD 指令中对内存操作对齐的要求，支持灵活的不对齐内存地址访问。
+
+XSAVE 指令（包括 XSAVE, XRSTOR等）是在 Intel Nehalem处理器中开始引入的，是为了保存和恢复处理器 扩展状态的，在AVX引入后，XSAVE 也要处理 YMM 寄存器状态。在KVM虚拟化环境中，客户机的动态迁移需要保存处理器状态，然后迁移后恢复处理器的执行状态，如果有AVX指令要执行，在保存和恢复时也需要 XSAVE, XRSTOR 指令的支持。
 
 ## vCPU运行
 
