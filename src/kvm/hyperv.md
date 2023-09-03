@@ -1,4 +1,5 @@
 
+# 概念
 Hyper-V Enlightenments 是针对windows虚拟机在虚拟化场景性能的优化，设计的目标是提供一个模拟hyperv的能力，从而可以降低比如内存管理的开销，通过VMBus（一种类似于virtio）的方式进行IO路径的优化。
 
 Enlightments在windows vista之后的系统，一般都提供支持。。
@@ -53,3 +54,7 @@ Enlightments在windows vista之后的系统，一般都提供支持
   <timer name='hypervclock' present='yes'/>
 </clock>
 ```
+
+## qemu 过程
+
+## kvm 过程
