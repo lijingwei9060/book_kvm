@@ -1,6 +1,19 @@
 
 # 概述
 
+- 中断是处理器用于异步处理外围设备请求的一种机制；
+- 外设通过硬件管脚连接在中断控制器上，并通过电信号向中断控制器发送请求；
+- 中断控制器将外设的中断请求路由到CPU上；
+
+CPU（以ARM为例）进行模式切换（切换到IRQ/FIQ），保存Context后，根据外设的中断号去查找系统中已经注册好的Handler进行处理，处理完成后再将Context进行恢复，接着之前打断的执行流继续move on；
+中断的作用不局限于外设的处理，系统的调度，SMP核间交互等，都离不开中断；
+
+中断虚拟化，将从中断信号产生到路由到vCPU的角度来展开，包含以下三种情况：
+
+1. 物理设备产生中断信号，路由到vCPU；
+2. 虚拟外设产生中断信号，路由到vCPU；
+3. Guest OS中CPU之间产生中断信号（IPI中断）；
+
 中断控制器：pic/ioapic/lapic/i8259
 
 qemu全局变量kvm_kernel_irqchip置为true
@@ -11,7 +24,59 @@ kvm_vm_ioctl(s, KVM_CREATE_IRQCHIP)
 |--> kvm_ioapic_init                 /* ioapic 初始化 */
 |--> kvm_setup_default_irq_routing   /* 初始化缺省的IRE */
 
-中断路由： 
+
+
+
+BIOS启动时发现中断控制器，把收集到的中断控制器的信息放在ACPI表中，操作系统起来后就知道有那些中断控制器，中断控制器和CPU/外设之间连接关系是怎么样的。中断控制器有PIC/APIC(IOAPIC和LAPCI)，CPU通过IO地址空间访问PIC，PIC芯片线的个数有限，导致中断大量共享，后来就有了高级的PIC，也就是APIC，APIC分别为全局一个IOAPIC，每个CPU一个LAPCI。IOAPIC映射到内存中，所有CPU可以访问它，给它读写信息。每个CPU有一个LAPIC，只是LAPIC的编号不相同，CPU只能读写自己的LAPIC，LAPIC对应的物理地址在寄存器IA32_APIC_BASE MSR中，虽然所有CPU的IA32_APIC_BASE MSR地址相同，但CPU访问这个地址时并不会把这个地址传到地址总线上，CPU内部就能满足这个地址访问。由于CPU的核心越来越多，APIC的编号位数不够用了，出了升级版的xAPIC和x2APIC，xAPIC用memory mapping方式访问，x2APIC用读写MSR寄存器的方式访问。
+
+
+中断路由：
+
+简单把中断分了LAPIC内部中断/IPI中断/外设中断。
+
+- LAPIC内部中断如local timer，就在CPU内产生的，直接就打断CPU执行。
+- IPI中断是不同CPU间中断，本CPU把中断目的CPU的LAPIC编号写到自己的LAPIC中，然后写自己LAPIC的ICR，通过APIC BUS或者系统总线就把中断送到目的CPU的LAPIC，目的CPU的LAPIC再打断自己CPU的执行。
+- 外设中断先到了IOAPIC，它根据Redirection Table Entry把中断路由到不同CPU的LAPIC，可以静态配置或者动态调整，它根据所有CPU的TPR选择优先级最低的CPU。外设还有一种方式就是用MSI方式触发中断，直接写到CPU的LAPIC，跳过了IOAPIC。驱动给外设的PCI配置空间写MSI的信息，外设有Message Address Register和Message Data Register，写这两个寄存器就能把中断投递到LAPIC中。
+
+
+操作系统中维护一个IDT表，操作系统初始化时会填充这个表，中断来了，CPU读中断控制器就知道是哪个vector了，vector就是IDT表中一个index，IDT表一个entry中存储了一个segment selector， 这个segment selector就是GDT表一个entry，这个entry中存放了中断处理程序的地址，CPU跳到这个地址开始执行指令就可以处理中断，不过在开始处理中断例程之前，CPU先得保存自己当前执行的context，否则它处理完中断返不回原来正在执行的地方，这些context相关的东西就保存在内核处理中断的stack中，处理完中断iret指令就自动恢复原来的context。中断有优先级之分，中断处理程序不可重入，所以CPU要把自己正在处理的中断以及优先级更低的中断都要mask掉，CPU处理中不可以block，中断处理的过程要快，否则一些中断信号就发送不到CPU了，那代表着CPU错过很多关键的事件。CPU处理完这个中断就开中断，再告诉中断控制器这个中断处理完了，中断控制器就可以把这个中断从自己的队列中清除了，接着投递其它优先级更低的中断。
+
+在虚拟化环境，一个物理CPU要当作很多个虚拟CPU来使用，虚拟CPU要么共享物理CPU的真正硬件，外加隔离措施，如TLB共享，要么用虚拟的硬件，如虚拟APIC。TLB就是通过VPID(virtual processor id)标签来区分不同的VCPU，APIC硬件逻辑太复杂，显然无法通过标签来区分，只能用虚拟的。如上图所示，guest的IOAPIC和LAPIC都是假的，不是真正存在的硬件单元，只有host拥有真正的硬件，没有虚拟化之前原来的流程都要玩得转，第一，guest里的操作系统和host上一模一样，host操作系统是怎么读写中断控制器的，那么guest就是怎么读写中断控制器的，由于guest并没有真正的硬件单元，guest对中断控制器的读写只能由hypervisor拦截住做特殊处理。第二，没有虚拟化之前，IOAPIC和LAPIC之间有硬连线，LAPIC和CPU就是强绑定，而且CPU是一直在线的，在虚拟化环境，中断控制器是虚拟的，但CPU使用的是真实的物理CPU，只是物理CPU运行于guest模式，虚拟的中断控制器和物理CPU之间没有连线，虚拟CPU在物理CPU上来回漂，而且虚拟CPU也有可能没有在任何物理CPU上运行，问题就来了，原来APIC的处理逻辑可以用软件来模拟，虚拟CPU在物理CPU上运行时怎么把中断投递给它？虚拟CPU没有运行时中断暂时存放在哪里？第三，外部中断来了由host处理还是guest处理？
+
+答案在intel手册中，先说第三个问题，intel在VMCS中加了一个控制字段external interrupt exiting，如果设置为1，外部中断来了，物理CPU如果在guest模式就exit出来处理这个中断，如果设置为0，就由guest来处理这个中断，有可能host和guest的IDT表不相同，处理结果就不一样，这显然不是虚拟化想要的效果，要设置为1，但CPU exit出来是有性能开销，最好guest绑定在一些物理CPU上运行，外部中断绑定在另一些物理CPU上处理。第一个问题，guest读写中断控制器时hypervisor进行拦截，guest要exit出来，中断控制器逻辑复杂，寄存器众多，guest要经常exit出来，性能影响很大。第二个问题，intel在VMCS中提供一个存放中断的地方interrupt pending，如果虚拟CPU没有运行投递给它的中断就pending起来，intel还提供了event inject机制，如果VMCS中有中断标志，VMRESUME后guest不会立马执行其它指令而是立马处理中断，如果虚拟CPU正在物理CPU上运行，还是把中断写在VMCS中，给物理CPU发个IPI中断，把物理CPU从guest模式kick出来，物理CPU一看IPI中携带的号码是事先约定的，就知道是给虚拟CPU的中断，然后重新RESUME guest用event inject机制把中断投递给虚拟CPU。
+
+中断虚拟化有点复杂，guest也是可能mask/unmask中断的，guest也有不可mask的中断，guest的两个虚拟CPU之间也要发IPI中断，一个虚拟CPU发送中断时exit出来，把真正的中断号写到目标虚拟CPU的VMCS中，如果目标CPU在一个物理CPU上运行，发送真正的IPI给目标物理CPU，目标物理CPU exit出来，然后重新RESUME进行interrupt inject。
+
+
+
+原来APIC virtualization在hypervisor软件中实现，导致guest exit次数太多，性能太差，intel决定在硬件中实现部分原来hypervisor软件实现的APIC virtualization功能，目标就是减少guest exit的次数，从而提高guest的性能。intel手册中有三部分APIC-Register Virtualization，Virtual-Interrupt Delivery和Posted-Interrupt Processing。
+
+intel在VMCS增加了很多很多中断控制相关的控制位，可以细粒度控制中断虚拟化。
+
+APIC-Register Virtualization
+上面说了所有CPU访问自己的LAPIC用了相同的物理地址，那么guest中两个虚拟CPU访问自己的虚拟LAPIC也用相同的物理地址，但一个guest只有一套EPT机制，这怎么区分？intel发明了apic-access page和virtual-apic page，这两个page的物理地址写在VMCS中，我理解一个guest只有一个apic-access page，每个虚拟CPU有一个virtual-apic page，guest虚拟CPU读写LAPIC时，EPT把地址翻译指向apic-access page，EPT翻译完了，CPU知道自己此时处于guest模式，正在运行哪个虚拟CPU，加载着哪个VMCS，然后就偷偷去virtual apic page去拿数据了，这样就能保证虚拟CPU访问相同的物理地址拿到不同的结果，而且不需要hypervisor软件介入，比如虚拟CPU读自己的LAPIC ID，那结果肯定不一样，EPT翻译到相同的地址，如果没重定向到virtual-apic page那么结果就一样了。
+
+guest处理完中断写EOI原来要exit出来，有了EOI-exit bitmapp就可以不exit出来。
+
+Virtual-Interrupt Delivery
+virtual-APIC page每个位置就代表着硬件LAPIC的寄存器，把中断号写到virtual-APIC page中一个位置中断就自动投递给虚拟CPU了，不需要把物理CPU kick一下exit出来再event inject。
+
+Posted-Interrupt Processing
+投递中断时不用再exit出了，但发送中断时要不要exit出来？如虚拟CPU之间IPI，一个虚拟CPU发送中断，另一个CPU接受中断，post interrupt就是要解决虚拟CPU发送中断时也不exit，VMCS中增加一个地址就叫做post interrupt descriptor addr，它指向了post interrupt request vector和post interrupt notification vector，post interrupt request就是目前有哪些中断来了，notification vector代表通知CPU中断来了，按我理解发送虚拟CPU写LAPIC ICR时硬件把数据写到了descriptor vector和notification vector中，硬件根据写的信息得进行中断逻辑处理，得出要投递的中断号，写到virtual-APIC page中，目标虚拟CPU在guest模式每个指令前都要检查一下outstanding notification，如果outstanding notification标志着中断来了就去virtual-APIC page中读中断。
+
+硬件实现了部分功能，kvm代码要配合修改，如果CPU具有这样的功能kvm会自动打开，目录/sys/module/kvm_intel/parameters/enable_apicv可以查看CPU是否具有这样的功能。
+
+intel手册中说的也不够清楚，反正是非常非常复杂，极其难以理解。
+
+vt-d中断虚拟化
+vt-d包括DMA remapping和interrupt remapping，由IOMMU硬件实现具体的功能，主要用于用户态驱动和kvm外设直接passthrough给guest，DMA remapping的目标就是外设直接把数据DMA到guest内存中，interrupt remapping的目标就是把外设产生的中断直接给了guest虚拟CPU，hypervisor不介入，这样性能最高。
+
+hypervisor拥有一个Interrupt Remap Table Address Register指向Interrupt Remapping Table Entry，每passthrough一个设备，hypervisor就在这个表中分配一个entry，打上相应的属性，由于外设已经pasthrough给guest了，guest里驱动写外设的PCI config space，此时hypervisor要拦截对PCI config space的写，配置外设MSI产生的中断是remappable格式。
+
+guest里的driver给这个passthroug的device分配了一个vector X，然后在IDT中添加了vector X的处理函数。由于device的interrupt是external interrupt，不能直接给了guest，host也给device分配一个vector Y，host接收到了interrupt Y转换成interrupt X，再投递给guest，guest用自己的函数处理，投递时用post interrupt就不会导致guest exit出来。这里有两个问题，第一，能不能vector X不转换成vector Y？其实是不行的，因为guest1会分配一个vector X，guest2也有可能分配一个vector X，外设的X中断来了投递给哪个guest呢？所以必须转换，guest独自分配自己的vector，host再转换保证不冲突。第二，原来虚拟CPU运行在物理CPU1上，外设中断Y来了交给物理CPU1处理，那么假如虚拟CPU漂移到物理CPU2上执行，那么就得修改IOMMU中东西，以后把中断Y交给物理CPU2处理，如果虚拟CPU没有在运行，还得找地方暂存起来。
+
+
+
 
 kvm_init_irq_routing
 
