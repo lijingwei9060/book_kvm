@@ -27,21 +27,74 @@ kvm_vm_ioctl(s, KVM_CREATE_IRQCHIP)
 
 
 
-BIOS启动时发现中断控制器，把收集到的中断控制器的信息放在ACPI表中，操作系统起来后就知道有那些中断控制器，中断控制器和CPU/外设之间连接关系是怎么样的。中断控制器有PIC/APIC(IOAPIC和LAPCI)，CPU通过IO地址空间访问PIC，PIC芯片线的个数有限，导致中断大量共享，后来就有了高级的PIC，也就是APIC，APIC分别为全局一个IOAPIC，每个CPU一个LAPCI。IOAPIC映射到内存中，所有CPU可以访问它，给它读写信息。每个CPU有一个LAPIC，只是LAPIC的编号不相同，CPU只能读写自己的LAPIC，LAPIC对应的物理地址在寄存器IA32_APIC_BASE MSR中，虽然所有CPU的IA32_APIC_BASE MSR地址相同，但CPU访问这个地址时并不会把这个地址传到地址总线上，CPU内部就能满足这个地址访问。由于CPU的核心越来越多，APIC的编号位数不够用了，出了升级版的xAPIC和x2APIC，xAPIC用memory mapping方式访问，x2APIC用读写MSR寄存器的方式访问。
+BIOS启动时发现中断控制器，把收集到的中断控制器的信息放在ACPI表中，操作系统起来后就知道有那些中断控制器，中断控制器和CPU/外设之间连接关系是怎么样的。
+
+中断控制器有PIC/APIC(IOAPIC和LAPCI)
+- CPU通过IO地址空间访问PIC，PIC芯片线的个数有限，导致中断大量共享
+- 后来就有了高级的PIC，也就是APIC，APIC分别为全局一个IOAPIC，每个CPU一个LAPCI。
+- IOAPIC映射到内存中，所有CPU可以访问它，给它读写信息。
+- 每个CPU有一个LAPIC，只是LAPIC的编号不相同，CPU只能读写自己的LAPIC，LAPIC对应的物理地址在寄存器IA32_APIC_BASE MSR中，虽然所有CPU的IA32_APIC_BASE MSR地址相同，但CPU访问这个地址时并不会把这个地址传到地址总线上，CPU内部就能满足这个地址访问。
+- 由于CPU的核心越来越多，APIC的编号位数不够用了，出了升级版的xAPIC和x2APIC，xAPIC用memory mapping方式访问，x2APIC用读写MSR寄存器的方式访问。
 
 
-中断路由：
+产生中断的设备： 简单把中断分了LAPIC内部中断/IPI中断/外设中断。
 
-简单把中断分了LAPIC内部中断/IPI中断/外设中断。
-
-- LAPIC内部中断如local timer，就在CPU内产生的，直接就打断CPU执行。
+- LAPIC内部中断，如local timer，就在CPU内产生的，直接就打断CPU执行。
 - IPI中断是不同CPU间中断，本CPU把中断目的CPU的LAPIC编号写到自己的LAPIC中，然后写自己LAPIC的ICR，通过APIC BUS或者系统总线就把中断送到目的CPU的LAPIC，目的CPU的LAPIC再打断自己CPU的执行。
 - 外设中断先到了IOAPIC，它根据Redirection Table Entry把中断路由到不同CPU的LAPIC，可以静态配置或者动态调整，它根据所有CPU的TPR选择优先级最低的CPU。外设还有一种方式就是用MSI方式触发中断，直接写到CPU的LAPIC，跳过了IOAPIC。驱动给外设的PCI配置空间写MSI的信息，外设有Message Address Register和Message Data Register，写这两个寄存器就能把中断投递到LAPIC中。
 
 
-操作系统中维护一个IDT表，操作系统初始化时会填充这个表，中断来了，CPU读中断控制器就知道是哪个vector了，vector就是IDT表中一个index，IDT表一个entry中存储了一个segment selector， 这个segment selector就是GDT表一个entry，这个entry中存放了中断处理程序的地址，CPU跳到这个地址开始执行指令就可以处理中断，不过在开始处理中断例程之前，CPU先得保存自己当前执行的context，否则它处理完中断返不回原来正在执行的地方，这些context相关的东西就保存在内核处理中断的stack中，处理完中断iret指令就自动恢复原来的context。中断有优先级之分，中断处理程序不可重入，所以CPU要把自己正在处理的中断以及优先级更低的中断都要mask掉，CPU处理中不可以block，中断处理的过程要快，否则一些中断信号就发送不到CPU了，那代表着CPU错过很多关键的事件。CPU处理完这个中断就开中断，再告诉中断控制器这个中断处理完了，中断控制器就可以把这个中断从自己的队列中清除了，接着投递其它优先级更低的中断。
+中断投递：
+- IDTR寄存器挺： 前半8bytes部分存“IDT开头地址”，后半部分2bytes存“IDT有多长”，asm(LIDT)指令修改cpu寄存器IDTR的值，asm(SIDT)指令读取cpu寄存器IDTR的值。 每个CPU都有IDTR寄存器，但是这些CPU的IDTR都指向同一个地址
+- IDT表(Interrupt Description Table): 4KB页面 = 256个vector号 * 16bytes，操作系统中维护一个IDT表，操作系统初始化时会填充这个表，中断来了，CPU读中断控制器就知道是哪个vector了，vector就是IDT表中一个index，IDT表一个entry中存储了一个segment selector， 这个segment selector就是GDT表一个entry，这个entry中存放了中断处理程序的地址，CPU跳到这个地址开始执行指令就可以处理中断，不过在开始处理中断例程之前，CPU先得保存自己当前执行的context，否则它处理完中断返不回原来正在执行的地方，这些context相关的东西就保存在内核处理中断的stack中，处理完中断iret指令就自动恢复原来的context。
 
-在虚拟化环境，一个物理CPU要当作很多个虚拟CPU来使用，虚拟CPU要么共享物理CPU的真正硬件，外加隔离措施，如TLB共享，要么用虚拟的硬件，如虚拟APIC。TLB就是通过VPID(virtual processor id)标签来区分不同的VCPU，APIC硬件逻辑太复杂，显然无法通过标签来区分，只能用虚拟的。如上图所示，guest的IOAPIC和LAPIC都是假的，不是真正存在的硬件单元，只有host拥有真正的硬件，没有虚拟化之前原来的流程都要玩得转，第一，guest里的操作系统和host上一模一样，host操作系统是怎么读写中断控制器的，那么guest就是怎么读写中断控制器的，由于guest并没有真正的硬件单元，guest对中断控制器的读写只能由hypervisor拦截住做特殊处理。第二，没有虚拟化之前，IOAPIC和LAPIC之间有硬连线，LAPIC和CPU就是强绑定，而且CPU是一直在线的，在虚拟化环境，中断控制器是虚拟的，但CPU使用的是真实的物理CPU，只是物理CPU运行于guest模式，虚拟的中断控制器和物理CPU之间没有连线，虚拟CPU在物理CPU上来回漂，而且虚拟CPU也有可能没有在任何物理CPU上运行，问题就来了，原来APIC的处理逻辑可以用软件来模拟，虚拟CPU在物理CPU上运行时怎么把中断投递给它？虚拟CPU没有运行时中断暂时存放在哪里？第三，外部中断来了由host处理还是guest处理？
+```C
+struct gate_struct {
+	u16		offset_low;
+	u16		segment;
+	struct idt_bits	bits;
+	u16		offset_middle;
+	u32		offset_high;
+	u32		reserved;
+}
+
+struct idt_bits {
+	u16		ist	: 3,
+			zero: 5,
+			type: 5,
+			dpl	: 2,
+			p	: 1;
+}
+
+struct idt_data {
+	unsigned int	vector;
+	unsigned int	segment;
+	struct idt_bits	bits;
+	const void	*addr;
+};
+
+static gate_desc idt_table[IDT_ENTRIES]
+static struct desc_ptr idt_descr
+```
+
+- 16-31共16位是中断处理程序所在的段选择符。
+- 0-15位和48-64位组合起来形成32位偏移量，也就是中断处理程序所在段(由16-31位给出)的段内偏移。
+- 40－43位共4位表示描述符的类型。(0111:中断描述符，1010：任务门描述符，1111：陷阱门描述符)
+- 45－46两位标识描述符的访问特权级(DPL,Descriptor Privilege Level)。
+- 47位标识段是否在内存中。如果为1则表示段当前不再内存中。
+
+- 16~31：code segment selector
+- 0~15 & 48-63：segment offset （根据以上两项可确定中断处理函数的地址）
+- 32-39： 保留
+- 40-43： Type：区分中断门、陷阱门、任务门等
+- 44： 0
+- 45-46： DPL：Descriptor Privilege Level， 访问特权级
+- 47： P：该描述符是否在内存中
+
+
+中断有优先级之分，中断处理程序不可重入，所以CPU要把自己正在处理的中断以及优先级更低的中断都要mask掉，CPU处理中不可以block，中断处理的过程要快，否则一些中断信号就发送不到CPU了，那代表着CPU错过很多关键的事件。CPU处理完这个中断就开中断，再告诉中断控制器这个中断处理完了，中断控制器就可以把这个中断从自己的队列中清除了，接着投递其它优先级更低的中断。
+
+在虚拟化环境，一个物理CPU要当作很多个虚拟CPU来使用，虚拟CPU要么共享物理CPU的真正硬件，外加隔离措施，如TLB共享，要么用虚拟的硬件，如虚拟APIC。TLB就是通过VPID(virtual processor id)标签来区分不同的VCPU，APIC硬件逻辑太复杂，显然无法通过标签来区分，只能用虚拟的。guest的IOAPIC和LAPIC都是假的，不是真正存在的硬件单元，只有host拥有真正的硬件，没有虚拟化之前原来的流程都要玩得转，第一，guest里的操作系统和host上一模一样，host操作系统是怎么读写中断控制器的，那么guest就是怎么读写中断控制器的，由于guest并没有真正的硬件单元，guest对中断控制器的读写只能由hypervisor拦截住做特殊处理。第二，没有虚拟化之前，IOAPIC和LAPIC之间有硬连线，LAPIC和CPU就是强绑定，而且CPU是一直在线的，在虚拟化环境，中断控制器是虚拟的，但CPU使用的是真实的物理CPU，只是物理CPU运行于guest模式，虚拟的中断控制器和物理CPU之间没有连线，虚拟CPU在物理CPU上来回漂，而且虚拟CPU也有可能没有在任何物理CPU上运行，问题就来了，原来APIC的处理逻辑可以用软件来模拟，虚拟CPU在物理CPU上运行时怎么把中断投递给它？虚拟CPU没有运行时中断暂时存放在哪里？第三，外部中断来了由host处理还是guest处理？
 
 答案在intel手册中，先说第三个问题，intel在VMCS中加了一个控制字段external interrupt exiting，如果设置为1，外部中断来了，物理CPU如果在guest模式就exit出来处理这个中断，如果设置为0，就由guest来处理这个中断，有可能host和guest的IDT表不相同，处理结果就不一样，这显然不是虚拟化想要的效果，要设置为1，但CPU exit出来是有性能开销，最好guest绑定在一些物理CPU上运行，外部中断绑定在另一些物理CPU上处理。第一个问题，guest读写中断控制器时hypervisor进行拦截，guest要exit出来，中断控制器逻辑复杂，寄存器众多，guest要经常exit出来，性能影响很大。第二个问题，intel在VMCS中提供一个存放中断的地方interrupt pending，如果虚拟CPU没有运行投递给它的中断就pending起来，intel还提供了event inject机制，如果VMCS中有中断标志，VMRESUME后guest不会立马执行其它指令而是立马处理中断，如果虚拟CPU正在物理CPU上运行，还是把中断写在VMCS中，给物理CPU发个IPI中断，把物理CPU从guest模式kick出来，物理CPU一看IPI中携带的号码是事先约定的，就知道是给虚拟CPU的中断，然后重新RESUME guest用event inject机制把中断投递给虚拟CPU。
 
@@ -75,6 +128,32 @@ hypervisor拥有一个Interrupt Remap Table Address Register指向Interrupt Rema
 
 guest里的driver给这个passthroug的device分配了一个vector X，然后在IDT中添加了vector X的处理函数。由于device的interrupt是external interrupt，不能直接给了guest，host也给device分配一个vector Y，host接收到了interrupt Y转换成interrupt X，再投递给guest，guest用自己的函数处理，投递时用post interrupt就不会导致guest exit出来。这里有两个问题，第一，能不能vector X不转换成vector Y？其实是不行的，因为guest1会分配一个vector X，guest2也有可能分配一个vector X，外设的X中断来了投递给哪个guest呢？所以必须转换，guest独自分配自己的vector，host再转换保证不冲突。第二，原来虚拟CPU运行在物理CPU1上，外设中断Y来了交给物理CPU1处理，那么假如虚拟CPU漂移到物理CPU2上执行，那么就得修改IOMMU中东西，以后把中断Y交给物理CPU2处理，如果虚拟CPU没有在运行，还得找地方暂存起来。
 
+
+## 物理机的中断初始化
+64位Linux启动大的方向上需要经过 实模式 -> 保护模式 -> 长模式 第三种模式的转换
+
+中断的第一次初始化： 实模式下的初始化，在实模式下也有一个BIOS的中断向量表，这个中断向量表提供了一些类似于BIOS的系统调用一样的方法。比如Linux在初始化时需要获取物理内存的详情，就 是调用了BIOS的相应中断来获取的。
+
+中断的第二次初始化: 在进入到保护模式后，会全新初始化一个空的中断描述符表 IDT, 供 kernel 使用;Linux Kernel提供256个大小的中断描述符表
+中断的第三次初始化: 在进入到长模式后，在x86_64_start_kernel先初始化(idt_setup_early_handler)前(early_idt_handler_array)32个异常类型的中断(即上面定义的 idt_table 的前32项)；
+
+- X86_TRAP_PF 缺页异常的中断处理程序
+- 在trap_init中调用 idt_setup_traps更新部分异常的中断处理程序
+
+
+
+实模式下的1MB地址空间： 
+0x0000 0000 - 0x0000 03FF: Real Mode Interrupt Vector Table
+0x0000 0400 - 0x0000 04FF: BIOS Data Area
+0x0000 0500 - 0x0000 7BFF: Unused
+0x0000 7C00 - 0x0000 7DFF: our Boot Loader
+0x0000 7E00 - 0x0009 FFFF: Unused
+0x000A 0000 - 0x000B FFFF: Video RAM (VRAM) Memory
+0x000B 0000 - 0x000B 7777: Monochrome Video Memory
+0x000B 8000 - 0x000B FFFF: Color Video Memory
+0x000C 0000 - 0x000C 7FFF: Video ROM BIOS
+0x000C 8000 - 0x000E FFFF: BIOS Shadow Area
+0x000F 0000 - 0x000F FFFF: System BIOS
 
 
 
