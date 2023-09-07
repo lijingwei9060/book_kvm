@@ -152,7 +152,20 @@ void irq_ctx_init(int cpu) // 为每个CPU分配硬中断和软中断独立栈�
 0x000C 8000 - 0x000E FFFF: BIOS Shadow Area
 0x000F 0000 - 0x000F FFFF: System BIOS
 
+## MSI(Message Signaled Interrupts)/MSI-X
+
+在pci中，相比于分配一个固定的中断号，它允许设备在特定的内存地址（particular address of RAM, in fact, the display on the Local APIC）记录消息（message）。
+- MSI 支持每个设备能分配 1, 2, 4, 8, 16 or 32 个中断，
+- MSI-X 支持每个设备分配多达 2048 个中断。
+内核函数 request_irq() 注册一个中断处理函数，并启用给定的中断线（enables a given interrupt line）。
+
 ## 中断处理ISR
+
+中断处理执行要快，否则会导致中断丢失，数据就会丢失，内核对中断响应过程有3个： critical， immediate和deferred
+1. critical： irq 关闭，ack irq
+2. immediate： irq 关闭，驱动 handle， eoi irq
+3. defered： softirq、tasklet、workqueue
+
 
 IRQ对应的设备驱动程序需要在中断到来之前安装/注册该中断的处理函数，也就是ISR。由于历史原因，Linux的中断子系统是按照服务中断共享的模式设计的，因此ISR的安装需要分为两级，第一级是针对这个IRQ线的，称为generic handler(或high level handler)，第二级是针对挂载在这个IRQ线上的不同设备的，称为specific handler。
 
