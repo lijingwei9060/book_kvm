@@ -1,5 +1,30 @@
 # 软中断
 
+
+软中断是一个内核子系统：每个 CPU 上会初始化一个 ksoftirqd 内核线程，负责处理各种类型的 softirq 中断事件；
+
+1. 用 cgroup ls 或者 ps -ef 都能看到：
+```shell
+ $ systemd-cgls -k | grep softirq # -k: include kernel threads in the output
+ ├─    12 [ksoftirqd/0]
+ ├─    19 [ksoftirqd/1]
+ ├─    24 [ksoftirqd/2]
+```
+2. 软中断事件的 handler 提前注册到 softirq 子系统， 注册方式 open_softirq(softirq_id, handler)。
+
+例如，注册网卡收发包（RX/TX）软中断处理函数：
+ // net/core/dev.c
+ open_softirq(NET_TX_SOFTIRQ, net_tx_action);
+ open_softirq(NET_RX_SOFTIRQ, net_rx_action);
+
+3. 软中断占 CPU 的总开销：可以用 top 查看，里面 si 字段就是系统的软中断开销（第三行倒数第二个指标）：
+```shell
+ $ top -n1 | head -n3
+ top - 18:14:05 up 86 days, 23:45,  2 users,  load average: 5.01, 5.56, 6.26
+ Tasks: 969 total,   2 running, 733 sleeping,   0 stopped,   2 zombie
+ %Cpu(s): 13.9 us,  3.2 sy,  0.0 ni, 82.7 id,  0.0 wa,  0.0 hi,  0.1 si,  0.0 st
+```
+
 ```C
 mpboot_thread_fn
   |-while (1) {
