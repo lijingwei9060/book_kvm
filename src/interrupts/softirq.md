@@ -1,5 +1,38 @@
-# 软中断
+# 概述
 
+Linux 中的三种推迟中断执行的方式：softirq、tasklet、workqueue。softirq 和 tasklet 依赖软中断子系统，运行在软中断上下文中；workqueue 不依赖软中断子系统，运行在进程上下文中。
+
+Linux 在每个 CPU 上会创建一个 ksoftirqd 内核线程。softirqs 是在 Linux 内核编译时就确定好的，例如网络收包对应的 `NET_RX_SOFTIRQ` 软中断。 因此是一种静态机制。如果想加一种新 softirq 类型，就需要修改并重新编译内核。
+
+
+## 数据结构
+
+在内部是用一个数组（或称向量）来管理的，每个软中断号对应一个 softirq handler。
+
+- static struct softirq_action softirq_vec[NR_SOFTIRQS]
+
+有10个软中断：
+1. HI_SOFTIRQ=0,          // tasklet
+2. TIMER_SOFTIRQ,         // timer
+3. NET_TX_SOFTIRQ,        // networking
+4. NET_RX_SOFTIRQ,        // networking
+5. BLOCK_SOFTIRQ,         // IO
+6. IRQ_POLL_SOFTIRQ,
+7. TASKLET_SOFTIRQ,       // tasklet
+8. SCHED_SOFTIRQ,         // schedule
+9. HRTIMER_SOFTIRQ,       // timer
+10. RCU_SOFTIRQ,           // lock
+11. NR_SOFTIRQS 
+## 管理接口
+
+- 注册软中断：open_softirq(int nr, softirq_action)，直接设置全局变量softirq_vec[nr] = action。
+- 唤醒软中断：raise_softirq(int nr)，关闭当前CPU 中断，唤醒当前CPU对应的ksoftirqd线程， 打开中断。
+
+## 初始化
+
+softirq_init
+
+## 用户态接口
 
 软中断是一个内核子系统：每个 CPU 上会初始化一个 ksoftirqd 内核线程，负责处理各种类型的 softirq 中断事件；
 
@@ -10,7 +43,7 @@
  ├─    19 [ksoftirqd/1]
  ├─    24 [ksoftirqd/2]
 ```
-2. 软中断事件的 handler 提前注册到 softirq 子系统， 注册方式 open_softirq(softirq_id, handler)。
+1. 软中断事件的 handler 提前注册到 softirq 子系统， 注册方式 open_softirq(softirq_id, handler)。
 
 例如，注册网卡收发包（RX/TX）软中断处理函数：
  // net/core/dev.c
@@ -24,6 +57,23 @@
  Tasks: 969 total,   2 running, 733 sleeping,   0 stopped,   2 zombie
  %Cpu(s): 13.9 us,  3.2 sy,  0.0 ni, 82.7 id,  0.0 wa,  0.0 hi,  0.1 si,  0.0 st
 ```
+
+也就是在 `cat /proc/softirqs` 看到的那些，
+```shell
+$ cat /proc/softirqs
+                  CPU0     CPU1  ...    CPU46    CPU47
+          HI:        2        0  ...        0        1
+       TIMER:   443727   467971  ...   313696   270110
+      NET_TX:    57919    65998  ...    42287    54840
+      NET_RX:    28728  5262341  ...    81106    55244
+       BLOCK:      261     1564  ...   268986   463918
+    IRQ_POLL:        0        0  ...        0        0
+     TASKLET:       98      207  ...      129      122
+       SCHED:  1854427  1124268  ...  5154804  5332269
+     HRTIMER:    12224    68926  ...    25497    24272
+         RCU:  1469356   972856  ...  5961737  5917455
+```
+
 
 ```C
 mpboot_thread_fn
