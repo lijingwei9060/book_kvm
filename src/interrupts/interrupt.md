@@ -1,33 +1,17 @@
 
 # 概述
 
+中断的作用？
+
 - 中断是处理器用于异步处理外围设备请求的一种机制；
 - 外设通过硬件管脚连接在中断控制器上，并通过电信号向中断控制器发送请求；
 - 中断控制器将外设的中断请求路由到CPU上；
 
-CPU（以ARM为例）进行模式切换（切换到IRQ/FIQ），保存Context后，根据外设的中断号去查找系统中已经注册好的Handler进行处理，处理完成后再将Context进行恢复，接着之前打断的执行流继续move on；
-中断的作用不局限于外设的处理，系统的调度，SMP核间交互等，都离不开中断；
-
+中断的类型？
 对于CPU而言，一般有两种中断请求，例如：对于ARM，是IRQ和FIQ信号线，分别让ARM进入IRQ mode和FIQ mode。对于X86，有可屏蔽中断和不可屏蔽中断。
 
-中断虚拟化，将从中断信号产生到路由到vCPU的角度来展开，包含以下三种情况：
-
-1. 物理设备产生中断信号，路由到vCPU；
-2. 虚拟外设产生中断信号，路由到vCPU；
-3. Guest OS中CPU之间产生中断信号（IPI中断）；
-
-中断控制器：pic/ioapic/lapic/i8259
-
-qemu全局变量kvm_kernel_irqchip置为true
-kvm将kvm->arch.irqchip_mode 赋值为 KVM_IRQCHIP_KERNEL
-
-kvm_vm_ioctl(s, KVM_CREATE_IRQCHIP)
-|--> kvm_pic_init                    /* i8259 初始化 */
-|--> kvm_ioapic_init                 /* ioapic 初始化 */
-|--> kvm_setup_default_irq_routing   /* 初始化缺省的IRE */
-
-
-
+1. 设备到cpu的中断
+2. cpu到cpu的中断
 
 BIOS启动时发现中断控制器，把收集到的中断控制器的信息放在ACPI表中，操作系统起来后就知道有那些中断控制器，中断控制器和CPU/外设之间连接关系是怎么样的。
 
@@ -36,7 +20,8 @@ BIOS启动时发现中断控制器，把收集到的中断控制器的信息放�
 - 后来就有了高级的PIC，也就是APIC，APIC分别为全局一个IOAPIC，每个CPU一个LAPCI。
 - IOAPIC映射到内存中，所有CPU可以访问它，给它读写信息。
 - 每个CPU有一个LAPIC，只是LAPIC的编号不相同，CPU只能读写自己的LAPIC，LAPIC对应的物理地址在寄存器IA32_APIC_BASE MSR中，虽然所有CPU的IA32_APIC_BASE MSR地址相同，但CPU访问这个地址时并不会把这个地址传到地址总线上，CPU内部就能满足这个地址访问。
-- 由于CPU的核心越来越多，APIC的编号位数不够用了，出了升级版的xAPIC和x2APIC，xAPIC用memory mapping方式访问，x2APIC用读写MSR寄存器的方式访问。
+- 由于CPU的核心越来越多，APIC的编号位数不够用了，出了升级版的xAPIC和x2APIC，xAPIC用memory mapping方式访问，x2APIC用读写MSR寄存器的方式访问。唯一标识CPU内核身份的APIC ID在APIC寄存器中却只有8位，也就是最多可以有255个内核(1个保留做广播用)。Intel大手一挥，推出了X2APIC，把APIC ID从8位扩展为32个bit，这下可以支持4G -1 （1个保留做广播用）个逻辑核，顺便将原来略显怪异的MMIO访问方式变成MSR方式。
+- ioapic可能有很多个：随着北桥被移入了CPU ，一些北桥的除了内存控制器外其他的功能也被引入CPU。其中最重要的是PCIe的root complex和一个至少x16的root port用于连接显卡。如果CPU内置的显卡，也会连接到这个root port上，所以Intel平台除了在南桥外，在CPU内也有IOAPIC。在一个4路的志强服务器中就会有4 + 1 = 5个IOAPIC, 每个IOAPIC有24个入口，就可以支持24 * 5 = 120个中断入口。
 
 
 产生中断的设备： 简单把中断分了LAPIC内部中断/IPI中断/外设中断。
@@ -45,6 +30,35 @@ BIOS启动时发现中断控制器，把收集到的中断控制器的信息放�
 - IPI中断是不同CPU间中断，本CPU把中断目的CPU的LAPIC编号写到自己的LAPIC中，然后写自己LAPIC的ICR，通过APIC BUS或者系统总线就把中断送到目的CPU的LAPIC，目的CPU的LAPIC再打断自己CPU的执行。
 - 外设中断先到了IOAPIC，它根据Redirection Table Entry把中断路由到不同CPU的LAPIC，可以静态配置或者动态调整，它根据所有CPU的TPR选择优先级最低的CPU。外设还有一种方式就是用MSI方式触发中断，直接写到CPU的LAPIC，跳过了IOAPIC。驱动给外设的PCI配置空间写MSI的信息，外设有Message Address Register和Message Data Register，写这两个寄存器就能把中断投递到LAPIC中。
 
+中断的信号格式？
+
+- IRQ号是PIC时代引入的概念,由于ISA设备通常是直接连接到到固定的引脚，所以对于IRQ号描述了设备连接到了PIC的哪个引脚上，同IRQ号直接和中断优先级相关,例如IRQ0比IRQ3的中断优先级更高。
+- GSI号是ACPI引入的概念，全称是Global System Interrupt，用于为系统中每个中断源指定一个唯一的中断编号。注：ACPI Spec规定PIC的IRQ号必须对应到GSI0-GSI15上。kvm默认支持最大1024个GSI。
+- 中断向量是针对逻辑CPU的概念，用来表示中断在IDT表的索引号，每个IRQ（或者GSI）最后都会被定向到某个Vecotor上。对于PIC上的中断，中断向量 = 32(start vector) + IRQ号。在IOAPIC上的中断被分配的中断向量则是由操作系统分配。
+- 在pci设备中，相比于分配一个固定的中断号，它允许设备在特定的内存地址（particular address of RAM, in fact, the display on the Local APIC）记录消息（message）。
+  - MSI 支持每个设备能分配 1, 2, 4, 8, 16 or 32 个中断，
+  - MSI-X 支持每个设备分配多达 2048 个中断。
+
+中断控制器与CPU的连接？
+
+1. pic时代，中断较少，由8259连接CPU。
+2. apic时代，正常有南桥中的ioapic连接系统总线，lapic也是在系统总线上。为了兼容pic模式，产生了PIC兼容模式或Virtual Wire Mode（虚拟连线模式）。新产生了8259A的模拟硬件（通常是南桥芯片内置），它连接了CPU的INTR引脚。IOAPIC会将8259A模拟硬件的信号放入ICC Bus（后是系统总线），由LAPIC处理交给BSP，处理效果和原来一样而不要增加连线。
+3. 即使有了apic，pci设备的中断也是不一样的。PCI设备想发送中断时，它会向其PCI配置空间Capability结构中的Message Address的地址（通常是0xFEExxxxx）写Message Data数据，消息会被该设备连接的root complex转给LAPIC(多CPU时，有可能要通过QPI)，而不需要通过IOAPIC中转。Message Address中和IOAPIC类似，也有目标APIC ID，而message Data中同样有Vector的数目。从电气机械的角度，MSI减少了对interrupt pin个数的需求。从而使得连接变得更简单，而且据研究，其相比INTx,有时能提高1/3的效能。
+
+中断处理过程？
+PIC时代中断源在8259上：
+1. 一个或多个IR 引脚被触发中断（脉冲或者边缘），若对应的中断没有被屏蔽，8259 拉高INTR 管脚通知CPU 或上一级8259中断发生。
+2. CPU 通过INTA 引脚响应8259，表示中断请求收到。8259则将IRR 中具有最高优先级位 清零，并设置ISR 中对应的位。在CPU发出中断查询脉冲后，8259将中断号提交到数据线上。
+3. 中断号对应的中断向量处理程序被调用，OS或者BIOS中断处理程序开始处理中断，完毕后写EOI并扫尾。OS的中断处理例程有严格的时间要求，处理过长会触发watch dog 导致蓝屏
+
+apic时代，lacpi在cpu里面，ioapic在南桥上：
+1. IOAPIC内部有个PRT（Programmable Redirection Table）表，里面的Destination Field标识了中断的目的地。
+2. IOAPIC收到中断，会将中断转化为message放入系统总线，而CPU中只有APIC ID和Destination Field域中一致的LAPIC才会处理这条中断。
+3. 用于处理来自IOAPIC 的中断消息的LAPIC内容就更多了，但最重要的寄存器还是IRR、ISR 以及EOI。
+
+中断由哪个cpu处理？
+
+Linux为了公平起见，并不会对BSP（bootstrap processor）另眼看待，所有内核一视同仁。Linux通过填写IOAPIC的RTE中的Delivery mode选择最低优先级策略，让TRP都被初始化做固定值，因此IRQ信号就可以公平的在CPU之间分发。有时为了优化性能，我们可以通过Linux的IRQ亲缘性来让特定内核为我们服务。
 
 ## 数据结构
 
