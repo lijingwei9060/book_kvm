@@ -1,0 +1,232 @@
+{
+    "statusCode": "OK",
+    "data": {
+        "pageInfo": {
+            "startIndex": 0,
+            "pageSize": 10000,
+            "totalRows": 44
+        },
+        "contents": [
+            {
+                "catId": "backup_period",
+                "catName": "backup_period",
+                "description": ""
+            },
+            {
+                "catId": "backup_type",
+                "catName": "backup_type",
+                "description": ""
+            },
+            {
+                "catId": "billing_cycle",
+                "catName": "billing_cycle",
+                "description": ""
+            },
+            {
+                "catId": "cache_resource_spec",
+                "catName": "cache_resource_spec",
+                "description": ""
+            },
+            {
+                "catId": "cache_resource_system",
+                "catName": "cache_resource_system",
+                "description": ""
+            },
+            {
+                "catId": "cache_resource_type",
+                "catName": "cache_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "charge_type",
+                "catName": "charge_type",
+                "description": ""
+            },
+            {
+                "catId": "ci_group",
+                "catName": "ci_group",
+                "description": ""
+            },
+            {
+                "catId": "ci_layer",
+                "catName": "ci_layer",
+                "description": ""
+            },
+            {
+                "catId": "cluster_node_type",
+                "catName": "cluster_node_type",
+                "description": ""
+            },
+            {
+                "catId": "cos_resource_type",
+                "catName": "cos_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "data_center_type",
+                "catName": "data_center_type",
+                "description": ""
+            },
+            {
+                "catId": "file_system",
+                "catName": "file_system",
+                "description": ""
+            },
+            {
+                "catId": "host_resource_spec",
+                "catName": "host_resource_spec",
+                "description": ""
+            },
+            {
+                "catId": "host_resource_system",
+                "catName": "host_resource_system",
+                "description": ""
+            },
+            {
+                "catId": "host_resource_type",
+                "catName": "host_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "init_script_type",
+                "catName": "init_script_type",
+                "description": ""
+            },
+            {
+                "catId": "invoke_resource_type",
+                "catName": "invoke_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "invoke_type",
+                "catName": "invoke_type",
+                "description": ""
+            },
+            {
+                "catId": "is_decompression",
+                "catName": "is_decompression",
+                "description": ""
+            },
+            {
+                "catId": "lb_resource_type",
+                "catName": "lb_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "network_charge_type",
+                "catName": "network_charge_type",
+                "description": ""
+            },
+            {
+                "catId": "network_link_type",
+                "catName": "network_link_type",
+                "description": ""
+            },
+            {
+                "catId": "network_subzone_type",
+                "catName": "network_subzone_type",
+                "description": ""
+            },
+            {
+                "catId": "network_zone_type",
+                "catName": "network_zone_type",
+                "description": ""
+            },
+            {
+                "catId": "package_type",
+                "catName": "package_type",
+                "description": ""
+            },
+            {
+                "catId": "protocol",
+                "catName": "protocol",
+                "description": ""
+            },
+            {
+                "catId": "rdb_resource_spec",
+                "catName": "rdb_resource_spec",
+                "description": ""
+            },
+            {
+                "catId": "rdb_resource_system",
+                "catName": "rdb_resource_system",
+                "description": ""
+            },
+            {
+                "catId": "rdb_resource_type",
+                "catName": "rdb_resource_type",
+                "description": ""
+            },
+            {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            },
+            {
+                "catId": "resource_cat",
+                "catName": "resource_cat",
+                "description": ""
+            },
+            {
+                "catId": "resource_network_type",
+                "catName": "resource_network_type",
+                "description": ""
+            },
+            {
+                "catId": "resource_system",
+                "catName": "resource_system",
+                "description": ""
+            },
+            {
+                "catId": "route_next_type",
+                "catName": "route_next_type",
+                "description": ""
+            },
+            {
+                "catId": "route_table_type",
+                "catName": "route_table_type",
+                "description": ""
+            },
+            {
+                "catId": "security_policy_action",
+                "catName": "security_policy_action",
+                "description": ""
+            },
+            {
+                "catId": "security_policy_type",
+                "catName": "security_policy_type",
+                "description": ""
+            },
+            {
+                "catId": "service_invoke_type",
+                "catName": "service_invoke_type",
+                "description": ""
+            },
+            {
+                "catId": "service_nature",
+                "catName": "service_nature",
+                "description": ""
+            },
+            {
+                "catId": "service_type",
+                "catName": "service_type",
+                "description": ""
+            },
+            {
+                "catId": "storage_type",
+                "catName": "storage_type",
+                "description": ""
+            },
+            {
+                "catId": "unit_type",
+                "catName": "unit_type",
+                "description": ""
+            },
+            {
+                "catId": "white_list_type",
+                "catName": "white_list_type",
+                "description": ""
+            }
+        ]
+    }
+}

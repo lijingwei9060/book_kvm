@@ -15,6 +15,21 @@ MSI(Message Signaled Interrupts)中断的目的是绕过IOAPIC，使中断能够
 - Mask Bits用于在CPU处理某中断时可以屏蔽其它同样的中断。类似PIC中的IMR。
 - Pending Bits用于指示当前正在等待的MSI中断，类似于PIC中的IRR.
 
+Message Address Register(32):
+- 20-31： 0FEEH，固定的值
+- Destination ID(12-19) 字段存放了中断要发往 LAPIC ID。 该 ID 也会记录在 I/O APIC Redirection Table 中每个表项的 bit56-63 。
+- Reserved(4-11)
+- Redirection hint indication(3) 指定了 MSI 是否直接送达 CPU。
+- Destination mode(2) 指定了 Destination ID 字段存放的是逻辑还是物理 APIC ID 。
+- xx(0-1)
+
+Message Data Register(64): 
+- Reserved(16-63)
+- Triger mode: 0-edge; 1- level
+- level for triger mode: 边缘模式是无用的，1表示触发， 0表示没有出发
+- reserved(11-13)
+- delivery mode(8-10): 定义同传统中断，表示中断类型
+- vector(0-7): 
 ## MSI-X
 
 为了支持多个中断，MSI-X的Capability Structure做出了变化，如Figure6-12所示:

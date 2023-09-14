@@ -1,0 +1,162 @@
+{
+    "statusCode": "OK",
+    "data": {
+        "pageInfo": {
+            "startIndex": 0,
+            "pageSize": 10,
+            "totalRows": 6
+        },
+        "contents": [
+            {
+                "code": "NGINX",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:04:07",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c257af772649",
+                "key_name": "RDC_LINK_NGINX",
+                "name": "NGINX",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aaa3c865b911",
+                    "key_name": "RDC_LINK"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            },
+            {
+                "code": "APP",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:04:57",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c289d2aff7da",
+                "key_name": "RDC_CORE_APP",
+                "name": "APP",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aac4a1fe3bec",
+                    "key_name": "RDC_CORE"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            },
+            {
+                "code": "RDB",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:05:12",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c298ab45050e",
+                "key_name": "RDC_CORE_RDB",
+                "name": "RDB",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aac4a1fe3bec",
+                    "key_name": "RDC_CORE"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            },
+            {
+                "code": "ILB",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:05:39",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c2b374e6aa04",
+                "key_name": "RDC_CORE_ILB",
+                "name": "ILB",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aac4a1fe3bec",
+                    "key_name": "RDC_CORE"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            },
+            {
+                "code": "ELB",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:06:05",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c2cd865a560a",
+                "key_name": "RDC_LINK_ELB",
+                "name": "ELB",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aaa3c865b911",
+                    "key_name": "RDC_LINK"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            },
+            {
+                "code": "MAPP",
+                "confirm_time": "2021-06-10 15:20:10",
+                "create_time": "2021-06-04 06:25:17",
+                "create_user": "umadmin",
+                "data_center_design": {
+                    "guid": "data_center_design_60b9aa42f3507a27",
+                    "key_name": "RDC"
+                },
+                "guid": "basic_security_group_design_60b9c74d1f6d97af",
+                "key_name": "RDC_LINK_MAPP",
+                "name": "MAPP",
+                "network_zone_design": {
+                    "guid": "network_zone_design_60b9aaa3c865b911",
+                    "key_name": "RDC_LINK"
+                },
+                "nextOperations": [
+                    "Update",
+                    "Delete",
+                    "Confirm"
+                ],
+                "state": "added_1",
+                "update_time": "2021-06-10 15:20:10",
+                "update_user": "umadmin"
+            }
+        ]
+    }
+}

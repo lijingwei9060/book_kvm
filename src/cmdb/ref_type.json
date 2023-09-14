@@ -1,0 +1,75 @@
+{
+    "statusCode": "OK",
+    "data": [
+        {
+            "codeId": "ref_type__belong",
+            "catId": "ref_type",
+            "code": "belong",
+            "value": "属于",
+            "codeDescription": "",
+            "seqNo": 1,
+            "status": "active",
+            "cat": {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            }
+        },
+        {
+            "codeId": "ref_type__depend",
+            "catId": "ref_type",
+            "code": "depend",
+            "value": "依赖",
+            "codeDescription": "",
+            "seqNo": 2,
+            "status": "active",
+            "cat": {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            }
+        },
+        {
+            "codeId": "ref_type__realize",
+            "catId": "ref_type",
+            "code": "realize",
+            "value": "实现",
+            "codeDescription": "",
+            "seqNo": 3,
+            "status": "active",
+            "cat": {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            }
+        },
+        {
+            "codeId": "ref_type__use",
+            "catId": "ref_type",
+            "code": "use",
+            "value": "使用",
+            "codeDescription": "",
+            "seqNo": 4,
+            "status": "active",
+            "cat": {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            }
+        },
+        {
+            "codeId": "ref_type__relation",
+            "catId": "ref_type",
+            "code": "relation",
+            "value": "关联",
+            "codeDescription": "",
+            "seqNo": 5,
+            "status": "active",
+            "cat": {
+                "catId": "ref_type",
+                "catName": "ref_type",
+                "description": ""
+            }
+        }
+    ]
+}

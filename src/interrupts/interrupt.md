@@ -36,7 +36,7 @@ BIOS启动时发现中断控制器，把收集到的中断控制器的信息放�
 - GSI号是ACPI引入的概念，全称是Global System Interrupt，用于为系统中每个中断源指定一个唯一的中断编号。注：ACPI Spec规定PIC的IRQ号必须对应到GSI0-GSI15上。kvm默认支持最大1024个GSI。
 - 中断向量是针对逻辑CPU的概念，用来表示中断在IDT表的索引号，每个IRQ（或者GSI）最后都会被定向到某个Vecotor上。对于PIC上的中断，中断向量 = 32(start vector) + IRQ号。在IOAPIC上的中断被分配的中断向量则是由操作系统分配。
 - 在pci设备中，相比于分配一个固定的中断号，它允许设备在特定的内存地址（particular address of RAM, in fact, the display on the Local APIC）记录消息（message）。
-  - MSI 支持每个设备能分配 1, 2, 4, 8, 16 or 32 个中断，
+  - MSI 支持每个设备能分配 1, 2, 4, 8, 16 or 32 个中断，在PCI2.2规范中，设备通过向某个 MMIO 地址写入 system-specified message 可实现向 CPU 发送中断的效果。具体的实现方式为设备通过 PCI write command 向 Message Address Register 指示的地址写入 Message Data Register 中内容来向 LAPIC 发送中断。
   - MSI-X 支持每个设备分配多达 2048 个中断。
 
 中断控制器与CPU的连接？
@@ -62,8 +62,22 @@ Linux为了公平起见，并不会对BSP（bootstrap processor）另眼看待�
 
 ## 数据结构
 
-- IDTR寄存器： 前半8bytes部分存“IDT开头地址”，后半部分2bytes存“IDT有多长”，asm(LIDT)指令修改cpu寄存器IDTR的值，asm(SIDT)指令读取cpu寄存器IDTR的值。 每个CPU都有IDTR寄存器，但是这些CPU的IDTR都指向同一个地址
+- IDTR寄存器(48位)： 保存中断描述符的位置，存放起始地址和长度。包含16bit的IDT limit 和 32bit的IDT Base Address。前半8bytes部分存“IDT开头地址”，后半部分2bytes存“IDT有多长”，asm(LIDT)指令修改cpu寄存器IDTR的值，asm(SIDT)指令读取cpu寄存器IDTR的值。 每个CPU都有IDTR寄存器，但是这些CPU的IDTR都指向同一个地址。
 - IDT表(Interrupt Description Table): 4KB页面 = 256个vector号 * 16bytes，操作系统中维护一个IDT表，操作系统初始化时会填充这个表，中断来了，CPU读中断控制器就知道是哪个vector了，vector就是IDT表中一个index，IDT表一个entry中存储了一个segment selector， 这个segment selector就是GDT表一个entry，这个entry中存放了中断处理程序的地址，CPU跳到这个地址开始执行指令就可以处理中断，不过在开始处理中断例程之前，CPU先得保存自己当前执行的context，否则它处理完中断返不回原来正在执行的地方，这些context相关的东西就保存在内核处理中断的stack中，处理完中断iret指令就自动恢复原来的context。
+  - 0-15 bits - 从segment select的偏移，处理器使用该段选择器作为中断处理程序入口点的基址;
+  - 16-31 bits - segment select的基地址，包含中断处理程序的入口点；
+  - IST 是 64 位引入的新的栈切换机制。在收到中断 / 异常时，如果中断对应的 IDT 表项中 IST 字段非 0，则硬件会自动切换到对应的中断栈(中断栈的指针存放在 TSS 中，被加载到 rsp)。IST 最多有 7 项，它们指向的中断栈的大小都可以不同。目前实现的栈有：
+    - DOUBLEFAULT_STACK：专门用于 Double Fault Exception ，因为 double fault 时不应该再用原来的中断栈，大小为 EXCEPTION_STKSZ
+    - NMI_STACK：专门用于不可屏蔽中断，因为 NMI 可能在任意时刻到来，如果此时正在切换栈则会引起混乱。大小为 EXCEPTION_STKSZ
+    - DEBUG_STACK：专门用于 debug 中断，因为 debug 中断可能在任意时刻到来。大小为 DEBUG_STKSZ
+    - MCE_STACK：专门用于 Machine Check Exception ，因为 MCE 中断可能在任意时刻到来。大小为 EXCEPTION_STKSZ
+  - Type - IDT条目类型：GATE_INTERRUPT，GATE_TRAP、GATE_CALL、GATE_TASK，区分中断门、陷阱门、任务门，(0111:中断描述符，1010：任务门描述符，1111：陷阱门描述符)
+  - DPL - 描述符的权限级别0最高
+  - P - Segment Present标志，是否在内存中
+  - Segment Present GDT或LDT代码段选择子
+  - 48-63 bits - 处理程序基址的第二部分
+  - 64-95 bits - 处理程序基址的第三部分
+  - 96-127 bits - 由CPU保留
 - CPU开中断和关中断：在x86_64上使用指令sti(start irq) `asm volatile("cli": : :"memory")`, cli(close irq) `asm volatile("sti": : :"memory")`
 - IST(Interrupt Stack Table) 在x86_64位系统中，还引入了一种新的栈配置：IST(Interrupt Stack Table)，为了解决嵌套中断处理函数栈溢出。目前Linux kernel中每个cpu最多支持7个IST，可以通过tss.ist[]来访问。这个是为了中断过程中有其他中断进入，不处理会导致问题，处理了很容易导致内核中断处理栈溢出。
 - IRQ链表
@@ -97,18 +111,6 @@ struct idt_data {
 static gate_desc idt_table[IDT_ENTRIES]
 static struct desc_ptr idt_descr
 ```
-
-x86_64下的IDT表：
-
-- 0-15 bits - offset from the segment selector which is used by the processor as the base address of the entry point of the interrupt handler;
-- 16-31 bits - base address of the segment select which contains the entry point of the interrupt handler;
-- IST(Interrupt Stack Table) - a new special mechanism in the x86_64, 支持7个IST指针指向TSS(Task state segement),意思最多7个process候着等着处理interrupt
-- Type - 区分中断门、陷阱门、任务门，(0111:中断描述符，1010：任务门描述符，1111：陷阱门描述符)
-- DPL - Descriptor Privilege Level， 访问特权级
-- P - Segment Present flag，该描述符是否在内存中
-- 48-63 bits - the second part of the handler base address，组合起来形成32位偏移量，也就是中断处理程序所在段(由16-31位给出)的段内偏移。
-- 64-95 bits - the third part of the base address of the handler;
-- 96-127 bits - and the last bits are reserved by the CPU.
 
 ## 中断初始化
 
