@@ -10,7 +10,21 @@ VFIO驱动框架为直接设备访问提供了统一的API。它将设备直接�
 Mediated core driver为mdiated device提供了一个公共的管理接口，它可以被不同类型的设备驱动所利用。
 Mediated core driver也提供注册总线驱动的接口。比如，一个mediated VFIO mdev驱动就是为mediated devices设计的，并且支持VFIO的API。Mediated bus driver可以将一个mediated device加入或者移出一个VFIO group。
 
+相关概念： 
+- iommu：硬件单元，它可以把设备的IO地址映射成虚拟地址，为设备提供页表映射，设备通过IOMMU将数据直接DMA写到用户空间。
+- device：要操作的硬件设备，这里的设备需要从IOMMU拓扑的角度来看。如果device 是一个硬件拓扑上是独立那么这个设备构成了一个IOMMU group。如果多个设备在硬件是互联的，需要相互访问数据，那么这些设备需要放到一个IOMMU group 中隔离起来。
+- group：IOMMU 能进行DMA隔离的最小单元。一个group 可以有一个或者多个device。
+- container： 由多个group 组成。虽然group 是VFIO 的最小隔离单元，但是并不是最好的分割粒度，比如多个group 需要共享一个页表的时候。将多个group 组成一个container来提高系统的性能，也方便用户管理。一般一个进程作为一个container。
+
 ## 架构图
+
+vfio驱动框架： 
+1. vfio interface暴露给用户态程序进行ioctl的接口，代码在 drivers\vfio\vfio。
+2. vifo_iommu 是对IOMMU driver 的封装，为vfio interface 提供IOMMU 功能，在内核源码中代码路径为：drivers\vfio\vfio_iommu_type1.c。
+3. vfio_pci 是的device 驱动的封装，为vfio interface 提供设备的访问能力，例如访问设备的配置空间，bar空间。在内核源码中代码路径为：drivers\vfio\pci\vfio_pci.c 。
+4. iommu driver 是物理硬件的IOMMU 实现，例如intel VT-D。
+5. pci_bus driver 是物理PCI 设备的驱动。
+6. VFIO的中断重映射相关的部分需要有kvm 相关的代码分析，本文没有分析。？？？？
 
 模块：
 vfio_mdev
@@ -44,7 +58,34 @@ mdev.ko   -(mdev_register_device)->       nvidia.ko/i915.ko/ccw_devide.ko
 - Device 指的是我们要操作的硬件设备，不过这里的“设备”需要从IOMMU拓扑的角度去理解。如果该设备是一个硬件拓扑上独立的设备，那么它自己就构成一个iommu group。 如果这里是一个multi-function设备，那么它和其他的function一起组成一个iommu group，因为多个function设备在物理硬件上就是互联的， 他们可以互相访问对方的数据，所以必须放到一个group里隔离起来。值得一提的是，对于支持**PCIe ACS**特性的硬件设备，我们可以认为他们在物理上是互相隔离的。
 - Container 是一个和地址空间相关联的概念，这里可以简单把它理解为一个VM Domain的物理内存空间。对于用户态驱动，Container可以是多个Group的集合。
 
-## vfio将设备暴露给用户
+## vfio用户态接口
+
+VFIO 给用户空间提供的接口主要是有三个层面上的，第一个是container 层面，第二个是group 层面，第三个是device层面。
+
+### container的操作
+第一个层面，container的操作是通过打开`/dev/vifo/vifo` 文件对其执行ioctl操作，主要的操作有：
+
+1. VFIO_GET_API_VERSION：获取VFIO版本信息
+2. VFIO_CHECK_EXTENSION：检测是否支持特定扩展，支持哪些类型的IOMMU
+3. VFIO_SET_IOMMU:设置指定的IOMMU类型
+4. VFIO_IOMMU_GET_INFO：获取IOMMU的信息
+5. VFIO_IOMMU_MAP_DMA：指定设备端看到的IO地址到进程的虚拟地址之间的映射
+
+### group的操作
+
+第二个层面，group的操作是通过打开`/dev/vifo/<group_id>`文件, 对其执行ioctl操作，主要的操作有：
+
+1. VFIO_GROUP_GET_STATUS:获取group 的状态信息
+2. VFIO_GROUP_SET_CONTAINER:设置group 和container 之间的绑定关系
+3. VFIO_GROUP_GET_DEVICE_FD:获取device 的文件描述符fd.
+
+
+### device的操作
+第三个层面的是device ,通过group 层面的ioctl的VFIO_GROUP_GET_DEVICE_FD 命令获取fd, 对获取的fd执行ioctl操作，主要的操作有：
+
+1. VFIO_DEVICE_GET_REGION_INFO:用来获得设备指定区域region的数据，这里的region 不仅仅是指bar 空间还包括rom空间和配置空间。
+2. VFIO_DEVICE_GET_IRQ_INFO:得到设备的中断信息
+3. VFIO_DEVICE_RESET:重置设备
 
 正常的IO
 
@@ -151,6 +192,39 @@ VM：vm_tranx_irq_handler ->  vm_tranx_get_irq
 
 
 ## 数据结构
+
+- vfio
+  - iommu_drivers_list：挂接在container 上的所有vfio iommu_drivers，是对IOMMU driver 的一种封装。
+  - group_list：挂接所有 vfio_group, 
+  - group_idr :idr 值，关联次设备号，
+  - group_devt：group 的设备号，
+  - group_cdev：表明为一个字符设备。
+- vfio_container
+  - group_list：关联到vfio_container 上的所有vifo_ group, 
+  - iommu_driver: vfio_container对iommu设备驱动的封装。
+  - iommu_data：iommu_driver->open（）函数的返回值，vifo_iommu对象。
+- vfiio_group
+  - minor为在注册group设备时的次设备号，
+  - container_users为该group的container的计数，
+  - iommu_group为该group封装的iommu-group, 
+  - container为该group关联的container，
+  - device_list将属于该group下的所有设备连接起来，
+  - vfio_next 挂接在vfio.group_list 上，
+  - container_next挂接在vfio_container.group_list上，
+  - unbound_lock 是挂在vfio_unbound_dev.unbound_next 上，
+  - opened表明该group 是否初始化完成。
+- vfio_device
+  - ops,指向vfio_pci_ops,
+  - group表示所属group,
+  - group_next连接同一个group 中的设备，
+  - device_data指向vfio_pci_device.
+- vfio_pci_ops
+- vfio_domain
+- vfio_iommu
+  - domain_list 为该vfio_iommu下挂接的vfio_domain，
+  - external_domain 用于pci_mdev下的vfio_domain，
+  - dma_list为dma 的rb_root的根节点，
+  - dma_avail表示dma 条目数量。
 
 VFIO提供了两个字符设备文件作为提供给用户程序的入口点，分别是/dev/vfio/vfio和/dev/vfio/$GROUP，此外还在sysfs中添加了一些文件。
 
@@ -320,39 +394,108 @@ struct vfio_iommu_driver {
     struct list_head                    vfio_next;
 };
 
-static int __init vfio_init(void)
-{
-	int ret;
-
-	ida_init(&vfio.device_ida);
-
-	ret = vfio_group_init();
-	if (ret)
-		return ret;
-
-	ret = vfio_virqfd_init();
-	if (ret)
-		goto err_virqfd;
-
-	/* /sys/class/vfio-dev/vfioX */
-	vfio.device_class = class_create(THIS_MODULE, "vfio-dev");
-	if (IS_ERR(vfio.device_class)) {
-		ret = PTR_ERR(vfio.device_class);
-		goto err_dev_class;
-	}
-
-	pr_info(DRIVER_DESC " version: " DRIVER_VERSION "\n");
-	return 0;
-
-err_dev_class:
-	vfio_virqfd_exit();
-err_virqfd:
-	vfio_group_cleanup();
-	return ret;
-}
-
 ```
-## 初始化
+
+## vfio
+
+vfio_init() // 初始化vfio模块
+|-> ida_init(&vfio.device_ida);  // XArray
+|-> ret = vfio_group_init();
+	|-> ida_init(&vfio.group_ida);
+	|-> ret = vfio_container_init();
+		|-> ret = misc_register(&vfio_dev);  // 注册vifo 作为一个混杂字符设备注册进内核，混杂设备为定义为vfio_dev
+		|-> CONFIG_VFIO_NOIOMMU => ret = vfio_register_iommu_driver(&vfio_noiommu_ops); //CONFIG_VFIO_NOIOMMU：VFIO驱动程序是否支持无 IOMMU 模式
+	|-> vfio.class = class_create(THIS_MODULE, "vfio");
+	|-> vfio.class->devnode = vfio_devnode; // 设备名称：vfio/%s
+	|-> ret = alloc_chrdev_region(&vfio.group_devt, 0, MINORMASK + 1, "vfio");
+|-> ret = vfio_virqfd_init();
+|-> vfio.device_class = class_create(THIS_MODULE, "vfio-dev");
+
+/dev/vfio/vfio用户态接口vfio_fops：
+
+1. vfio_fops_open（）函数主要完成struct vfio_container 对象的实例化，并将实例化的对象放到filep->private_data中。
+2. vfio_fops_release（）函数主要完成vfio_container对象的释放。
+3. vfio_fops_read（），vfio_fops_write（），vfio_fops_mmap（）主要是对vfio_iommu_driver 的read(),write(),mmap()函数的封装。
+4. vfio_fops_unl_ioctl（）函数大部分cmd 也是对vfio_iommu_driver 的ioctl()函数的封装，主要有一个VFIO_SET_IOMMU命令，完成vfio_container和vfio_iommu_driver的绑定。
+
+```C
+static const struct file_operations vfio_fops = {
+	.owner		= THIS_MODULE,
+	.open		= vfio_fops_open,
+	.release	= vfio_fops_release,
+	.unlocked_ioctl	= vfio_fops_unl_ioctl,
+	.compat_ioctl	= compat_ptr_ioctl,
+};
+```
+
+vfio_fops_open： 设置vfio_container作为filep->private_data 
+vfio_group_set_container: 通过open(/dev/vfio/vfio)获得container，open(/dev/vfio/$group_id)获得group，需要将group 链接contailer
+vfio_ioctl_set_iommu： 用户态设置container的iommu
+vfio_iommu_type1_open： 分配和初始化vfio_iommu
+vfio_iommu_type1_attach_group: 创建和分配 vfio_group vfio_domain
+
+struct pci_driver vfio_pci_driver.probe = vfio_pci_probe // vfio_pci驱动注册, 驱动加载的时候执行，注册vfio_group_fops接口
+|-> vfio_alloc_device(vfio_pci_core_device, vdev, &pdev->dev, &vfio_pci_ops)
+|-> ret = vfio_pci_core_register_device(vdev);
+	|-> rootbus => ret = vfio_assign_device_set(&vdev->vdev, vdev);
+	|-> reset_slot => ret = vfio_assign_device_set(&vdev->vdev, pdev->slot);
+	|-> other => ret = vfio_assign_device_set(&vdev->vdev, pdev->bus);
+	|-> ret = vfio_pci_vf_init(vdev);
+	|-> ret = vfio_pci_vga_init(vdev);
+	|-> vfio_pci_probe_power_state(vdev);
+	|-> vfio_pci_set_power_state(vdev, PCI_D0);
+	|-> dev->driver->pm = &vfio_pci_core_pm_ops;
+	|-> pm_runtime_allow(dev);
+	|-> ret = vfio_register_group_dev(&vdev->vdev);
+		|-> vfio_device_set_group(device, type)
+			|-> vfio_group_find_or_alloc(device->dev)
+				|-> iommu_group = iommu_group_get(dev)
+				|-> vfio_group = vfio_group_find_from_iommu(iommu_group)
+				|-> vfio_create_group(iommu_group, VFIO_IOMMU)
+					|-> group = vfio_group_alloc(iommu_group, type)
+						|-> device_initialize(&group->dev);
+						|-> cdev_init(&group->cdev, &vfio_group_fops); // 注册group_id的fops
+						|-> group->iommu_group = iommu_group;
+					|-> dev_set_name(&group->dev, "%s%d",group_id)
+					|-> cdev_device_add(&group->cdev, &group->dev);
+			|-> device->group = group
+
+/dev/vfio/group_id注册vfio_group_fops用户态接口：
+
+```C
+static const struct file_operations vfio_group_fops = {
+	.owner		= THIS_MODULE,
+	.unlocked_ioctl	= vfio_group_fops_unl_ioctl,
+	.compat_ioctl	= compat_ptr_ioctl,
+	.open		= vfio_group_fops_open,
+	.release	= vfio_group_fops_release,
+};
+```
+
+vfio_device的用户态接口vfio_device_fops:
+
+VFIO_GROUP_GET_DEVICE_FD => vfio_group_ioctl_get_device_fd
+|-> device = vfio_device_get_from_name(group, buf);
+|-> fdno = get_unused_fd_flags(O_CLOEXEC);
+|-> filep = vfio_device_open_file(device);
+	|-> ret = vfio_device_group_open(device)
+	|-> filep = anon_inode_getfile("[vfio-device]", &vfio_device_fops, device, O_RDWR);
+	|-> filep->f_mode |= (FMODE_PREAD | FMODE_PWRITE);
+|-> fd_install(fdno, filep);
+
+```C
+const struct file_operations vfio_device_fops = {
+	.owner		= THIS_MODULE,
+	.release	= vfio_device_fops_release,
+	.read		= vfio_device_fops_read,
+	.write		= vfio_device_fops_write,
+	.unlocked_ioctl	= vfio_device_fops_unl_ioctl,
+	.compat_ioctl	= compat_ptr_ioctl,
+	.mmap		= vfio_device_fops_mmap,
+};
+```
+
+## vfio驱动分析
 
 vfio group不是凭空造出的一个概念，vfio group和IOMMU硬件的group紧密相关，所以vfio还有一个重要的函数就是vfio_register_iommu_driver，vfio_iommu_type1.ko就调用这个函数给vfio注册了操作IOMMU的ops，一个设备DMA用到的pagetable就可以通过这个ops配置到IOMMU中。
 
@@ -374,6 +517,52 @@ vfio_msihandler->eventfd_signal wakeup了irqfd_wakeup->schedule_work
 
 irqfd_inject->kvm_set_irq中断就注册了
 
+
+## vfio_iommu驱动
+
+- vfio_iommu
+- vfio_domain
+- vfio_dma
+- vfio_tatch
+- vfio_iommu_group
+- vfio_iova
+- vfio_pfn
+- vfio_regions
+- vfio_iommu_driver_ops vfio_iommu_driver_ops_type1: 是对intel iommu 驱动的封装，最主要的功能是完成group 内的设备的内存映射和解映射。这个功能是通过vfio_iommu_type1_ioctl 的VFIO_IOMMU_MAP_DMA和VFIO_IOMMU_UNMAP_DMA命令来完成。
+
+vfio_register_iommu_driver(&vfio_iommu_driver_ops_type1)
+|-> driver = kzalloc(sizeof(vfio_iommu_driver), GFP_KERNEL);
+|-> driver->ops = ops;
+|-> list_add(&driver->vfio_next, &vfio.iommu_drivers_list) // 将vfio_iommu_driver 对象添加到vfio.iommu_drivers_list链表上。
+
+```C
+static const struct vfio_iommu_driver_ops vfio_iommu_driver_ops_type1 = {
+	.name			= "vfio-iommu-type1",
+	.owner			= THIS_MODULE,
+	.open			= vfio_iommu_type1_open,
+	.release		= vfio_iommu_type1_release,
+	.ioctl			= vfio_iommu_type1_ioctl,
+	.attach_group		= vfio_iommu_type1_attach_group,
+	.detach_group		= vfio_iommu_type1_detach_group,
+	.pin_pages		= vfio_iommu_type1_pin_pages,
+	.unpin_pages		= vfio_iommu_type1_unpin_pages,
+	.register_device	= vfio_iommu_type1_register_device,
+	.unregister_device	= vfio_iommu_type1_unregister_device,
+	.dma_rw			= vfio_iommu_type1_dma_rw,
+	.group_iommu_domain	= vfio_iommu_type1_group_iommu_domain,
+};
+```
+## vfio_group驱动分析
+
+vfio_group_create_device
+
+## vfio_device驱动分析
+## vfio_pci驱动分析
+
+## vfio interrupt
+- vfio_irq_set
+
+Guests communicate with the host via VFIO Interrupt Requests (IRQs). These are sent via an irqfd (IRQ File Descriptor). Similarly, the host receives these interrupts via eventfd (Event File Descriptor). The resulting data can be returned via a callback.
 ## demo
 
 https://blog.csdn.net/alex_mianmian/article/details/119428351?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&utm_relevant_index=2
