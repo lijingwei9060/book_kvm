@@ -16,6 +16,11 @@ Mediated core driver也提供注册总线驱动的接口。比如，一个mediat
 - group：IOMMU 能进行DMA隔离的最小单元。一个group 可以有一个或者多个device。
 - container： 由多个group 组成。虽然group 是VFIO 的最小隔离单元，但是并不是最好的分割粒度，比如多个group 需要共享一个页表的时候。将多个group 组成一个container来提高系统的性能，也方便用户管理。一般一个进程作为一个container。
 
+VFIO的关键技术：
+1. VFIO对完备的设备访问支持：其中包括MMIO， I/O Port，PCI 配置空间，PCI BAR空间；
+2. VFIO中高效的设备中断机制，其中包括MSI/MSI-X，Interrupt Remapping，以及Posted Interrupt等；
+3. VFIO对直通设备热插拔支持。
+
 ## 架构图
 
 vfio驱动框架： 
@@ -199,11 +204,11 @@ VM：vm_tranx_irq_handler ->  vm_tranx_get_irq
   - group_idr :idr 值，关联次设备号，
   - group_devt：group 的设备号，
   - group_cdev：表明为一个字符设备。
-- vfio_container
+- vfio_container： 可以理解为一个vm。用户态的接口文件为/dev/vfio/vfio
   - group_list：关联到vfio_container 上的所有vifo_ group, 
   - iommu_driver: vfio_container对iommu设备驱动的封装。
   - iommu_data：iommu_driver->open（）函数的返回值，vifo_iommu对象。
-- vfiio_group
+- vfio_group: 是IOMMU能够进行DMA隔离的最小硬件单元，一个group内可能只有一个device，也可能有多个device，取决于物理平台上硬件的IOMMU拓扑结构。VFIO中的group和iommu group可以认为是同一个概念。一个group里面的device无法做到dma隔离，也就是不能分配给不同的VM。用户态文件接口/dev/vfio/$groupid。
   - minor为在注册group设备时的次设备号，
   - container_users为该group的container的计数，
   - iommu_group为该group封装的iommu-group, 
@@ -219,14 +224,17 @@ VM：vm_tranx_irq_handler ->  vm_tranx_get_irq
   - group_next连接同一个group 中的设备，
   - device_data指向vfio_pci_device.
 - vfio_pci_ops
+- vfio_pci是VFIO对pci设备驱动的统一封装，它和用户态进程一起配合完成设备访问直接访问，具体包括PCI配置空间模拟、PCI Bar空间重定向，Interrupt Remapping等。
 - vfio_domain
-- vfio_iommu
+- vfio_iommu: 是VFIO对iommu层的统一封装主要用来实现DMAP Remapping的功能，即管理IOMMU页表的能力
   - domain_list 为该vfio_iommu下挂接的vfio_domain，
   - external_domain 用于pci_mdev下的vfio_domain，
   - dma_list为dma 的rb_root的根节点，
   - dma_avail表示dma 条目数量。
 
 VFIO提供了两个字符设备文件作为提供给用户程序的入口点，分别是/dev/vfio/vfio和/dev/vfio/$GROUP，此外还在sysfs中添加了一些文件。
+
+VFIO驱动在加载的时候会创建一个名为/dev/vfio/vfio的文件，而这个文件的句柄关联到了vfio_container上，用户态进程打开这个文件就可以初始化和访问vfio_container。
 
 首先看/dev/vfio/vfio，它是一个misc device，在vfio模块的初始化函数vfio_init中注册：
 
@@ -520,10 +528,12 @@ irqfd_inject->kvm_set_irq中断就注册了
 
 ## vfio_iommu驱动
 
-- vfio_iommu
-- vfio_domain
+VFIO框架中很重要的一部分是要完成DMA Remapping，即为Domain创建对应的IOMMU页表，这个部分是由vfio_iommu_driver来完成的。 vfio_container包含一个指针记录vfio_iommu_driver的信息，在x86上vfio_iommu_driver的具体实现是由vfio_iommu_type1来完成的。 其中包含了vfio_iommu, vfio_domain, vfio_group, vfio_dma等关键数据结构（注意这里是iommu里面的）。
+
+- vfio_iommu： 可以认为是和container概念相对应的iommu数据结构，在虚拟化场景下每个虚拟机的物理地址空间映射到一个vfio_iommu上。
+- vfio_domain： 它是一个与DRHD（即IOMMU硬件）相关的概念， 它的出现就是为了应对多IOMMU硬件的场景。我们知道在大规格服务器上可能会有多个IOMMU硬件，不同的IOMMU硬件有可能存在差异， 例如IOMMU 0支持IOMMU_CACHE而IOMMU 1不支持IOMMU_CACHE（当然这种情况少见，大部分平台上硬件功能是具备一致性的），这时候我们不能直接将分别属于不同IOMMU硬件管理的设备直接加入到一个container中， 因为它们的IOMMU页表SNP bit是不一致的。 因此，一种合理的解决办法就是把一个container划分多个vfio_domain，当然在大多数情况下我们只需要一个vfio_domain就足够了。 处在同一个vfio_domain中的设备共享IOMMU页表区域，不同的vfio_domain的页表属性又可以不一致，这样我们就可以支持跨IOMMU硬件的设备直通的混合场景
 - vfio_dma
-- vfio_tatch
+- vfio_batch
 - vfio_iommu_group
 - vfio_iova
 - vfio_pfn
@@ -559,6 +569,27 @@ vfio_group_create_device
 ## vfio_device驱动分析
 ## vfio_pci驱动分析
 
+### vfio配置空间管理
+直通设备的配置空间并不是直接呈现给虚拟机的，VFIO中会对设备的PCI 配置空间进行模拟。 为什么VFIO不直接把直通PCI 配置空间呈现给虚拟机呢？主要原因是一部分PCI Capability不能直接对guest呈现，VFIO需要截获部分guest驱动对某些PCI配置空间的操作， 另外像MSI/MSIx等特性需要QEMU/KVM的特殊处理，所以也不能直接呈现给虚拟机。
+
+VFIO内核模块和QEMU会相互配合来完成设备的PCI配置空间的模拟，在VFIO中vfio_config_init函数中会为PCI设备初始化模拟的PCI配置空间。 对于每个设备而言，VFIO内核模块为其分配了一个pci_config_map结构，每个PCI Capability都有一个与之对应的perm_bits， 我们可以重写其hook函数来截获对这个Capability的访问（读/写）。
+
+.open_device	= vfio_pci_open_device(struct vfio_device *core_vdev)
+|-> ret = vfio_pci_core_enable(vdev)
+	|-> pci_clear_master(pdev);
+	|-> ret = pci_enable_device(pdev);
+	|-> ret = pci_try_reset_function(pdev);
+	|-> pci_save_state(pdev);
+	|-> no_intx: 是否支持 Masking broken INTx support
+	|-> ret = vfio_pci_zdev_open_device(vdev)
+	|-> ret = vfio_config_init(vdev) // PCI设备初始化模拟的PCI配置空间,分配pci_config_map结构(大小vdev->cfg_size)，每个PCI Capability都有一个与之对应的perm_bits
+		|-> vfio_fill_vconfig_bytes(vdev, 0, PCI_STD_HEADER_SIZEOF)
+		|-> vdev->rbar[0]------rbar[6]
+		|-> ret = vfio_cap_init(vdev) // 初始化PCI Capability，主要用来填充模拟的vconfig
+		|-> ret = vfio_ecap_init(vdev) // 初始化PCI Extended Capability，主要用来填充模拟的vconfig
+	|-> vdev->msix_bar
+|-> intel + vga => vfio_pci_igd_init(vdev)
+|-> vfio_pci_core_finish_enable(vdev);
 ## vfio interrupt
 - vfio_irq_set
 
