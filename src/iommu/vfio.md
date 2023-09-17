@@ -570,15 +570,28 @@ vfio_group_create_device
 ## vfio_pci驱动分析
 
 ### vfio配置空间管理
+
+全局静态变量：
+1. static struct perm_bits cap_perms[PCI_CAP_ID_MAX + 1]： PCI Capability
+2. static struct perm_bits ecap_perms[PCI_EXT_CAP_ID_MAX + 1]： PCI Extended Capability
+3. static const u8 pci_cap_length[PCI_CAP_ID_MAX + 1]： pci config cababilities，各个位置的长度，有定长和变长
+4. static const u16 pci_ext_cap_length[PCI_EXT_CAP_ID_MAX + 1]： pcie config cababilietes
+
+API：
+static int vfio_user_config_read(struct pci_dev *pdev, int offset, __le32 *val, int count)
+static int vfio_user_config_write(struct pci_dev *pdev, int offset,__le32 val, int count)
+static int vfio_default_config_read(struct vfio_pci_core_device *vdev, int pos, int count, struct perm_bits *perm, int offset, __le32 *val)
+static int vfio_default_config_write(struct vfio_pci_core_device *vdev, int pos, int count, struct perm_bits *perm, int offset, __le32 val)
+
 直通设备的配置空间并不是直接呈现给虚拟机的，VFIO中会对设备的PCI 配置空间进行模拟。 为什么VFIO不直接把直通PCI 配置空间呈现给虚拟机呢？主要原因是一部分PCI Capability不能直接对guest呈现，VFIO需要截获部分guest驱动对某些PCI配置空间的操作， 另外像MSI/MSIx等特性需要QEMU/KVM的特殊处理，所以也不能直接呈现给虚拟机。
 
 VFIO内核模块和QEMU会相互配合来完成设备的PCI配置空间的模拟，在VFIO中vfio_config_init函数中会为PCI设备初始化模拟的PCI配置空间。 对于每个设备而言，VFIO内核模块为其分配了一个pci_config_map结构，每个PCI Capability都有一个与之对应的perm_bits， 我们可以重写其hook函数来截获对这个Capability的访问（读/写）。
 
-.open_device	= vfio_pci_open_device(struct vfio_device *core_vdev)
-|-> ret = vfio_pci_core_enable(vdev)
+static const struct vfio_device_ops vfio_pci_ops.open_device	= vfio_pci_open_device(struct vfio_device *core_vdev) // 使能PCI设备，进行初始化设备，并将配置空间拷贝到相关结构体中。
+|-> ret = vfio_pci_core_enable(vdev) // 读取PCI设备，读取配置空间和CAP
 	|-> pci_clear_master(pdev);
-	|-> ret = pci_enable_device(pdev);
-	|-> ret = pci_try_reset_function(pdev);
+	|-> ret = pci_enable_device(pdev); // 是能PCI设备
+	|-> ret = pci_try_reset_function(pdev); // 复位function
 	|-> pci_save_state(pdev);
 	|-> no_intx: 是否支持 Masking broken INTx support
 	|-> ret = vfio_pci_zdev_open_device(vdev)
@@ -590,10 +603,98 @@ VFIO内核模块和QEMU会相互配合来完成设备的PCI配置空间的模拟
 	|-> vdev->msix_bar
 |-> intel + vga => vfio_pci_igd_init(vdev)
 |-> vfio_pci_core_finish_enable(vdev);
-## vfio interrupt
-- vfio_irq_set
+	|-> vdev->bar_mmap_supported[i] // 设置改BAR是否支持mmap
+	|-> vfio_spapr_pci_eeh_open
+	|-> vfio_pci_vf_token_user_add
 
-Guests communicate with the host via VFIO Interrupt Requests (IRQs). These are sent via an irqfd (IRQ File Descriptor). Similarly, the host receives these interrupts via eventfd (Event File Descriptor). The resulting data can be returned via a callback.
+static const struct vfio_device_ops vfio_pci_ops.read = vfio_pci_core_read // 对vfio配置空间进行读取
+static const struct vfio_device_ops vfio_pci_ops.write = vfio_pci_core_write //对vfio配置空间进行写入
+|-> vfio_pci_rw(vdev, buf, count, ppos, false); // 对VFIO设备的读写操作包括对配置空间的读写，对BAR空间的读写，以及region特定的读写操作
+	|-> CONFIG_REGION => vfio_pci_config_rw(vdev, buf, count, ppos, iswrite)
+		|-> PCI_CAP_ID_INVALID => vfio_raw_config_*() => pci_user_{read|write}_config来处理
+		|-> PCI_CAP_ID_INVALID_VIRT => vfio_virt_config_*() => memcpy将结构体vdev->config上模拟的内部读取；
+		|-> PCI_CAP_ID |PCI_ECAP_ID  => vfio_direct_config_*() => pci_user_{read|write}_config，若失败再调用memcpy进行读取；
+		|-> PCI_CAP_ID_MSI => vfio_msi_config_x()
+	|-> BAR0--BAR5|ROM_REGION => vfio_pci_bar_rw(vdev, buf, count, ppos, false)
+		|-> BAR0~BAR5 => vfio_pci_setup_barmap()将BAR区域映射到vdev->barmap[]中
+		|-> ROM => pci_map_rom() => io_remap()对ROM区域映射；
+		|-> MSIX
+	|-> VGA_REGION => vfio_pci_vga_rw(vdev, buf, count, ppos, iswrite)
+	|-> default => vdev->region[index].ops->rw(vdev, buf,  count, ppos, iswrite)
+
+
+static const struct vfio_device_ops vfio_pci_ops.mmap = vfio_pci_core_mmap // 对BAR空间进行映射
+|-> 非PCI定义的区域 => region->ops->mmap(vdev, region, vma)
+|-> 定义的PCI区域，支持mmap => pci_iomap()将BAR空间映射到vdev->barmap[]，并为vma设置回调函数vfio_pci_mmap_ops。
+	vm_flags_set(vma, VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP);
+	vma->vm_ops = &vfio_pci_mmap_ops;
+
+```C
+static const struct vm_operations_struct vfio_pci_mmap_ops = {
+	.open = vfio_pci_mmap_open,
+	.close = vfio_pci_mmap_close,
+	.fault = vfio_pci_mmap_fault,
+};
+```
+
+static const struct vfio_device_ops vfio_pci_ops.request = vfio_pci_core_request // 若定义vdev->req_trigger，通过eventfd_signal()往虚拟机中注入模拟中断
+static const struct vfio_device_ops vfio_pci_ops.ioctl = vfio_pci_core_ioctl // QEMU要获取设备的信息并设置设备，需要通过设备API进行调用，它们是通过函数vfio_pci_core_ioctl()来分别对不同的设备API进行处理。
+|-> VFIO_DEVICE_GET_INFO => vfio_pci_ioctl_get_info // 获取设备region数目和中断的数目
+|-> VFIO_DEVICE_GET_IRQ_INFO => vfio_pci_ioctl_get_irq_info // 获取设备对应的中断数目和标志
+|-> VFIO_DEVICE_GET_PCI_HOT_RESET_INFO => vfio_pci_ioctl_get_pci_hot_reset_info
+|-> VFIO_DEVICE_GET_REGION_INFO => vfio_pci_ioctl_get_region_info： 查看设备在host上呈现的bar空间信息,查询到对应BAR空间的size和offset信息。
+|-> VFIO_DEVICE_IOEVENTFD => vfio_pci_ioctl_ioeventfd
+|-> VFIO_DEVICE_PCI_HOT_RESET => vfio_pci_ioctl_pci_hot_reset
+|-> VFIO_DEVICE_RESET => vfio_pci_ioctl_reset
+|-> VFIO_DEVICE_SET_IRQS => vfio_pci_ioctl_set_irqs // 请求中断并设置中断处理函数,使能MSIX中断
+
+
+- struct vfio_region_info
+- struct vfio_info_cap
+
+
+vfio_pci_core_ioctl：
+
+
+
+
+
+
+static const struct vfio_device_ops vfio_pci_ops.mmap = vfio_pci_core_mmap
+vm_flags_set(vma, VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP);
+vma->vm_ops = &vfio_pci_mmap_ops;
+
+vfio_pci_mmap_open: 
+|-> zap_vma_ptes(vma, vma->vm_start, vma->vm_end - vma->vm_start);
+	|-> zap_page_range_single(vma, address, size, NULL)
+
+## vfio interrupt
+
+MSI和MSIX的差异点主要有两点：
+1. 产生MSI中断的内存映射区在PCIE设备的配置空间，而产生MSIX中断的内存映射区在PCIE设备的BAR空间；
+2. MSI中断最多支持32个，且要求申请的中断连续，而MSIX中断可支持的比较多（2048），不要求申请的中断连续；
+
+默认在PCIE设备的配置空间存在着BAR地址指针，MSIX CAP寄存器等。其中MSIX CAP寄存中指定MSIX对应的Table和PBA所对应的BAR空间号以及在BAR中偏移，Table数目(Message Control指定)。在Table空间存放着每个MSIX中断对应的Message Addr/Message Data/Vector control。在PBA空间存放着MSIX中断对应的pending BIT。
+
+中断过程：
+1. QEMU通过对设备ioctl（VFIO_DEVICE_SET_IRQS）将VFIO设备中断与eventfd关联，并对VFIO设备申请中断并填充中断处理函数vfio_msihandle()；
+2. QEMU中将guest要求的中断virq与eventfd关联，即当eventfd收到事件时，会往guest OS注入中断，这是通过QEMU对调用ioctl(KVM_IRQFD)实现的；
+3. Guest OS对可以产生MSI/MSIX中断的内存映射区（设备配置空间或设备BAR空间）发起写操作时，会产生VM Exit到QEMU，QEMU将写的数据填写到设备的BAR空间中MSIX对应的Table中，从而触发ITS产生中断；
+4. 当VFIO设备收到中断时，首先触发vfio-pci设备的中断处理函数vfio_msihandler()，它会调用eventfd_signal()向与virq关联的eventfd发送事件，eventfd收到事件后往guest OS注入中断；
+
+
+VFIO_DEVICE_SET_IRQS => vfio_pci_ioctl_set_irqs // 使能msi中断最终调用vfio_msihandler(),向与virq关联的eventfd发送事件，eventfd收到事件后往guest OS注入中断；
+|-> max = vfio_pci_get_irq_count(vdev, hdr.index);
+|-> ret = vfio_set_irqs_validate_and_prepare(&hdr, max, VFIO_PCI_NUM_IRQS, &data_size);
+|-> ret = vfio_pci_set_irqs_ioctl(vdev, hdr.flags, hdr.index, hdr.start, hdr.count, data)
+	|-> VFIO_PCI_INTX_IRQ_INDEX => vfio_pci_set_intx_[trigger|mask|unmask](vdev, index, start, count, flags, data)
+	|-> VFIO_PCI_MSI[X]_IRQ_INDEX => vfio_pci_set_msi_trigger(vdev, index, start, count, flags, data)
+		|-> vfio_msi_set_block(vdev, start, count, fds, msix)
+			|-> vfio_msi_set_vector_signal(vdev, j, fd, msix)
+				|-> request_irq(irq, vfio_msihandler, 0, vdev->ctx[vector].name, trigger)
+	|-> VFIO_PCI_ERR_IRQ_INDEX => vfio_pci_set_err_trigger
+	|-> VFIO_PCI_REQ_IRQ_INDEX => vfio_pci_set_req_trigger
+
 ## demo
 
 https://blog.csdn.net/alex_mianmian/article/details/119428351?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-119428351-blog-110845945.235%5Ev38%5Epc_relevant_anti_vip_base&utm_relevant_index=2
@@ -601,3 +702,5 @@ https://blog.csdn.net/alex_mianmian/article/details/119428351?spm=1001.2101.3001
 https://rtoax.blog.csdn.net/article/details/110843839
 
 https://terenceli.github.io/%E6%8A%80%E6%9C%AF/2019/08/21/vfio-driver-analysis
+
+https://www.openeuler.org/en/blog/wxggg/2020-11-29-vfio-passthrough-2.html
