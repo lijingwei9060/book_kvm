@@ -74,7 +74,7 @@ VFIO 给用户空间提供的接口主要是有三个层面上的，第一个是
 2. VFIO_CHECK_EXTENSION：检测是否支持特定扩展，支持哪些类型的IOMMU
 3. VFIO_SET_IOMMU:设置指定的IOMMU类型
 4. VFIO_IOMMU_GET_INFO：获取IOMMU的信息
-5. VFIO_IOMMU_MAP_DMA：指定设备端看到的IO地址到进程的虚拟地址之间的映射
+5. VFIO_IOMMU_MAP_DMA：
 
 ### group的操作
 
@@ -205,10 +205,17 @@ VM：vm_tranx_irq_handler ->  vm_tranx_get_irq
   - group_devt：group 的设备号，
   - group_cdev：表明为一个字符设备。
 - vfio_container： 可以理解为一个vm。用户态的接口文件为/dev/vfio/vfio
-  - group_list：关联到vfio_container 上的所有vifo_ group, 
-  - iommu_driver: vfio_container对iommu设备驱动的封装。
+  - group_list：关联到vfio_container 上的所有vifo_ group, 一个container可以挂载多个container。
+  - iommu_driver: vfio_container对iommu设备驱动(vfio_iommu_driver)的封装。
   - iommu_data：iommu_driver->open（）函数的返回值，vifo_iommu对象。
-- vfio_group: 是IOMMU能够进行DMA隔离的最小硬件单元，一个group内可能只有一个device，也可能有多个device，取决于物理平台上硬件的IOMMU拓扑结构。VFIO中的group和iommu group可以认为是同一个概念。一个group里面的device无法做到dma隔离，也就是不能分配给不同的VM。用户态文件接口/dev/vfio/$groupid。
+  - noiommu：是否是no iommu
+  - 支持的用户态ioctl接口`/dev/vifo/vifo`
+    - VFIO_GET_API_VERSION： 获取vfio的版本
+    - VFIO_CHECK_EXTENSION
+    - VFIO_SET_IOMMU： 设置iommu模式 VFIO_TYPE1_IOMMU
+    - VFIO_IOMMU_GET_INFO： 
+    - VFIO_IOMMU_MAP_DMA： 指定设备端看到的IO地址到进程的虚拟地址之间的映射
+- vfio_group: 是IOMMU能够进行DMA隔离的最小硬件单元，一个group内可能只有一个device，也可能有多个device，取决于物理平台上硬件的IOMMU拓扑结构。VFIO中的group和iommu group可以认为是同一个概念。一个group里面的device无法做到dma隔离，也就是不能分配给不同的VM。设备属于哪个group取决于IOMMU和设备的物理结构，在设备直通时需要将一个group里的所有设备都分配给一个虚拟机，其实就是多个group可以从属于一个container，而group下的所有设备也随着该group从属于该container。用户态文件接口`/dev/vfio/$groupid`。
   - minor为在注册group设备时的次设备号，
   - container_users为该group的container的计数，
   - iommu_group为该group封装的iommu-group, 
@@ -218,12 +225,42 @@ VM：vm_tranx_irq_handler ->  vm_tranx_get_irq
   - container_next挂接在vfio_container.group_list上，
   - unbound_lock 是挂在vfio_unbound_dev.unbound_next 上，
   - opened表明该group 是否初始化完成。
-- vfio_device
-  - ops,指向vfio_pci_ops,
+  - 支持的用户态ioctl接口`/dev/vfio/$groupid`
+    - VFIO_GROUP_GET_STATUS:获取group 的状态信息
+    - VFIO_GROUP_SET_CONTAINER:设置group 和container 之间的绑定关系
+    - VFIO_GROUP_GET_DEVICE_FD:获取device 的文件描述符fd.
+- vfio_device: 为了兼顾platform和pci设备，vfio统一对外提供 struct vfio_device 来描述vfio设备，并用device_data来指向如 struct vfio_pci_device。
+  - struct vfio_device_ops *ops => vfio_pci_ops, 静态的操作函数。支持的ioctl用户态接口：
+    - VFIO_DEVICE_GET_INFO：获取设备信息，region数量、irq数量等
+	- VFIO_DEVICE_GET_REGION_INFO：获取vfio_region的信息，包括配置空间的region和bar空间的region等
+	- VFIO_DEVICE_GET_IRQ_INFO：获取设备中断相关的信息
+	- VFIO_DEVICE_SET_IRQS：完成中断相关的设置
+	- VFIO_DEVICE_RESET：设备复位
+	- VFIO_DEVICE_GET_PCI_HOT_RESET_INFO：获取PCI设备hot reset信息
+	- VFIO_DEVICE_PCI_HOT_RESET：设置PCI设备 hot reset
+	- VFIO_DEVICE_IOEVENTFD：设置ioeventfd
   - group表示所属group,
   - group_next连接同一个group 中的设备，
   - device_data指向vfio_pci_device.
-- vfio_pci_ops
+  - kvm
+  - iommufd_access
+  - dev_set
+- vfio_device_ops：vfio 设备操作函数callback
+  - init： initialize private fields in device structure
+  - release： Reclaim private fields in device structure
+  - bind_iommufd： Called when binding the device to an iommufd
+  - unbind_iommufd：Opposite of bind_iommufd
+  - attach_ioas：Called when attaching device to an IOAS/HWPT managed by the	 bound iommufd. Undo in unbind_iommufd.
+  - open_device： Called when the first file descriptor is opened for this device
+  - close_device：
+  - read： Perform read(2) on device file descriptor
+  - write：
+  - ioctl：
+  - mmap：
+  - request：
+  - match： Optional device name match callback (return: 0 for no-match, >0 for match, -errno for abort 
+  - dma_unmap：Called when userspace unmaps IOVA from the container   this device is attached to.
+  - device_feature： Optional, fill in the VFIO_DEVICE_FEATURE ioctl
 - vfio_pci是VFIO对pci设备驱动的统一封装，它和用户态进程一起配合完成设备访问直接访问，具体包括PCI配置空间模拟、PCI Bar空间重定向，Interrupt Remapping等。
 - vfio_domain
 - vfio_iommu: 是VFIO对iommu层的统一封装主要用来实现DMAP Remapping的功能，即管理IOMMU页表的能力
@@ -239,101 +276,6 @@ VFIO驱动在加载的时候会创建一个名为/dev/vfio/vfio的文件，而�
 首先看/dev/vfio/vfio，它是一个misc device，在vfio模块的初始化函数vfio_init中注册：
 
 ```c
-
-static struct vfio {
-	struct list_head		iommu_drivers_list;
-	struct mutex			iommu_drivers_lock;
-} vfio;
-
-struct vfio_device_set {
-	void *set_id;
-	struct mutex lock;
-	struct list_head device_list;
-	unsigned int device_count;
-};
-
-
-struct vfio_device {
-	struct device *dev;
-	const struct vfio_device_ops *ops;
-	/*
-	 * mig_ops/log_ops is a static property of the vfio_device which must
-	 * be set prior to registering the vfio_device.
-	 */
-	const struct vfio_migration_ops *mig_ops;
-	const struct vfio_log_ops *log_ops;
-	struct vfio_group *group;
-	struct vfio_device_set *dev_set;
-	struct list_head dev_set_list;
-	unsigned int migration_flags;
-	struct kvm *kvm;
-
-	/* Members below here are private, not for driver use */
-	unsigned int index;
-	struct device device;	/* device.kref covers object life circle */
-	refcount_t refcount;	/* user count on registered device*/
-	unsigned int open_count;
-	struct completion comp;
-	struct list_head group_next;
-	struct list_head iommu_entry;
-	struct iommufd_access *iommufd_access;
-	void (*put_kvm)(struct kvm *kvm);
-#if IS_ENABLED(CONFIG_IOMMUFD)
-	struct iommufd_device *iommufd_device;
-	struct iommufd_ctx *iommufd_ictx;
-	bool iommufd_attached;
-#endif
-};
-enum vfio_group_type {
-	/*
-	 * Physical device with IOMMU backing.
-	 */
-	VFIO_IOMMU,
-
-	/*
-	 * Virtual device without IOMMU backing. The VFIO core fakes up an
-	 * iommu_group as the iommu_group sysfs interface is part of the
-	 * userspace ABI.  The user of these devices must not be able to
-	 * directly trigger unmediated DMA.
-	 */
-	VFIO_EMULATED_IOMMU,
-
-	/*
-	 * Physical device without IOMMU backing. The VFIO core fakes up an
-	 * iommu_group as the iommu_group sysfs interface is part of the
-	 * userspace ABI.  Users can trigger unmediated DMA by the device,
-	 * usage is highly dangerous, requires an explicit opt-in and will
-	 * taint the kernel.
-	 */
-	VFIO_NO_IOMMU,
-};
-struct vfio_group {
-	struct device 			dev; //指向/dev/vfio/$GROUP对应的Device
-	struct cdev			cdev;
-	/*
-	 * When drivers is non-zero a driver is attached to the struct device
-	 * that provided the iommu_group and thus the iommu_group is a valid
-	 * pointer. When drivers is 0 the driver is being detached. Once users
-	 * reaches 0 then the iommu_group is invalid.
-	 */
-	refcount_t			drivers;
-	unsigned int			container_users;
-	struct iommu_group		*iommu_group;
-	struct vfio_container		*container;
-	struct list_head		device_list;
-	struct mutex			device_lock;
-	struct list_head		vfio_next;
-#if IS_ENABLED(CONFIG_VFIO_CONTAINER)
-	struct list_head		container_next;
-#endif
-	enum vfio_group_type		type;
-	struct mutex			group_lock;
-	struct kvm			*kvm;
-	struct file			*opened_file;
-	struct blocking_notifier_head	notifier;
-	struct iommufd_ctx		*iommufd;
-	spinlock_t			kvm_ref_lock;
-};
 
 // VFIO bus driver device callbacks
 struct vfio_device_ops { 
