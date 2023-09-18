@@ -19,7 +19,7 @@
 属性名称
 属性描述
 搜索排序
-数据类型： 
+数据类型： 密码、引用属性、密码、附件、文本、数字、日期、时间、表达式、单选、多选、下拉、附件、用户和分组
 	datetime
 	text(正则规则)
 	ref: 引用选择(service),更新状态，确定状态，引用命名，引用类型（属于，依赖，实现，使用，关联），过滤规则： 表[字段] op(equal, in notequal ,null, notnull,empty, notempty,) 表达式类型 表达式（host_resource.resource_set>resource_set.network_subzone>network_subzone:[guid]）
