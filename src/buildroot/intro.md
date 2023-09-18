@@ -31,6 +31,7 @@ make
 qemu-system-x86_64 -kernel bzImage -hda rootfs.ext2 -append "root=/dev/sda rw console=ttyS0" --enable-kvm --nographic 
 
 
+./scripts/clang-tools/gen_compile_commands.py -d .
 
 vscode: 
 1. add clangd plugin
@@ -59,7 +60,10 @@ CompileFlags:
         "**/*.cmd": true,
         "**/*.d": true,
         "**/*.S": true,
-        "**/*.o": true
+        "**/*.o": true,
+        "**/*.a": true,
+        "arch/[a-u]*": true,
+        "arch/xtensa": true,
     },
     "[c]": {
         "editor.detectIndentation": false,
