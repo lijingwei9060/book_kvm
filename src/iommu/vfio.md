@@ -612,6 +612,43 @@ vfio_pci_mmap_open:
 
 ## vfio interrupt
 
+vfio如何通知guest cpu 有事情要做？
+
+qemu为vfio-device注册MSIX Capability Structure及MSIX Table和MSIX PBA，注册配置空间的读写函数
+
+Guest中的驱动读写配置空间，触发qemu的配置空间，使能msi/msi-x时进入到qemu的vfio_msix_enbale配置eventfd和irq关联，qemu会注册eventfd的poll、invoke函数，kvm会记录这些信息。kvm中处理irq的消费者，如果支持PI，还会注册一个consumer，consumer.add_producer函数会更新producer->host_irq对应的IOMMU->IRTE。
+
+vfio通过msi/msi-x写指定内存地址区域导致触发中断，kvm根据中断处理函数gsi routing entry 对应的set方法(kvm_set_msi)，找到目标CPU，调用kvm_apic_set_irq()向Guest注入中断。
+
+```C
+ vfio_msihandler()
+  |
+  |-> eventfd_signal()
+      |
+      |-> ...
+          |
+          |->  irqfd_wakeup()
+               |
+               |->kvm_arch_set_irq_inatomic()
+                  |
+                  |-> kvm_irq_delivery_to_apic_fast()
+                      |
+                      |-> kvm_apic_set_irq()
+```
+
+### 工作工程
+
+qemu在模拟vfio的时候需要给vfio-devic的配置空间增加msi/msi-x功能状态位，也就是向msi/msi-x的capability structure中写入msi/msi-x enable bit。
+
+### 数据结构
+
+- struct vfio_device_info： 设备信息，包含region数量和irq数量信息。
+- struct vfio_region_info： 每个region信息
+- struct vfio_irq_info 
+- struct vfio_irq_set
+- 
+### 实现过程
+
 MSI和MSIX的差异点主要有两点：
 1. 产生MSI中断的内存映射区在PCIE设备的配置空间，而产生MSIX中断的内存映射区在PCIE设备的BAR空间；
 2. MSI中断最多支持32个，且要求申请的中断连续，而MSIX中断可支持的比较多（2048），不要求申请的中断连续；
