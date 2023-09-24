@@ -632,9 +632,54 @@ vfio通过msi/msi-x写指定内存地址区域导致触发中断，kvm根据中�
                |->kvm_arch_set_irq_inatomic()
                   |
                   |-> kvm_irq_delivery_to_apic_fast()
-                      |
-                      |-> kvm_apic_set_irq()
+                      |-> kvm_set_msi_irq(kvm, e, &irq)
+                      |-> kvm_irq_delivery_to_apic_fast(kvm, NULL, &irq, &r, NULL) // 对于不是广播和最低优先级的中断，可以直接根据 irq->dest_id 从 phys_map 中取出对应的 kvm_lapic, 设置lapic的中断信息。
+					  	|-> APIC_DEST_SELF => kvm_apic_set_irq(src->vcpu, irq, dest_map)
+						|-> kvm_apic_map_get_dest_lapic(kvm, &src, irq, map, &dst, &bitmap);
+						|-> vm_apic_set_irq(dst[i]->vcpu, irq, dest_map); // 为该vcpu的lapic设置中断
+							|->__apic_accept_irq(apic, irq->delivery_mode, irq->vector,	irq->level, irq->trig_mode, dest_map);
+								|-> 根据 delivery_mode 进行对应设置，如 APIC_DM_FIXED 为 kvm_lapic_set_vector + kvm_lapic_set_irr
+								|-> kvm_make_request(event, vcpu) ，event 可取 KVM_REQ_EVENT / KVM_REQ_SMI / KVM_REQ_NMI,设置 vcpu->requests 中请求对应的bit ，在下次 vcpu_enter_guest 时会对请求进行处理
+								|-> kvm_vcpu_kick(vcpu)              让目标vCPU退出来处理请求
 ```
+
+kvm_vcpu_kick: 将vcpu从sleeping或者guest running模式踢出到host kernel 模式，让其重新调度
+```C
+kvm_vcpu_kick 
+=> smp_send_reschedule (native_smp_send_reschedule) 
+	=> apic->send_IPI(cpu, RESCHEDULE_VECTOR) (x2apic_send_IPI)
+		=> native_x2apic_icr_write(cfg, apicid)
+```
+
+
+
+向目标vcpu产生一个中断，让其重新被调度，由于在VMCS中设置了外部中断会发生 VMExit，因此返回到 KVM ，从而能够实现在其重新 VMENTRY (vcpu_enter_guest) 之前注入中断。于是 kvm_x86_ops->run (vmx_vcpu_run) 返回到 vcpu_enter_guest 再到 vcpu_run 进入下一轮循环，于是又调用 vcpu_enter_guest。
+
+```C
+vcpu_enter_guest 
+=> inject_pending_event        run前检查请求，如果kvm_check_request(KVM_REQ_EVENT, vcpu)，在运行vcpu前进行中断注入
+	=> 如果有 pending的异常 ，调用 kvm_x86_ops->queue_exception (vmx_queue_exception) 重新排队
+	=> 如果 nmi_injected ，调用 kvm_x86_ops->set_nmi (vmx_inject_nmi)
+	=> 如果有 pending的中断 ，调用 kvm_x86_ops->set_irq (vmx_inject_irq)
+	=> 如果有 pending的不可屏蔽中断 ，调用 kvm_x86_ops->set_nmi (vmx_inject_nmi)
+	=> kvm_cpu_has_injectable_intr                                                   如果vCPU有可注入的中断
+		=> lapic_in_kernel                      如果 LAPIC 不在KVM中，表示由QEMU负责模拟，于是 vcpu.arch.interrupt 早已被设置好，返回 interrupt.pending
+		=> kvm_cpu_has_extint                   如果有pending的外部(非non-APIC)中断，返回 true
+		=> kvm_vcpu_apicv_active                如果启用了virtual interrupt delivery，则APIC的中断会由硬件处理，无需软件干涉，返回 false
+		=> kvm_apic_has_interrupt               如果 LAPIC 在KVM中，找到优先级最高的中断号，如果其大于PPR，返回 true
+			=> apic_update_ppr                                                    更新PPR
+			=> apic_find_highest_irr => apic_search_irr => find_highest_vector    从IRR中找到优先级最高的中断号
+			=> 如果该中断号小于等于PPR，则返回-1
+	=> kvm_queue_interrupt(vcpu, kvm_cpu_get_interrupt(vcpu), false)                        将最高优先级的中断设置到 vcpu->arch.interrupt 中
+	=> kvm_x86_ops->set_irq (vmx_inject_irq)                                                将中断信息写入VMCS
+		=> vmcs_write32(VM_ENTRY_INSTRUCTION_LEN, vmx->vcpu.arch.event_exit_inst_len)       对于软中断，需要写指令长度
+		=> vmcs_write32(VM_ENTRY_INTR_INFO_FIELD, intr)                                     更新中断信息区域
+=> kvm_x86_ops->run            VMLAUNCH/VMRESUME
+=> vmx->idt_vectoring_info = vmcs_read32(IDT_VECTORING_INFO_FIELD)
+=> vmx_complete_interrupts => __vmx_complete_interrupts    根据中断信息更新vcpu，该入队的入队
+```
+
+
 
 ### 工作工程
 
