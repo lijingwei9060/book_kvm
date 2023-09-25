@@ -1,7 +1,7 @@
 # 概述
 
-X86外联针脚有2个，一个用户NMI，一个INTR。NMI不可屏蔽信号，INTR是可屏蔽信号。所以中断控制器链接到CPU上的INTR：
-1. PIC（Programable Interrupt Controller， 8259A）：可编程中断控制器，有8个针脚，支持两个级联，Master和Slave模式，除去一个用于上联的针脚，可用的一共15个。部分针脚对应的中断是固定的，有哪些呢？如何进行编程呢？因为针脚数量有限，所以必然出现很多设备共享中断号。存在问题无法对接smp架构cpu。
+X86外联针脚有2个，一个NMI，一个INTR。NMI不可屏蔽信号，INTR是可屏蔽信号。所以中断控制器链接到CPU上的INTR：
+1. PIC（Programable Interrupt Controller， 8259A）：可编程中断控制器，有8个针脚，支持两个级联，Master和Slave模式，除去一个用于上联的针脚，可用的一共15个。部分针脚对应的中断是固定的。因为针脚数量有限，所以必然出现很多设备共享中断号。存在问题无法对接smp架构cpu。
 2. APIC包含LAPIC(local apic)和IO APIC。
    1. LAPIC负责传递中断信号到指定的CPU，包含在每个核中一个，也就是一颗cpu可以有多个LAPIC。
    2. IOAPIC负责收集IO设备的中断信号，并投递到LAPIC，是一颗cpu一个，现在系统中最多8个IOAPIC。
@@ -15,10 +15,27 @@ X86外联针脚有2个，一个用户NMI，一个INTR。NMI不可屏蔽信号，
 
 ## PIC 物理和模拟
 
-中断信号：
-- 0： 始终
-- 1： 键盘
+3个寄存器：
 
+master中断信号： 0x20 0x3F
+- 0： system clock0
+- 1：keyboard
+- 2: 下联slave
+- 3：com2/com4/NetCard
+- 4：com1/com3
+- 5: Parallel1
+- 6: Floppy Controller
+- 7: parallel2
+
+slave中断信号： 0xA0， 0x3B
+- 0：CMOS Clock
+- 1： EGA/VGA
+- 2: Reserved
+- 3: Reserved
+- 4: Mouse
+- 5: FPU-Error/DMA
+- 6: Disk Controller(major)
+- 7: Disk Controller(minor) 
 
 在内核中每条IRQ线由结构体 `irq_desc_t` 来描述，irq_desc_t 定义如下：
 
