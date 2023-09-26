@@ -45,9 +45,14 @@ acpi_init(): apci启动所涉及到的初始化流程，PCIe基于acpi的启动�
 
 ## kernel 初始化流程
 
-pcibus_class_init： 注册pci设备class， class_register(pcibus_class)
+pcibus_class_init： 注册pci设备class， class_register(pcibus_class)，完成后创建了/sys/class/pci_bus目录
 pci_driver_init: 注册pci总线和pcie总线，总线的驱动，完成后创建了/sys/bus/pci目录
-acpi_pci_init: 注册acpi_pci_bus, 并设置电源管理相应的操作。
+acpi_pci_init: ACPI下对PCI总线的枚举操作，ACPI的Definition Block中使用PNP0A03表示一个PCI Host Bridge。
+- acpi_pci_root_add设备枚举,函数首先通过_SEG确定该PCI Host bridge(这个在root complex里面，也就是iommu)的segment group,随后通过_CRS里的BusRange类型资源取得该Host Bridge的Secondary总线范围，保存在root->secondary这个resource中。
+- 然后设置基本属性
+- _CBA对象中可以保存这个PCI Host Bridge的用于MMCONFIG枚举的基址
+- pci_acpi_scan_root函数枚举这个Host Bridge上的设备, 该函数是一个平台相关的函数
+acpi_init(): apci启动所涉及到的初始化流程，PCIe基于acpi的启动流程从该接口进入。
 pci_arch_init
 pci_slot_init
 pci_subsys_init
@@ -75,6 +80,50 @@ pci_mmcfg_late_insert_resources7
 
 
 ## acpi pci 初始化
+
+ACPI Namespace就是表示系统上所有可枚举的ACPI设备的层次结构。
+
+现在对acpi_init()流程展开，主要找和pci初始化相关的调用:
+
+acpi_init() /* subsys_initcall(acpi_init) */
+    +-> mmcfg_late_init()
+    +-> acpi_scan_init()
+        +-> acpi_pci_root_init()
+            +-> acpi_scan_add_handler_with_hotplug(&pci_root_handler, "pci_root");
+                +-> .attach = acpi_pci_root_add
+        /*
+         * register pci_link_handler to list: acpi_scan_handlers_list.
+         * this handler has relationship with PCI IRQ.
+         */
+        +-> acpi_pci_link_init()
+        /* we facus on PCI-ACPI, ignore other handlers' init */
+        ...
+        +-> acpi_bus_scan()
+            /* create struct acpi_devices for all device in this system */
+            --> acpi_walk_namespace()
+            --> acpi_bus_attach()
+                --> acpi_scan_attach_handler()
+                    --> acpi_scan_match_handler()
+                    --> handler->attach /* attach is acpi_pci_root_add */
+
+1. mmcfg_late_init(), acpi先扫描MCFG表，MCFG表定义了ecam的相关资源。
+2. acpi_pci_root_init()，定义pcie host bridge device的attach函数, ACPI的Definition Block中使用PNP0A03表示一个PCI Host Bridge。
+3. acpi_pci_link_init(), 注册pci_link_handler, 主要和pcie IRQ相关。
+4. acpi_bus_scan(), 会通过acpi_walk_namespace()会遍历system中所有的device，并为这些acpi device创建数据结构，执行对应device的attatch函数。根据ACPI spec定义，pcie host bridge device定义在DSDT表中，acpi在扫描过程中扫描DSDT，如果发现了pcie host bridge, 就会执行device对应的attach函数，调用到acpi_pci_root_add()。
+
+acpi_pci_root_add的函数很长，完整代码就不贴了, 它主要做了几个动作
+(1)通过ACPI的_SEG参数, 获取host bridge使用的segment号， segment指的就是pcie domain, 主要目的是为了突破pcie最大256条bus的限制。
+(2)通过ACPI的_CRS里的BusRange类型资源取得该Host Bridge的Secondary总线范围，保存在root->secondary这个resource中
+(3)通过ACPI的_BNN参数获取host bridge的根总线号。
+执行到这里如果没有返回失败，硬件设备上会有如下打印：
+
+pci_acpi_scan_root, pcie枚举流程的入口： 
+pr_info(PREFIX "%s [%s](domain %04x %pR)\n",
+        acpi_device_name(device), acpi_device_bid(device),
+        root->segment, &root->secondary);
+...
+ACPI: PCI Root Bridge [PCI0](domain 0000 [bus 00-7f])
+
 
 acpi_pci_init 和PCI有关的初始化acpi_init->acpi_scan_init->acpi_pci_root_init / acpi_bus_scan
 
