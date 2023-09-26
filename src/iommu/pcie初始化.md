@@ -1,7 +1,38 @@
 # 初始化过程
+
+PCI-e 初始化可以分为以下几步：
+1. 获得 PCI-e 设备配置空间
+2. 为设备加载相应的驱动程序
+3. 由驱动程序完成硬件配置 
+
+
+ECAM (Enhanced Configuration Address Mapping) 基址由固件或桥设备提供
+
+ACPI 体系计算机的 ECAM 基址 (Base address of enhanced configuration mechanism) 储存在 MCFG 中。
+1. 0-3：   MCFG
+2. 4-7：   长度(byte)
+3. 8:      revision
+4. 9:      checksum(所有字节sum & 0xFF = 0)
+5. 10-15:  OEM ID
+6. 16-23:  OEM Table id( manufacturer model id)
+7. 24-27:  OEM Revision 
+8. 28-31:  Creator ID
+9. 32-35:  Creator Revision
+10. 36-44: Reserved
+11. 44 + (16*n): 
+    1.  0-7: base address of enchanced configuration mechanism
+    2.  8-9: pci segment group number
+    3.  10:  start pci bus number
+    4.  11:  end pci bus number
+    5.  12-: Reserved
+
+获取 ECAM 基址的具体方式：
+
+1. 系统在初始化时，先获取 RSDP （Root System Description Ptr）,不同平台拥获取 RSDP 实现方法不同，具体见 ACPI_Spec 的 5.2.5 Root System Description Pointer (RSDP) 章节 
+2. 根据 RSDP 找到 RSDT ( Root System Decription ) 或 XSDT ( Extend System Decription )XSDT 目的是取代 RSDT 而并非 RSDT 的拓展。所以，所以这里就只提 XSDT。固件加载 boot*.efi 后，会将 SystemTable 传入主函数。详细的内容后续会补充在 UEFI 引导编写教程的相关章节。EDK2 规范中指明的 XSDT 位置 ：SystemTable -> XSDT -> MCFG, 通过 图 APCI MCFG Table 构建结构体，即可导出ECAM基址 (Base address of enhanced configuration mechanism) 
+
+
 ACPI与PCI的关系，需要描述。
-
-
 
 acpi_init
 acpi_pci_root_init
@@ -12,6 +43,336 @@ pci_driver_init(): 注册pci_bus_type, 完成后创建了/sys/bus/pci目录。
 acpi_pci_init(): 注册acpi_pci_bus, 并设置电源管理相应的操作。
 acpi_init(): apci启动所涉及到的初始化流程，PCIe基于acpi的启动流程从该接口进入。
 
+## kernel 初始化流程
+
+pcibus_class_init： 注册pci设备class， class_register(pcibus_class)
+pci_driver_init: 注册pci总线和pcie总线，总线的驱动，完成后创建了/sys/bus/pci目录
+acpi_pci_init: 注册acpi_pci_bus, 并设置电源管理相应的操作。
+pci_arch_init
+pci_slot_init
+pci_subsys_init
+pcibios_assign_resources5
+pci_apply_final_quirks5s
+pci_iommu_initrootfs
+pci_proc_init6
+pcie_portdrv_init6
+pci_hotplug_init6
+pci_stub_init6
+dw_pci_driver_init6
+virtio_pci_driver_init6
+serial_pci_driver_init6
+exar_pci_driver_init6
+lpss8250_pci_driver_init6
+mid8250_pci_driver_init6
+intel_lpss_pci_driver_init6
+ehci_pci_init6
+ohci_pci_init6
+xhci_pci_init6
+tcpci_i2c_driver_init6
+pci_resource_alignment_sysfs_init7
+pci_sysfs_init7
+pci_mmcfg_late_insert_resources7
+
+
+## acpi pci 初始化
+
+acpi_pci_init 和PCI有关的初始化acpi_init->acpi_scan_init->acpi_pci_root_init / acpi_bus_scan
+
+
+static struct acpi_scan_handler pci_root_handler = {
+	.ids = root_device_ids,
+	.attach = acpi_pci_root_add,
+	.detach = acpi_pci_root_remove,
+	.hotplug = {
+		.enabled = true,
+		.scan_dependent = acpi_pci_root_scan_dependent,
+	},
+};
+ 
+void __init acpi_pci_root_init(void)
+{
+	acpi_hest_init();
+	if (acpi_pci_disabled)
+		return;
+ 
+	pci_acpi_crs_quirks();
+	acpi_scan_add_handler_with_hotplug(&pci_root_handler, "pci_root");
+}
+
+acpi_bus_scan(ACPI_ROOT_OBJECT)
+->acpi_bus_attach(device);
+  ->acpi_scan_attach_handler(device);
+
+static int acpi_scan_attach_handler(struct acpi_device *device)
+{
+	struct acpi_hardware_id *hwid;
+	int ret = 0;
+ 
+	list_for_each_entry(hwid, &device->pnp.ids, list) {
+		const struct acpi_device_id *devid;
+		struct acpi_scan_handler *handler;
+ 
+		handler = acpi_scan_match_handler(hwid->id, &devid);
+		if (handler) {
+			if (!handler->attach) {
+				device->pnp.type.platform_id = 0;
+				continue;
+			}
+			device->handler = handler;
+			ret = handler->attach(device, devid);
+			if (ret > 0)
+				break;
+ 
+			device->handler = NULL;
+			if (ret < 0)
+				break;
+		}
+	}
+ 
+	return ret;
+}
+
+遍历的链表就是上面注册的，可以看到先acpi_scan_match_handler，就是分别通过match和id进行匹配，如果匹配成功了就执行handler的attach函数，这就对应到了上面的acpi_pci_root_add函数，函数比较长，分段来看：
+
+static int acpi_pci_root_add(struct acpi_device *device,
+			     const struct acpi_device_id *not_used)
+{
+	unsigned long long segment, bus;
+	acpi_status status;
+	int result;
+	struct acpi_pci_root *root;
+	acpi_handle handle = device->handle;
+	int no_aspm = 0;
+	bool hotadd = system_state == SYSTEM_RUNNING;
+ 
+	root = kzalloc(sizeof(struct acpi_pci_root), GFP_KERNEL);
+	if (!root)
+		return -ENOMEM;
+ 
+	segment = 0;
+	status = acpi_evaluate_integer(handle, METHOD_NAME__SEG, NULL,
+				       &segment);
+    ...
+ 
+	/* Check _CRS first, then _BBN.  If no _BBN, default to zero. */
+	root->secondary.flags = IORESOURCE_BUS;
+	status = try_get_root_bridge_busnr(handle, &root->secondary);
+    ...
+ 
+	root->device = device;
+	root->segment = segment & 0xFFFF;
+	strcpy(acpi_device_name(device), ACPI_PCI_ROOT_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ACPI_PCI_ROOT_CLASS);
+	device->driver_data = root;
+ 
+	if (hotadd && dmar_device_add(handle)) {
+		result = -ENXIO;
+		goto end;
+	}
+ 
+	pr_info(PREFIX "%s [%s] (domain %04x %pR)\n",
+	       acpi_device_name(device), acpi_device_bid(device),
+	       root->segment, &root->secondary);
+ 
+	root->mcfg_addr = acpi_pci_root_get_mcfg_addr(handle);
+ 
+	negotiate_os_control(root, &no_aspm);
+    ...
+}
+
+上述过程就是分配一个acpi_pci_root，并对其进行初始化，一般情况下仅含有一个HOST桥。
+
+struct acpi_pci_root {
+	struct acpi_device * device;
+	struct pci_bus *bus;
+	u16 segment;
+	struct resource secondary;	/* downstream bus range */
+ 
+	u32 osc_support_set;	/* _OSC state of support bits */
+	u32 osc_control_set;	/* _OSC state of control bits */
+	phys_addr_t mcfg_addr;
+};
+通过ACPI表获取HOST主桥的segment和bus号
+看一下填充后在虚拟机上的打印信息：
+
+[    0.212357] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-7f])
+来看下后半部分：
+
+/*
+	 * Scan the Root Bridge
+	 * --------------------
+	 * Must do this prior to any attempt to bind the root device, as the
+	 * PCI namespace does not get created until this call is made (and
+	 * thus the root bridge's pci_dev does not exist).
+	 */
+	root->bus = pci_acpi_scan_root(root);
+ 
+	if (no_aspm)
+		pcie_no_aspm();
+ 
+	pci_acpi_add_bus_pm_notifier(device);
+	device_set_wakeup_capable(root->bus->bridge, device->wakeup.flags.valid);
+ 
+	if (hotadd) {
+		pcibios_resource_survey_bus(root->bus);
+		pci_assign_unassigned_root_bus_resources(root->bus);
+		/*
+		 * This is only called for the hotadd case. For the boot-time
+		 * case, we need to wait until after PCI initialization in
+		 * order to deal with IOAPICs mapped in on a PCI BAR.
+		 *
+		 * This is currently x86-specific, because acpi_ioapic_add()
+		 * is an empty function without CONFIG_ACPI_HOTPLUG_IOAPIC.
+		 * And CONFIG_ACPI_HOTPLUG_IOAPIC depends on CONFIG_X86_IO_APIC
+		 * (see drivers/acpi/Kconfig).
+		 */
+		acpi_ioapic_add(root->device->handle);
+	}
+ 
+	pci_lock_rescan_remove();
+	pci_bus_add_devices(root->bus);
+	pci_unlock_rescan_remove();
+	return 1;
+
+pci_acpi_scan_root枚举PCI设备
+
+[arch/x86/pci/acpi.c]
+
+struct pci_bus *pci_acpi_scan_root(struct acpi_pci_root *root)
+{
+	int domain = root->segment;
+	int busnum = root->secondary.start;
+	int node = pci_acpi_root_get_node(root);
+	struct pci_bus *bus;
+ 
+	bus = pci_find_bus(domain, busnum);
+	if (bus) {
+        ...
+		memcpy(bus->sysdata, &sd, sizeof(sd));
+	} else {
+		struct pci_root_info *info;
+ 
+		info = kzalloc_node(sizeof(*info), GFP_KERNEL, node);
+		if (!info)
+			dev_err(&root->device->dev,
+				"pci_bus %04x:%02x: ignored (out of memory)\n",
+				domain, busnum);
+		else {
+			info->sd.domain = domain;
+			info->sd.node = node;
+			info->sd.companion = root->device;
+			bus = acpi_pci_root_create(root, &acpi_pci_root_ops,
+						   &info->common, &info->sd);
+		}
+	}
+ 
+    ...
+ 
+	return bus;
+}
+
+通过pci_find_bus查找HOST Bridge对应的segment，bus num有没有被注册，如果注册了就更新一下信息，没有注册则调用acpi_pci_root_create创建,该函数中有两个比较重要，一个是pci_create_root_bus
+
+struct pci_bus *pci_create_root_bus(struct device *parent, int bus,
+		struct pci_ops *ops, void *sysdata, struct list_head *resources)
+{
+	int error;
+	struct pci_host_bridge *bridge;
+ 
+	bridge = pci_alloc_host_bridge(0);
+	if (!bridge)
+		return NULL;
+ 
+	bridge->dev.parent = parent;
+ 
+	list_splice_init(resources, &bridge->windows);
+	bridge->sysdata = sysdata;
+	bridge->busnr = bus;
+	bridge->ops = ops;
+ 
+	error = pci_register_host_bridge(bridge);
+	if (error < 0)
+		goto err_out;
+ 
+	return bridge->bus;
+ 
+err_out:
+	kfree(bridge);
+	return NULL;
+}
+
+分配一个主桥结构，就是一个device，其parent为NULL，为PCI设备的顶级顶点
+接下来注册主桥
+static int pci_register_host_bridge(struct pci_host_bridge *bridge)
+{
+    ...
+ 
+	bus = pci_alloc_bus(NULL);
+ 
+	bridge->bus = bus;
+ 
+	/* Temporarily move resources off the list */
+	list_splice_init(&bridge->windows, &resources);
+	bus->sysdata = bridge->sysdata;
+	bus->msi = bridge->msi;
+	bus->ops = bridge->ops;
+	bus->number = bus->busn_res.start = bridge->busnr;  //注意这
+ 
+    ...
+ 
+	dev_set_name(&bridge->dev, "pci%04x:%02x", pci_domain_nr(bus),
+		     bridge->busnr);
+ 
+	err = device_register(&bridge->dev);
+ 
+	bus->bridge = get_device(&bridge->dev);
+ 
+	bus->dev.class = &pcibus_class;
+	bus->dev.parent = bus->bridge;
+ 
+	dev_set_name(&bus->dev, "%04x:%02x", pci_domain_nr(bus), bus->number);
+	name = dev_name(&bus->dev);
+ 
+	err = device_register(&bus->dev);
+ 
+	pcibios_add_bus(bus);
+ 
+	/* Create legacy_io and legacy_mem files for this bus */
+	pci_create_legacy_files(bus);
+ 
+	down_write(&pci_bus_sem);
+	list_add_tail(&bus->node, &pci_root_buses);
+	up_write(&pci_bus_sem);
+ 
+	return 0;
+ 
+unregister:
+	put_device(&bridge->dev);
+	device_unregister(&bridge->dev);
+ 
+free:
+	kfree(bus);
+	return err;
+}
+
+一个主桥下面新建了一个pci_bus, 其也对应一个设备，这两个设备都注册到系统中，注意他们的名字
+
+dev_set_name(&bridge->dev, "pci%04x:%02x", pci_domain_nr(bus), bridge->busnr);
+dev_set_name(&bus->dev, "%04x:%02x", pci_domain_nr(bus), bus->number);
+下图显示了注册后的PCI设备分级情况，其他的PCI设备都挂在主桥下
+
+[root@localhost /]# ls /sys/devices/pci0000:00
+0000:00:00.0  0000:00:07.7  0000:00:15.1  0000:00:15.6  0000:00:16.3  0000:00:17.0  0000:00:17.5  0000:00:18.2  0000:00:18.7
+0000:00:01.0  0000:00:0f.0  0000:00:15.2  0000:00:15.7  0000:00:16.4  0000:00:17.1  0000:00:17.6  0000:00:18.3  firmware_node
+0000:00:07.0  0000:00:10.0  0000:00:15.3  0000:00:16.0  0000:00:16.5  0000:00:17.2  0000:00:17.7  0000:00:18.4  pci_bus
+0000:00:07.1  0000:00:11.0  0000:00:15.4  0000:00:16.1  0000:00:16.6  0000:00:17.3  0000:00:18.0  0000:00:18.5  power
+0000:00:07.3  0000:00:15.0  0000:00:15.5  0000:00:16.2  0000:00:16.7  0000:00:17.4  0000:00:18.1  0000:00:18.6  uevent
+ 
+
+我画了个示意图，pci桥本身也是一个设备和其下的pci device一样都挂在同一总线上：
+
+
+pci_scan_child_bus包含整个的枚举过程,简单而言就是一个DFS,这个过程最终确定了每级PCI桥的bus范围：[secondary, subordinate]
 ## 全局变量
 
 acpi_scan_initialized = false: acpi scan完成了吗？

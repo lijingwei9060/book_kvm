@@ -185,15 +185,6 @@ PCIe Switch内部主要有三个部分：
 
 PCIe中有两类设备：Type 0表示终端设备，和Type 1表示Switch。
 
-- Device ID和Vendor ID寄存器： 这两个寄存器只读，Vendor ID代表PCI设备的生产厂商，而Device ID代表这个厂商所生产的具体设备。如Intel公司的82571EB芯片网卡，其中Vendor ID为0x8086，Device为0x105E。device ID全部为F的表示无效设备，需要跳过。
-- Revision ID和Class Code寄存器：这两个寄存器只读。其中Revision ID寄存器记载PCI设备的版本号。该寄存器可以被认为是Device ID的寄存器的扩展。Class Code寄存器记载PCI设备的分类，该寄存器由三个字段组成，分别是Base Class Code、Sub Class Code和Interface。其中Base Class Code讲PCI设备分类为显卡、网卡、PCI桥等设备；Sub Class Code对这些设备进一步细分。Interface定义编程接口。除此之外硬件逻辑设计也需要使用寄存器识别不同的设备。当Base Class Code寄存器为0x06，Sub Class Code寄存器为0x04时，表示当前PCI设备为一个标准的PCI桥。
-- Header Type寄存器：该寄存器只读，由8位组成。第7位为1表示当前PCI设备是多功能设备，为0表示为单功能设备。第0~6位表示当前配置空间的类型，为0表示该设备使用PCI Agent设备的配置空间，普通PCI设备都是用这种配置头；为1表示使用PCI桥的配置空间，PCI桥使用这种配置头。系统软件需要使用该寄存器区分不同类型的PCI配置空间。
-- Cache Line Size寄存器：该寄存器记录处理器使用的Cache行长度。在PCI总线中和cache相关的总线事务，如存储器写无效等需要使用这个寄存器。该寄存器由系统软件设置，硬件逻辑使用。
-- Expansion ROM base address寄存器：有些PCI设备在处理器还没有运行操作系统前，就需要完成基本的初始化。为了实现这个"预先执行"功能，PCI设备需要提供一段ROM程序，而处理器在初始化过程中将运行这段ROM程序，初始化这些PCI设备。Expansion ROM base address寄存器记载这段ROM程序的基地址。
-- Capabilities Pointer寄存器：在PCI设备中，该寄存器是可选的，但是在PCIe设备中必须支持这个寄存器，Capabilities Pointer寄存器存放Capabilitise寄存器组的基地址，利用Capabilities寄存器组存放一些与PCI设备相关的扩展配置信息。
-- Base Address Register 0~5寄存器：该组寄存器简称为BAR寄存器，BAR寄存器保存PCI设备使用的地址空间的基地址，该基地址保存的是该设备在PCI总线域中的地址。在PCI设备复位之后，该寄存器存放PCI设备需要使用的基址空间大小，这段空间是I/O空间还是存储器空间。系统软件可以使用该寄存器，获取PCI设备使用的BAR空间的长度，其方法是向BAR寄存器写入0xFFFFFFFF，之后在读取该寄存器。
-
-
 PCIe设备兼容PCI，配置空间的大小是4K：
 1. 256byte PCI 兼容空间(pci caompatible space), 其中头部和PCI3.0保持兼容，有64个字节header space，这块空间的大小是固定的，不会随着设备的类型或者系统的重启而改变。header space部分区分type0和type1。剩下的192字节是功能相关的配置空间Function-Specific Configuration Header space。
 2. 256-4K：pcie扩展空间(pcie extended configration space)
@@ -236,57 +227,9 @@ $ setpci -s 46:00.1 02.w
 使用`setpci`的时候需要注意：无论是读取和写入，请务必按照目标字段的长度来进行输入，PCIe的内存地址的IO并不一定是内存的读取，而有可能被转换成PCIe的请求，如果长度不对，则很有可能出现错误。
 
 
-## BAR-type0
-
-BAR（Base Address Registers）和MMIO（Memory Mapped IO）是两个非常重要的概念。
-
-BAR（Base Address Registers）：BAR是PCIe设备与主机之间通信的基础，它用于标识PCIe设备需要的资源，包括I/O端口和内存地址。每个设备可以拥有多个BAR，每个BAR可以对应一个I/O或内存资源。主机通过读取设备的BAR寄存器，可以获取该设备所占用的资源的起始地址和大小等信息。
-
-在Type 0的配置空间中，BAR区域有24个字节，可以保存6个指针/地址，每一个都可以用来描述一个不同的内存空间或者IO空间的地址和范围。
-
-地址空间结构：
-
-- 最低位Bit 0：是一个标志位，用于描述地址空间的类型，0表示内存空间，1表示IO空间
-- Memory Space中的Bit [2:1] - Type：用于描述内存空间的类型，00表示32位地址空间，10表示64位地址空间
-- Memory Space中的Bit 3 - Prefetchable：用于描述内存空间是否支持预取，0表示不支持，1表示支持。如果一段内存空间支持预取，它意味着读取时不会产生任何副作用，所以CPU可以随时将其预取到DRAM中。而如果预取被启用，在读取数据时，内存控制器也会先去DRAM查看是否有缓存。当然，这是一把双刃剑，如果数据本身不支持预取，那么除了可能导致数据不一致，多一次DRAM的查询还会导致速度下降。
-
-另外也许你会觉得很奇怪，一个32位的空间，又是如何又表示地址又表示范围呢？这里其实和BAR的初始化过程有关。BAR的寄存器初始化主要有三步 [1]（7.5.1.2.1 Base Address Registers）：
-
-- BIOS将全1的地址写入BAR寄存器，这样会导致BAR寄存器的值被重置，并被设备重新写入初始值。这个初始值是一个地址，表示如果将这个BAR寄存器指向的内存放在物理内存的最后，其地址为多少。比如，如果我们需要4KB的内存空间，那么这个地址就是0xFFFFF000，当然这里还需要加上最低几位表示类型的Flag。另外，如何这个空间不可用，那么返回全0。
-- BIOS读取BAR寄存器的值，并去除掉最后几位Flag，然后将其取反并加1，求出其大小。比如0xFFFFF000，取反之后就是0x00000FFF，加1之后就是0x00001000，也就是4KB。
-- BIOS接着进行真正的地址分配和映射，并将这个新的地址重新写入BAR。这个时候设备没有权利拒绝这个修改，并且也不能再对这个地址进行任何的更改了，不然系统可能会整个崩溃。
-
-在这样的握手之后，我们就通过BAR中这一个地址大小的空间，又表示了地址，又传递了大小了。
-
-对于BAR空间中保存的所有的地址，我们都可以通过lspci来查看到：
-```shell
-$ sudo lspci -s 81:00.0 -nn -vv
-81:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104 [GeForce RTX 2080] [10de:1e82] (rev a1) (prog-if 00 [VGA controller])
-        Subsystem: Gigabyte Technology Co., Ltd TU104 [GeForce RTX 2080] [1458:37c1]
-        ...
-        Region 0: Memory at f0000000 (32-bit, non-prefetchable) [size=16M]
-        Region 1: Memory at 20030000000 (64-bit, prefetchable) [size=256M]
-        Region 3: Memory at 20040000000 (64-bit, prefetchable) [size=32M]
-        Region 5: I/O ports at b000 [size=128]
-        ...
-```
-
-从上面我们可以看到，这块显卡中有4个地址空间，三块是内存空间，一块是I/O空间。Region的编号表示其地址在BAR中间的偏移，比如Region 1就是BAR中的第二个DWORD，Region 3就是BAR中的第4个DWORD（Region 1是64位，所以需要占用8个字节），以此类推。这里我们也可以把原始的物理内存dump出来，进行验证。
-
-`hexdump -C --skip 0xe8100000 /dev/mem |head`
 
 
-MMIO（Memory Mapped IO）：MMIO是一种通过内存地址来访问I/O设备的机制。在PCIe设备中，MMIO用于访问设备的寄存器、配置空间和DMA缓冲区等，主机通过MMIO读写这些资源。MMIO访问与传统I/O端口访问不同，I/O端口访问是通过out/in指令进行的，而MMIO访问则是通过读写内存地址来完成的。
 
-在PCIe设备中，MMIO通常是通过访问设备的BAR来实现的。设备的BAR中存储了一段物理内存地址，主机通过MMIO读写这个地址就可以访问设备的资源。当主机进行MMIO访问时，CPU会将访问请求路由到PCIe设备，设备进行相应的处理并返回结果。
-
-## type-1桥
-作为Switch，它并不需要也不会实现特定的功能，它的作用就是为PCIe的消息提供路由转发的机制，所以中间所有的字段几乎都变成了和路由转发相关的地址信息。
-
-- Primary Bus Number / Secondary Bus Number / Subordinate Bus Number：用于基于BDF的转发
-- Memory Base / Memory Limit：用于基于内存空间地址的转发
-- Prefetchable Memory Base (Upper) / Prefetchable Memory Limit (Upper)：也是用于基于内存空间地址的转发，不过是Prefetchable的地址
-- IO Base / IO Limit：用于基于IO空间地址的转发
 
 ### PCIe的遍历（PCIe Enumeration）
 整个PCIe的遍历过程其实是一个简单的DFS和线段树，拿上图的BDF来举例子，每一个Bridge中都保存着三个用于路由的关键信息：
