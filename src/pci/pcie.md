@@ -10,15 +10,85 @@
 
 总之，内核中的PCIe管理框架提供了一系列的子系统和工具，以帮助开发人员管理和优化PCIe设备的性能，并确保PCIe设备与内核之间的协议兼容性。
 
-## 物理结构
+## 历史
+
+1. ISA (Industry Standard Architecture)： 第一代ISA插槽出现在第一代IBM PC XT机型上（1981），作为现代PC的盘古之作，8位的ISA提供了4.77MB/s的带宽（或传输率）。
+2. MCA (Micro Channel Architecture)
+3. EISA (Extended Industry Standard Architecture)
+4. VLB (VESA Local Bus)
+5. PCI (Peripheral Component Interconnect)
+6. PCI-X (Peripheral Component Interconnect eXtended)
+7. AGP (Accelerated Graphics Port)
+8. PCI Express (Peripheral Component Interconnect Express)
+
+
+## pci架构
+
+1. PCI 设备。符合 PCI 总线标准的设备就被称为 PCI 设备，PCI 总线架构中可以包含多个 PCI 设备。图中的 Audio、LAN 都是一个 PCI 设备。PCI 设备同时也分为主设备和目标设备两种，主设备是一次访问操作的发起者，而目标设备则是被访问者。
+2. PCI 总线。PCI 总线在系统中可以有多条，类似于树状结构进行扩展，每条 PCI 总线都可以连接多个 PCI 设备/桥。上图中有两条 PCI 总线。
+3. PCI 桥。当一条 PCI 总线的承载量不够时，可以用新的 PCI 总线进行扩展，而 PCI 桥则是连接 PCI 总线之间的纽带。
 
 PCIe的架构主要由五个部分组成：Root Complex，PCIe Bus，Endpoint，Port and Bridge，Switch。其整体架构呈现一个树状结构。
 
-1. Root Complex： 是PCIe的树的跟设备，一般实现了主桥设备(host bridge), 一条内部PCIe总线(Bus 0),以及通过多个PCI bridge 扩展出来的root port。host bridge完成cpu地址到pci地址的转换(?如何实现)，pci bridge用于系统的扩展，没有地址转换的功能。IOMMU设备是不是在这里？
+1. Root Complex： 是PCIe的树的根设备，一般实现了主桥设备(host bridge), 一条内部PCIe总线(Bus 0),以及通过多个PCI bridge 扩展出来的root port。host bridge完成cpu地址到pci地址的转换，也就是IOMMU，pci bridge用于系统的扩展，没有地址转换的功能。I
 2. Switch是转接器设备，作用是扩展pcie总线。switch中有一个upstream port和若干个downstream port， 每个port相当于一个pci bridge(乔是总线到总线的链接，所以是双口的)。
 3. pcie endpoint device是叶子节点设备，比如网卡，显卡，nvme等。
+4. Host Bridge用于隔离处理器系统的存储器域与PCI总线域，并完成处理器与PCI设备间的数据交换，属于RootComplex的一部分。每个Host Bridge单独管理独立的总线空间，包括PCI Bus, PCI I/O, PCI Memory, and PCI Prefetchable Memory Space。连接一个CPU或者多个CPU。
+5. Root Port： 位于Root Complex上通过相关联的虚拟PCI-PCI Bridge映射一个层次结构整体部分的的PCIE Port。
+6. Root Bridge，每个Root Bridge管理一个Local Bus空间，它下面挂载了一颗PCI总线树，在同一颗PCI总线树上的所有PCI设备属于同一个PCI总线域。
+7. PCI-to-PCI bridge ：又编写为PCI-PCI bridge，或者缩写为P2P bridge，提供PCI 结构到PCI结构的互联。
+8. PCI Express to PCI/PCI-X Bridges：又编写为PCIe-PCI/PCI-X Bridge或者PCIe-to-PCI-PCI-X-Bridge，提供PCIE结构到PCI/PCI-X结构的互联
+9. Switch内部使用的是virtual PCI-PCI bridge。
 
-### CPU Bus
+1. Link的概念：两个Ports和他们之间所连接Lanes的集合。一个Link是一个双工通信通道在两个部件之间。
+2. Lane的概念：一组不同的信号对，一对用来传送，一堆用来接收。由于PCIE使用差分信号传输，一条lane四条线，两条线组成一对，供发送。另外两条接收！
+
+
+### RC
+
+在x86处理器系统中，RC内部集成了一些PCI设备、RCRB(RC Register Block)和Event Collector等组成部件。其中RCRB由一系列的寄存器组成的大杂烩，而仅存在于x86处理器中；而Event Collector用来处理来自PCIe设备的错误消息报文和PME消息报文。RCRB的访问基地址一般在LPC设备寄存器上设置。
+
+REF: https://blogs.oracle.com/linux/post/a-study-of-the-linux-kernel-pci-subsystem-with-qemu
+
+### p2p
+EndPint是否可以直接访问另外一个EndPoint？
+
+在PCIE这种点对点的模型中，设备之间之间的互联访问是可以的。　　
+
+情况一：不需要CPU参与，最典型的应用就是在一个带有DMA功能的Switch下，挂载两个EP，CPU需要首先配置DMA控制器，包括设置一些源地址，目标地址，传输数据以及数据量。然后每个设备发起DMA传输的时候，会直接透过Switch中的DMA控制器，发数据到另外一个设备，这个过程不需要CPU干预
+
+情况二：CPU参与，这个过程就相对来说简单了，CPU从一个PCIE设备中读取出要发送的数据，然后直接发送给指定的目的PCIE设备节点即可。
+
+### ACS(Access Control Service)
+
+PCIe协议允许P2P传输，这也就意味着同一个PCIe交换开关连接下不同EP可以在不流经RC的情况下互相通信。若使用过程中不希望P2P直接通信又不采取相关措施，则该漏洞很有可能被无意或有意触发，使得某些EP收到无效、非法甚至恶意的访问请求，从而引发一系列潜在问题。
+
+ACS协议提供了一种机制，能够决定一个TLP被正常路由、阻塞或重定向。在SR-IOV系统中，还能防止属于VI或者不同SI的设备Function之间直接通信。通过在交换节点上开启ACS服务，可以禁止P2P发送，强迫交换节点将所有地址的访问请求送到RC，从而避开P2P访问中的风险。ACS可以应用于PCIe桥、交换节点以及带有VF的PF等所有具有调度功能的节点，充当一个看门人的角色。
+
+
+ACS支持以下类型的PCIe访问控制：
+• ACS来源验证；
+• ACS转换阻塞；
+• ACS P2P请求事务重定向；
+• ACS完成事务重定向；
+• ACS上行转发；
+• ACS P2P出口控制；
+• ACS定向转换P2P。
+
+为了提升ACS的隔离及保护能力，在常规ACS控制机制外提供了ACS增强能力，主要有如下四种：
+• ACS I/O请求阻塞；
+• ACS DSP存储器目标访问；
+• ACS USP存储器目标访问；
+• ACS未声明请求重定向。
+
+
+REF: https://developer.aliyun.com/article/1071405
+## 物理特性
+
+1. 它是个并行总线。在一个时钟周期内32个bit（后扩展到64）同时被传输。地址和数据在一个时钟周期内按照协议，分别一次被传输。
+2. PCI空间与处理器空间隔离。PCI设备具有独立的地址空间，即PCI总线地址空间，该空间与存储器地址空间通过Host bridge隔离。处理器需要通过Host bridge才能访问PCI设备，而PCI设备需要通过Host bridge才能主存储器。在Host bridge中含有许多缓冲，这些缓冲使得处理器总线与PCI总线工作在各自的时钟频率中，彼此互不干扰。Host bridge的存在也使得PCI设备和处理器可以方便地共享主存储器资源。处理器访问PCI设备时，必须通过Host bridge进行地址转换；而PCI设备访问主存储器时，也需要通过Host bridge进行地址转换。
+
+## CPU Bus
 
 - Integrated IO(device: 5)
   - Vt-d 
