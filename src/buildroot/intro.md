@@ -23,6 +23,14 @@ tar -xvzf buildroot-2023.02.2.tar.gz
 ~/buildroot-2023.02.2$ 
 make qemu_x86_64_defconfig
 make menuconfig
+
+```shell
+kernel
+     Kernel version (Custom version)  --->  (6.5.5) Kernel version
+Filesystem images
+[*] ext2/3/4 root filesystem    
+```
+
 make linux-menuconfig
 
 make
