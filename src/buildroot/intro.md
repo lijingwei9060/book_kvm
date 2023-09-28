@@ -25,6 +25,10 @@ make qemu_x86_64_defconfig
 make menuconfig
 
 ```shell
+Kernel Hacking
+    compile the kernel withd ebug info
+    Provide GDB scripts for kernel debugging
+    Reduce debugging information (取消)
 kernel
      Kernel version (Custom version)  --->  (6.5.5) Kernel version
 Filesystem images
@@ -35,9 +39,12 @@ make linux-menuconfig
 
 make
 
-
+cd  /home/casoul/buildroot-2023.08.1/output/images/
 qemu-system-x86_64 -kernel bzImage -hda rootfs.ext2 -append "root=/dev/sda rw console=ttyS0" --enable-kvm --nographic 
 
+debug： -s -S
+
+退出qemu：
 
 ./scripts/clang-tools/gen_compile_commands.py -d .
 
@@ -83,3 +90,34 @@ CompileFlags:
         "*.h": "c"
     }
 }
+
+
+gdb debug：
+
+1. 安装c/c++插件
+2. Debug->Open Configurations,做以下配置
+
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "kernel-debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "miDebuggerServerAddress": "127.0.0.1:1234",
+            "program": "${workspaceFolder}/vmlinux",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "logging": {
+                "engineLogging": false
+            },
+            "MIMode": "gdb",
+        }
+    ]
+    }
