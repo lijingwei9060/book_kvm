@@ -120,6 +120,38 @@ LVT(Local vector table) 实际上是一片连续的地址空间，每 32-bit 一
 并不是LVT中每个寄存器都拥有所有的field。
 
 
+### APIC Timer
+
+APIC Timer是一个32位的Timer，通过两个32位的Counter寄存器实现：
+1. Initial Count Register（APIC_Page[0x380]）
+2. Current Count Register（APIC_Page[0x390]，只读）
+
+Counter的频率由APIC Timer的基准频率除以Divide Configuration Register确定的除数获得, 地址0xFEE003E0H， reset后为0。
+
+Divide Configuration Register（APIC_Page[0x3E0]）的第0、1、3位决定了除数：
+- 000: divided by 2
+- 001: divided by 4
+- 010: divided by 8
+- 011: divided by 16
+- 100: divided by 32
+- 101: divided by 64
+- 110: divided by 128
+- 111: divided by 1 
+
+APIC Timer可能会随CPU休眠而停止运作，检查CPUID.06H.EAX.ARAT[bit 2]（APIC Timer Always Running bit）可知其是否会永远保持运作。APIC Timer的基准频率是总线频率（外频）或Core晶振频率（如果能通过CPUID.15H.ECX查到的话）。
+
+APIC Timer有三种操作模式，可以通过LVT Timer Register的第17-18位设置，分别是：
+
+1. One shot（00b）：写入Initial Count以启动Timer，Current Count会从Initial Count开始不断减小，直到最后降到零触发一个中断，并停止变化。One-shot 通过MMIO给 initial-count register写一个相对时间，比如10ms那就是10ms后来个中断，
+2. Periodic（01b）：写入Initial Count以重启Timer，Current Count会反复从Initial Count减小到0，并在减小到0时触发中断
+3. TSC-Deadline Mode（10b： TSC-Deadline通过给IA32_TSC_DEADLINE MSR写一个tsc的绝对时间，cpu的tsc值到了这个绝对值就来个中断
+   - CPUID.01H.ECX.TSC_Deadline[bit 24]表示是否支持TSC-Deadline模式，若不支持，第18位为reserved
+   - 此模式下，对Initial Count的写入会被忽略，Current Count永远为0。此时Timer受MSR[IA32_TSC_DEADLINE_MSR]控制，为其写入一个非零64位值即可激活Timer，使得在TSC达到该值时触发一个中断。该中断只会触发一次，触发后IA32_TSC_DEADLINE_MSR就被重置为零。
+
+写入LVT Timer Register切换到TSC-Deadline Mode是一个Memory操作，该操作和接下来的WRMSR指令间必须添加一个MFENCE以保证不会乱序
+
+注意前两种模式下，为Initial Count写入0即可停止Timer运作，在第三种模式下则是为IA32_TSC_DEADLINE_MSR写入0，此外修改模式也会停止Timer运行。当然，也可以通过LVT Timer Register中的Mask屏蔽Timer中断实现同样的效果。
+
 ### ICR： Issuing IPI
 Selft IPI和IOAPIC本身的中断这两种中断通过写 ICR 来发送。当对 ICR 进行写入时，将产生 interrupt message 并通过 system bus(Pentium 4 / Intel Xeon) 或 APIC bus(Pentium / P6 family) 送达目标 LAPIC 。
 
