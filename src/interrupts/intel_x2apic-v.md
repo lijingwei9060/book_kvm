@@ -35,15 +35,18 @@ Virtual-APIC Page中的寄存器的偏移量，vapic与APIC中对应的寄存器
 
 为了不让Guest访问到Host的APIC，早期采取的做法是利用Hypervisor对Shadow Page Table或EPT的控制，令Guest在访问落在APIC的MMIO区间的GPA (Guest Physical Address)时VM Exit，从而实现Trap-and-Emulate。
 
-现在已经有了更好的做法：当Secondary Processor-Based VM-Execution Controls.Virtualize APIC Accesses[bit 0] = 1时，可以通过设置APIC-Access Address（VMCS[0x2014]/VMCS[0x2015](64 bit full/high)）指定一个APIC-Access Page，Non-root模式下对HPA落在APIC-Access Page的内存访问默认的处理是引起一个VM Exit（VM Exit No.44 APIC Access）。
+现在已经有了更好的做法：当Secondary Processor-Based VM-Execution Controls.Virtualize APIC Accesses[bit 0] = 1时，可以通过设置`APIC-Access Address`（VMCS[0x2014]/VMCS[0x2015](64 bit full/high)）指定一个APIC-Access Page，Non-root模式下对HPA落在APIC-Access Page的内存访问默认的处理是引起一个VM Exit（VM Exit No.44 APIC Access）。
 
 Virtualize APIC Accesses 功能可以单独开启，此时它的作用仅仅是将Guest APIC访问的VM Exit从EPT Violaton改为了APIC Access，对Guest的APIC访问仍需要以Trap-and-Emulate方式实现。但是，若进一步开启其他APIC虚拟化功能，则可以将Guest APIC访问转变为访问Virtual-APIC Page中的虚拟寄存器。
 
 APIC Access VM Exit发生在Pagewalk之后，更进一步说是在页表项的A/D位被设置后，因为Pagewalk完成前还未获知HPA。另外，APIC-Access Page不能位于大页，否则可能失效。
 
-这里所说的内存访问指的是所谓的「Linear Access」，不包括Pagewalk时产生的内存访问等不使用Linear Address进行的内存访问，软件最好保证不要让Non-Linear Access访问到APIC-Access Page。
+这里所说的内存访问指的是所谓的`Linear Access`，不包括Pagewalk时产生的内存访问等不使用Linear Address进行的内存访问，软件最好保证不要让Non-Linear Access访问到APIC-Access Page。
 
-Memory Reads： 若满足下列任意条件，则对APIC-Access Page的读取会引起APIC Access VM Exit：
+APIC-access address：申请4K空间，通过ept map到GPA的0xfee00000。
+#### Memory Reads
+
+若满足下列任意条件，则对APIC-Access Page的读取会引起APIC Access VM Exit：
 
 - Use TPR Shadow = 0
 - 读取访问是一个取指令操作
@@ -65,11 +68,13 @@ Memory Reads： 若满足下列任意条件，则对APIC-Access Page的读取会
   - LVT Entries、Initial Count Register、Divide Configuration Register
   - 换句话说除了只读的PPR和Current Count Register，APIC中其余所有寄存器都允许从Virtual-APIC Page中读取
 
-Memory Writes： 若满足下列任意条件，则对APIC-Access Page的写入会引起APIC Access VM Exit：
+#### Memory Writes
+
+若满足下列任意条件，则对APIC-Access Page的写入会引起APIC Access VM Exit：
 
 - Use TPR Shadow = 0
 - 写入访问的Size大于32位
-- 导致写入的指令已经进行了一次对APIC-Access Page的写入的虚拟化
+- 导致写入的指令已经进行了一次对APIC-Access Page的写入的虚拟化
 - 没有访问到合法的寄存器
 
 否则，将有机会避免VM Exit，写入到Virtual-APIC Page：
@@ -108,7 +113,7 @@ Memory Writes： 若满足下列任意条件，则对APIC-Access Page的写入�
 
 ### MSR-Based APIC Accesses
 
-要实现对x2APIC的MSR寄存器的虚拟化，一种方式是利用MSR Bitmap（通过MSR Bitmap Address（VMCS[0x2004]/VMCS[0x2005](64 bit full/high)）指定），令对这些寄存器的访问都产生VM Exit（VM Exit No.31 RDMSR或VM Exit No.32 WRMSR），从而实现Trap-and-Emulate。
+要实现对x2APIC的MSR寄存器的虚拟化，一种方式是利用MSR Bitmap（通过MSR Bitmap Address（VMCS[0x2004]/VMCS[0x2005](64 bit full/high)）指定），令对这些寄存器的访问都产生VM Exit（VM Exit No.31 RDMSR或VM Exit No.32 WRMSR），从而实现Trap-and-Emulate。X2APIC和apic-access不能共存。
 
 若Secondary Processor-Based VM-Execution Controls.Virtualize x2APIC Mode[bit 4] = 1，则对于x2APIC MSR的访问会得到特殊处理。
 
@@ -131,6 +136,8 @@ Memory Writes： 若满足下列任意条件，则对APIC-Access Page的写入�
 4. 对其余寄存器的写入都会Passthrough、
 
 ### 总结
+
+apic-access page和virtual-apic page这两个page的物理地址写在VMCS中，一个guest只有一个apic-access page，每个虚拟CPU有一个virtual-apic page，guest虚拟CPU读写LAPIC时，EPT把地址翻译指向apic-access page，EPT翻译完了，CPU知道自己此时处于guest模式，正在运行哪个虚拟CPU，加载着哪个VMCS，然后去virtual apic page去拿数据，这样就能保证虚拟CPU访问相同的物理地址拿到不同的结果，而且不需要hypervisor软件介入，比如虚拟CPU读自己的LAPIC ID，那结果肯定不一样，EPT翻译到相同的地址，如果没重定向到virtual-apic page那么结果就一样了。
 
 首先，对于MMIO方式的访问，可以通过Virtualize APIC Access令对APIC-Access Page的访问，产生APIC Access VM Exit，该功能是对MMIO访问进行进一步虚拟化的前提，它可以独立于Use TPR Shadow开启。
 
@@ -158,7 +165,7 @@ Memory Writes： 若满足下列任意条件，则对APIC-Access Page的写入�
 ### FlexPriority
 在APICv推出之前，还有一个过渡性的技术，称为VT-x FlexPriority，它引入了Shadow TPR，即VTPR寄存器（Virtual-APIC Page也是此时引入的）。此时，Virtual-APIC Page中仅实现了VTPR一个寄存器，并且尚未发明APIC Write VM Exit，因此对VTPR寄存器的写入会起到类似APIC-Write Emulation的效果，不会引起APIC Write VM Exit。
 
-当Virtual-Interrupt Delivery = 0时，在写入完VTPR寄存器后
+当Virtual-Interrupt Delivery = 0时，在写入完VTPR寄存器后
 
 若VTPR[7:4] < TPR Threshold，则产生一个VM Exit（VM Exit No.43 TPR Below Threshold）
 否则，不会有任何副作用，也不会产生APIC Write VM Exit
@@ -166,13 +173,23 @@ Memory Writes： 若满足下列任意条件，则对APIC-Access Page的写入�
 
 若当前处于Non-root模式，写入了VTPR导致VTPR[7:4] < TPR Threshold，则立即产生TPR Below Threshold VM Exit
 若当前处于Root模式，且已满足VTPR[7:4] < TPR Threshold，则VM Entry后会立即产生TPR Below Threshold VM Exit
-也就是说，TPR Threshold 的作用是强制令Task Priority较低的vCPU停止执行。
+也就是说，TPR Threshold 的作用是强制令Task Priority较低的vCPU停止执行。
 
 ### Virtual Interrupt Delivery
 当Virtual-Interrupt Delivery = 1时，Virtual Interrupt Delivery功能就会开启，此时会引入一个Guest Non-Register State.Guest Interrupt Status（VMCS[0x810](16 bit)），它由两个8位的Field构成：
 
 - 低8位为Requesting Virtual Interrupt (RVI)，表示正在等待处理的中断中最大的Vector，相当于IRRV
 - 高8位为Servicing Virtual Interrupt (SVI)，表示正在处理的中断中最大的Vector，相当于ISRV
+
+使能条件： 置位VMCS中如下控制区域 secondary processor-based VM-executeion controls： virtual interrupt delivery，控制位使能后将自动使能VMCS的Guest-state区域中的Guest interrupt status区域。
+
+Virtual-interrupt delivery使能后，物理核会执行Evaluation of Pending Virtual Interrupts。会执行Evaluation of Pending Virtual Interrupts的场景：
+
+1. VM entry;
+2. TPR virtualization;
+3. EOI virtualization;
+4. self-IPI virtualization;
+5. posted-interrupt processing。
 
 #### PPR virtualization
 从前文可知，VPPR寄存器不允许Guest读取，未启用Virtual-Interrupt Delivery时，它等同于不存在。由于Virtual-Interrupt Delivery功能需要判断Guest的虚拟PPR，因此它在VM Entry、TPR virtualization和EOI virtualization时会自动更新VPPR寄存器的值：
@@ -211,7 +228,7 @@ VPPR更新的三个时机，选择的依据如下：
 
 真正的区别在于Interrupt Acknowledgement和Interrupt Delivery：
 
-首先来看传统的处理方法，Hypervisor会手动设置VIRR和VISR的位，然后通过Event Injection机制在紧接着的下一次VM Entry时注入一个中断向量号，调用Guest的IDT中注册的中断处理例程。如果Guest正处在屏蔽外部中断的状态，即Guest的RFLAGS.IF = 0或Guest Non-Register State.Interruptibility State（VMCS[0x4824](32 bit)）的Bit 0 (Blocking by STI)和Bit 1 (Blocking by MOV-SS)不全为零，将不允许在VM Entry时进行Event Injection。为了向vCPU注入中断，可以临时设置Primary Processor-Based VM-Execution Controls.Interrupt-Window Exiting = 1，然后主动VM Entry进入Non-root模式。一旦CPU进入能够接收中断的状态，即RFLAGS.IF = 1且Interruptibility State[1:0] = 0，便会产生一个VM Exit（VM Exit No.7 Interrupt Window），此时Hypervisor便可注入刚才无法注入的中断，并将Interrupt-Window Exiting重置为0。
+首先来看传统的处理方法，Hypervisor会手动设置VIRR和VISR的位，然后通过Event Injection机制在紧接着的下一次VM Entry时注入一个中断向量号，调用Guest的IDT中注册的中断处理例程。如果Guest正处在屏蔽外部中断的状态，即Guest的RFLAGS.IF = 0或Guest Non-Register State.Interruptibility State（VMCS[0x4824](32 bit)）的Bit 0 (Blocking by STI)和Bit 1 (Blocking by MOV-SS)不全为零，将不允许在VM Entry时进行Event Injection。为了向vCPU注入中断，可以临时设置Primary Processor-Based VM-Execution Controls.Interrupt-Window Exiting = 1，然后主动VM Entry进入Non-root模式。一旦CPU进入能够接收中断的状态，即RFLAGS.IF = 1且Interruptibility State[1:0] = 0，便会产生一个VM Exit（VM Exit No.7 Interrupt Window），此时Hypervisor便可注入刚才无法注入的中断，并将Interrupt-Window Exiting重置为0。
 
 Virtual-Interrupt Delivery解决了上述做法中的两个问题，第一个是需要Hypervisor手动模拟Interrupt Acknowledgement、Interrupt Delivery，第二个是有时需要产生Interrupt Window VM Exit以正确注入中断。
 
@@ -229,7 +246,7 @@ Virtual-Interrupt Delivery解决了上述做法中的两个问题，第一个是
 3. 若VIRR中还有非零位，设置RVI = VIRRV，即VIRR中优先级最高的Vector号，否则设置RVI = 0
 4. 根据RVI提供的Vector调用Guest的IDT中注册的中断处理例程
 
-基本上，Virtual-Interrupt Delivery就是用硬件自动执行了我们前文定义的Interrupt Acknowledgement和Interrupt Delivery两个步骤，除了它还需要同步RVI、SVI与VIRRV、VISRV。
+基本上，Virtual-Interrupt Delivery就是用硬件自动执行了我们前文定义的Interrupt Acknowledgement和Interrupt Delivery两个步骤，除了它还需要同步RVI、SVI与VIRRV、VISRV。
 
 现在来考察一下Virtual-Interrupt Delivery的用法：
 
@@ -266,6 +283,14 @@ Self-IPI virtualization：
 Posted Interrupt是对Virtual-Interrupt Delivery的进一步发展，让我们可以省略Interrupt Acceptance的过程，直接令正在运行的vCPU收到一个虚假中断，而不产生VM Exit。它可以向正在运行的vCPU注入中断，配合VT-d的Posted Interrupt功能，还可以实现Passthrough设备的中断直接发给vCPU而不引起VM Exit。
 
 我们可以通过Pin-Based VM-Execution Controls.Process Posted Interrupts[bit 7]开启Posted Interrupt功能，要启用该功能必须先开启Virtualize-Interrupt Delivery以及VM Exit Controls.Acknowledge Interrupt on Exit[bit 15]。
+
+需置位的VMCS Execution control区域如下：
+
+1. pin-based VM-execution controls: external-interrupt exiting、Process posted interrupts
+2. primary processor-based VM-executeion controls： Use TPR shadow， Virtual-APIC address、posted-interrupt notification vector、 posted-interrupt descriptor address
+3. secondary processor-based VM-executeion controls：APIC register virtualization、Virtual-interrupt delivery
+
+Posted Interrupt，它引入了一个Posted-Interrupt Notification Vector（VMCS[0x0002](16 bit)，仅最低8位有效）和一个64字节（恰好占满一个Cache Line）的Posted-Interrupt Descriptor。后者位于内存中，其地址（HPA）通过Posted-Interrupt Descriptor Address（VMCS[0x2016]/VMCS[0x2017](64 bit full/high)）指定。
 
 在介绍Posted Interrupt之前，首先来回顾一下，Non-root模式下对外部中断（指除NMI、SMI、INIT和Start-IPI外的所有中断）的处理：
 
