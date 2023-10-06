@@ -31,6 +31,11 @@ Local APIC（以下简称APIC）可以从以下来源接收中断：
 
 传统上，LAPIC的寄存器是通过MMIO访问的（即xAPIC模式），后来添加的x2APIC模式则通过MSR来访问其寄存器，这里先介绍xAPIC模式，x2APIC模式会在后面详细介绍。APIC默认的物理地址为从`0xFEE00000`起的4KB页，每个CPU使用的物理地址都是一样的，但它们对应的是各自的Local APIC。
 
+x86 CPU中一共有三种访问APIC的方式：
+1. 通过CR8来访问TPR寄存器（仅IA32-e即64位模式）
+2. 通过MMIO来访问APIC的寄存器，这是xAPIC模式提供的访问方式
+3. 通过MSR来访问APIC的寄存器，这是x2APIC模式提供的访问方式
+
 寄存器所在页的物理地址可以通过设置改变，这是P6时代遗留下来的上古特性，当时是为了防止与已经使用了这块地址的程序发生冲突，现在已无人使用。此外还需注意，该页在页表中必须设置为`strong uncacheable (UC)`。
 
 APIC可以硬件禁用/启用，禁用再启用后相当于断电重启。此外还可以软件禁用/启用，这只是暂时禁用，重新启用后其状态会得到保留。需要注意的是，APIC在通电后默认是处于软件禁用的状态的。
@@ -58,6 +63,31 @@ xAPIC模式下用到的唯一一个MSR是MSR[IA32_APIC_BASE]：
 - ISR(In-Service Register) 当前 LAPIC 送入 CPU 中 (CPU 正在处理) 的中断请求
 - TPR(Task Priority Register) 当前 CPU 处理中断所需的优先级
 - PPR(Processor Priority Register) 当前 CPU 处理中断所需的优先级，只读，由 TPR 决定
+
+分一下组：
+Timer related:
+CCR: Current Count Register
+ICR: Initial Count Register
+DCR: Divide Configuration Register
+Timer: in LVT
+ 
+LVT (Local Vector Table):
+ 
+Timer
+Local Interrupt
+Performance Monitor Counters
+Thermal Sensor
+Error
+ 
+IPI: 
+- ICR: Interrupt Command Register
+- LDR: Logical Destination Register
+- DFR: Destination Format Register
+ 
+Interrupt State: 
+- ISR: In-Service Register
+- IRR: Interrupt Request Register
+- TMR: Trigger Mode Register
 
 ### LVT： 本地中断
 
