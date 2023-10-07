@@ -207,6 +207,40 @@ xAPIC模式下，不建议使用Cluster模式，详情可参考[这个贴子](ht
 
 x2APIC只提供Cluster Model，不再支持Flat Model。由于x2APIC将APIC ID扩展为了32位，故Destination也是32位，其高16位为Cluster，低16位为Bitmap。显然x2APIC改进了Cluster Model的支持，鼓励使用该模式。
 
+内核中有2个lapic驱动apic_x2apic_cluster、apic_x2apic_phys、apic_noop，全局变量apic指向具体哪个驱动, 默认选择的是apic_x2apic_cluster。
+
+
+
+```C
+apic_intr_mode_select(void) // Select the interrupt delivery mode for the BSP, 设置全局变量apic_intr_mode
+enum apic_intr_mode_id apic_intr_mode：
+- APIC_PIC: 禁用APIC默认就是PIC模式
+- APIC_VIRTUAL_WIRE
+- APIC_VIRTUAL_WIRE_NO_CONFIG
+- APIC_SYMMETRIC_IO
+- APIC_SYMMETRIC_IO_NO_ROUTING
+```
+
+
+```C
+apic_intr_mode_init(void) // Init the interrupt delivery mode for the BSP
+|-> x86_64_probe_apic()
+    |-> enable_IR_x2apic();
+    |-> apic_install_driver(*drv);
+|-> x86_32_install_bigsmp();
+|-> x86_platform.apic_post_init() => kvm_apic_init();
+|-> apic_bsp_setup(upmode);
+```
+
+### 和PIC共存
+
+MP spec为PIC和APIC共存的平台规定了三种模式：PIC mode、Virtual Wire Mode、Symmetric I/O Mode。
+三种模式中，PIC mode和Virtual Wire Mode互斥存在。Symmetric I/O Mode是所有MP平台最终进入的模式。Spec规定，为了PC/AT compatibility，系统在RESET后首先进入PIC mode或者Virtual Wire mode，操作系统（或BIOS）在适当时候切换入Symmetric I/O Mode。
+
+IMCR，Interrupt Mode Configuration Register，中断模式配置寄存器，控制当前系统的中断模式——PIC？还是APIC？当系统RESET后，该寄存器清0，系统默认进入PIC模式。此时BSP（Boot Startup Processor，多处理器系统中第一个启动的CPU）的NMI和INTR脚为硬连线，直接从外部接入，不经过APIC。
+
+对IMCR写1，可将系统切换至Symmetric I/O Mode模式。此时外部中断直接通过APIC到达CPU，NMI则连接LAPIC的LINT1脚。
+
 ### Lowest Priority Mode
 当使用Logical Destination Mode或使用Destination Shorthand进行IPI群发时，可以使用Lowest Priority Mode，选出目标CPU集合中优先级最低的CPU作为发送对象，最终只有该CPU能收到IPI。
 
@@ -292,7 +326,7 @@ IRR、ISR、TMR大小都是256位，每一位代表一个Vector，EOI Register�
 
 当CPU执行完中断处理例程后，在调用IRET指令返回之前，应该向EOI Register进行写入（一般写入0即可），表示中断已经处理完毕。这会导致ISR的最高位被清空，并引起CPU接收IRR中Pending的中断（如果有的话）。
 
-若收到的中断是Level Triggered的，则在设置IRR中Vector对应位的同时，还会设置TMR中的对应位。到写入EOI Register时，就会检查TMR，发现欲完成的中断是Level Triggered的后就会通过总线向所有IOAPIC广播EOI Message。
+若收到的中断是Level Triggered的，则在设置IRR中Vector对应位的同时，还会设置TMR中的对应位。到写入EOI Register时，就会检查TMR，发现欲完成的中断是Level Triggered的后就会通过总线向所有IOAPIC广播EOI Message。
 
 这个默认的广播行为是可以禁止的，通过设置Spurious Interrupt Vector Register的第12位即可禁止向IOAPIC广播。此时，必须由软件手动设置发送中断的那个IOAPIC的EOI Register（仅后来集成在南桥的IOxAPIC具备，初代IOAPIC芯片不具备该寄存器），来完成EOI的必要步骤。
 
