@@ -242,7 +242,10 @@ vmx_x86_ops，.deliver_posted_interrupt = vmx_deliver_posted_interrupt
 
 当vCPU正在运行时，有posted-interrupt notification vector产生，此时虚机不需要vm exit，那么对于3、4两个操作是硬件自己做的，还是通过物理机上的posted-interrupt notification vector服务程序做的。通过查看smp_kvm_posted_intr_ipi函数commit信息，整个posted-interrup过程对vmm是透明的，smp_kvm_posted_intr_ipi函数就是当vcpu挂起的时候用的，通过这些信息说明3、4两个操作是硬件自己做的。
 
-kvm_vcpu_trigger_posted_interrupt 这里面先判断vcpu是否处于guest mode，如果是，说明正在运行，那么假设现在不在运行，然后另一个核给投入运行了，然后在发送也没啥事，因为先给ipr置位了，一旦执行了vm entry就响应中断了。
+kvm_vcpu_trigger_posted_interrupt 这里面先判断vcpu是否处于guest mode(vcpu->mode == IN_GUEST_MODE)，如果是，说明正在运行，那么假设现在不在运行，然后另一个核给投入运行了，然后在发送也没啥事，因为先给ipr置位了，一旦执行了vm entry就响应中断了。
+
+
+
 
 ### IOMMU + PI
 

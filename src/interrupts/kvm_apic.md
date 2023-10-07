@@ -410,3 +410,10 @@ apic_mmio_write()
    |- 踢醒(出)vCPU
 vmentry时触发中断检测
 ```
+
+
+
+
+LAPIC收到中断：
+
+kvm_apic_set_irq

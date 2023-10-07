@@ -184,3 +184,13 @@ kvm_irq_delivery_to_apic: 遍历每个vcpu，查看其apic id和重定向表中�
 kvm_lowest_prio_delivery
 kvm_apic_set_irq
 __apic_accept_irq: lapic收到来自其它CPU或IOAPIC发来的中断向量。lapic递交中断信号的主要动作就是往它模拟的lapic的寄存器地址上，IRR对应的地方写1，之后标记vcpu上的request的对应bit，这里是event。注意，除了这种方式，如果硬件支持posted-interrupt方式deliver中断，需要优先考虑使用。lapic将内存中IRR上中断向量对应bit置1后，make request就完成了。之后就是唤醒vcpu或者将其从guest态踢出，让其再次进入guest态前能够处理中断，这个动作被称为Kick
+
+
+kvm_irq_delivery_to_apic
+kvm_arch_async_page_present
+kvm_irq_delivery_to_apic_fast
+kvm_pv_send_ipi
+
+
+vmx_deliver_interrupt()
+|-> vmx_deliver_posted_interrupt(vcpu, vector)
