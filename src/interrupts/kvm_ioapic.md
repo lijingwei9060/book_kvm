@@ -253,10 +253,13 @@ IOMMU硬件单元也可以借用post interrupt机制把passthrough设备产生�
 
 一个passthrough给虚拟机的外设，虚拟机里driver给外设分配虚拟中断，qemu拦截到对外设pci config space的写，然后把虚拟中断更新到kvm的irq routing entry中，kvm再调用update_pi_irte把post interrupt descriptor地址和虚拟中断号更新到IRTE中。
 ```shell
-update_pi_irte
-  └─irq_set_vcpu_affinity
-       └─intel_ir_set_vcpu_affinity
-             └─modify_irte
+kvm_set_irq_routing()
+  void kvm_irq_routing_update(struct kvm *kvm)
+    kvm_arch_update_irqfd_routing
+      vmx_x86_ops.pi_update_irte = vmx_pi_update_irte
+        └─irq_set_vcpu_affinity
+            └─intel_ir_set_vcpu_affinity
+                  └─modify_irte
 ```
 
 vt-x posted interrupt就是另一个CPU更新了vcpu的post interrupt descriptor，发送一个ipi给vcpu运行的物理CPU。vt-d posted interrupt就是IOMMU硬件单元更新了vcpu的post interrupt descriptor。vt-x和vt-d post interrupt都不会导致vcpu运行的物理CPU从non-root模式exit到root模式，而且能把vcpu的中断注入到guest。但vt-d相比vt-x就弱智多了，一个vcpu有没有运行，运行在哪个物理cpu上，这个vcpu可不可以接收中断，或者vcpu从一个物理cpu迁移到另一个物理cpu，vt-d IOMMU都不能自己判断，只能通过kvm告诉它，所以kvm就把这些信息写到post interrupt descriptor的其它位中，IOMMU来读，这些位就是SN，NDST和NV。
