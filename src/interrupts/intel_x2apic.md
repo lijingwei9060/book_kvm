@@ -106,13 +106,14 @@ LVT(Local vector table) 实际上是一片连续的地址空间，每 32-bit 一
 1. 第0-7位为Vector，即CPU收到的中断向量号，其中0-15号被视为非法，会产生一个Illegal Vector错误（即ESR的第6位，详下）
 2. 第8-10位为Delivery Mode，有以下几种取值：
    1. 000b (Fixed)：按Vector的值向APIC所在的CPU发送相应的中断向量号
-   2. 010b (SMI)：向CPU发送一个SMI，为了兼容性Vector必须为0，SMI总是Edge Triggered的（即会忽略Trigger Mode的设置）
-   3. 011b (REMAPED)
-   4. 100b (NMI)：向CPU发送一个NMI，此时Vector会被忽略，NMI总是Edge Triggered的
-   5. 101b (INIT)
-   6. 110b (STARTUP)
-   7. 111b (ExtINT)：令CPU按照响应外部8259A PIC的方式响应中断，这将会引起一个INTA周期，CPU在该周期向外部控制器索取Vector
-   8. 整个系统中应当只有一个CPU的其中一个LVT表项配置为ExtINT模式，因为整个系统应该只有一个PIC
+   2. 001b (Lowest)
+   3. 010b (SMI)：向CPU发送一个SMI，为了兼容性Vector必须为0，SMI总是Edge Triggered的（即会忽略Trigger Mode的设置）
+   4. 011b (REMAPED)
+   5. 100b (NMI)：向CPU发送一个NMI，此时Vector会被忽略，NMI总是Edge Triggered的
+   6. 101b (INIT)
+   7. 110b (STARTUP)
+   8. 111b (ExtINT)：令CPU按照响应外部8259A PIC的方式响应中断，这将会引起一个INTA周期，CPU在该周期向外部控制器索取Vector
+   9. 整个系统中应当只有一个CPU的其中一个LVT表项配置为ExtINT模式，因为整个系统应该只有一个PIC
 3. 第12位为Delivery Status（只读），取0表示空闲，取1表示CPU尚未接受该中断（尚未EOI）
 4. 第13位为Interrupt Input Pin Polarity，取0表示LINT0/LINT1引脚上的信号是Active High的，取1表示Active Low
 5. 第14位为Remote IRR Flag（只读），若当前接受的中断为Fixed Mode且是Level Triggered的，则该位为1表示CPU已经接受中断（已将中断加入IRR），但尚未进行EOI。CPU执行EOI后，该位就恢复到0
