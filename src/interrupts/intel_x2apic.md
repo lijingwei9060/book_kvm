@@ -384,6 +384,16 @@ Spurious-Interrupt Vector Register (SVR, APIC_Page[0xF0])的格式如下：
 
 并非所有型号的CPU都支持Suppress EOI Broadcasts，这个功能实际上是与x2APIC模式一同引入的，可以通过查询APIC Version Register的第24位获知是否支持该功能。换句话说，它实际上是对过去广播EOI Message的改进，现代CPU上建议启用该功能。
 
+
+通过Spurious-Interrupt Vector Register进行APIC初始化：
+1. 禁用APIC，将SIV第8位置0. `apic_write(APIC_SPIV, value)`
+2. 设置LDR、DFR、TPR: TPR初始值为0x10，可以接收除了0-31以外的所有vector。
+3. 清理ISR/IRR： 因为系统crash可能存在旧的isr、irr信息，因为没有eoi所以有残留。需要发出一个eoi， apic_eoi,这里执行512次，极端情况下ISR和ISR里面都有中断位，每个都有256位，所以执行512次。
+4. 启用APIC配置Spurious Interrupt，将SIV第8位置1，0-7位(spurious interrupt)全部置1，apic_write(APIC_SPIV, SPURIOUS_APIC_VECTOR|APIC_SPIV_APIC_ENABLED)。
+5. 设置LVT0/LVT1负责转发来自LINT0引脚的中断，本地直连 IO 设备 (Locally connected I/O devices) 通过 LINT0 和 LINT1 引脚发来的中断
+6. 负责发送Corrected Machine Check Error Interrupt，被纠正的Machine Check Error累积至超过一个阈值后，便会引起一个CMCI中断
+7. ESR: Error Status Register(0x280), Readonly
+
 ## Message Signalled Interrupts
 MSI (Message Signalled Interrupt)是PCI总线引入的功能，它本质上就是在中断发生时，不通过带外（Side-band）的中断信号线（INTx机制），而是通过带内（In-band）的PCI写入事务来通知中断的发生。
 
