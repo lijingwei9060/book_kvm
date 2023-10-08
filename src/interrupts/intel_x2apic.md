@@ -183,9 +183,8 @@ Interrupt Command Register (ICR)：是一个64位寄存器，分为ICR_Low（API
 IOAPIC和MSI方式发送的中断，包括经过VT-d重映射的中断，由于System Bus上的中断消息格式相同，其配置涉及的参数都与IPI几乎相同
 
 
-Physical Destination Mode：若Destination Mode取0，则为Physical模式。在此模式下，Destination表示目标CPU的APIC ID，0xF（奔腾和P6）或0xFF（奔腾4及以后）表示全局广播。
-
-Logical Destination Mode： 若Destination Mode取1，则为Logical模式。在此模式下，Destination不再是物理的APIC ID而是逻辑上代表一组CPU，手册将此时的Destination称为Message Destination Address (MDA)。
+- Physical Destination Mode：若Destination Mode取0，则为Physical模式。在此模式下，Destination表示目标CPU的APIC ID，0xF（奔腾和P6）或0xFF（奔腾4及以后）表示全局广播。
+- Logical Destination Mode： 若Destination Mode取1，则为Logical模式。在此模式下，Destination不再是物理的APIC ID而是逻辑上代表一组CPU，手册将此时的Destination称为Message Destination Address (MDA)。
 
 IPI Message发送到System Bus上后，各个CPU的APIC会根据自己的Logical Destination Register (LDR)和Destination Format Register (DFR)决定是否要接受这个IPI：
 
@@ -209,6 +208,20 @@ x2APIC只提供Cluster Model，不再支持Flat Model。由于x2APIC将APIC ID�
 
 内核中有2个lapic驱动apic_x2apic_cluster、apic_x2apic_phys、apic_noop，全局变量apic指向具体哪个驱动, 默认选择的是apic_x2apic_cluster。
 
+x86_cpu_to_logical_apicid: 这是一个数组，存放nr_cpu_ids 个 cpu对应的logical_apicid = (cluster << 16) | (1 << (phys_apicid & 0xf))
+x2apic_cluster_probe： 分配x86_cpu_to_logical_apicid内存空间，为每个cpu分配logical_apicid
+
+```C
+void x2apic_send_IPI(int cpu, int vector) // 向指定CPU发送IPI
+|-> __x2apic_send_IPI_dest(dest, vector, APIC_DEST_LOGICAL)
+    |-> unsigned long cfg = __prepare_ICR(0, vector, dest)
+    |-> native_x2apic_icr_write(cfg, apicid)
+        |-> wrmsrl(APIC_BASE_MSR + (APIC_ICR >> 4), ((__u64) id) << 32 | low)
+x2apic_send_IPI_allbutself(int vector) => __x2apic_send_IPI_shorthand(vector, APIC_DEST_ALLBUT) // 使用shorthand，向所有除了自己
+x2apic_send_IPI_all(int vector) => __x2apic_send_IPI_shorthand(vector, APIC_DEST_ALLINC)        // 使用shorthand，向所有
+x2apic_send_IPI_self(int vector) => apic_write(APIC_SELF_IPI, vector)    => native_apic_msr_write(APIC_SELF_IPI, vector) // 向Self IPI Register 写入vector，发送自身IPI
+
+```
 
 
 ```C
@@ -330,6 +343,29 @@ IRR、ISR、TMR大小都是256位，每一位代表一个Vector，EOI Register�
 
 这个默认的广播行为是可以禁止的，通过设置Spurious Interrupt Vector Register的第12位即可禁止向IOAPIC广播。此时，必须由软件手动设置发送中断的那个IOAPIC的EOI Register（仅后来集成在南桥的IOxAPIC具备，初代IOAPIC芯片不具备该寄存器），来完成EOI的必要步骤。
 
+### EOI 过程
+
+中断中经常出现边沿触发(edge triggered)与电平触发(level triggered)，它和其他地方的概念类似：
+- 边沿触发：在一个计时周期内电信号出现变换，如低电平变高电平是上升沿变换，反之为下降沿变换，这种变换是在一个周期内比较两次电平来检测的，因此若中断被屏蔽，则这个中断信号就会被丢弃。
+- 电平触发：在一段时间内电信号保持低电平或高电平状态，它会一直有效，即使中断被屏蔽，之后开中断后依然能识别并处理它。
+
+edge 触发中断的基本处理过程：电压跳变触发中断===>中断控制器接收中断，记IRR寄存器===>中断控制器置ISR寄存器===>CPU屏蔽本CPU中断===>CPU处理中断，发出EOI===>中断控制器确认可以处理下一次中断===>ISR清中断源，电压归位===>中断源可以发起下一次中断===>CPU中断处理完成，执行完现场处理后执行IRET，不再屏蔽本CPU中断。
+level 触发：这种模式下，外设通过把电压保持到某个门限值来完成触发中断，在处理完成(EOI)后，如果电压还在门限值，就会再次触发中断的执行。 
+
+
+CPU执行中断处理例程，在合适的时机(在IRET指令前)通过写EOI(EOI Register, 32bit，APIC_Page[0xB0])寄存器来确认中断处理已经完成，写EOI寄存器会导致local APIC清理ISR(In Service Register，正在处理的中断寄存器)的对应bit，对于level trigged中断，还会向所有的I/O APIC发送EOI message，通告中断处理已经完成。
+
+对于 level-triggered interrupt， EOI 会被发送给所有的 IOAPIC。可以通过设置 Spurious Interrupt Vector Register 的 bit12 来避免 EOI 广播。
+
+怎么写EOI寄存器，APIC-Page msr？
+```C
+static inline void native_apic_msr_eoi(void)
+{
+	__wrmsr(APIC_BASE_MSR + (APIC_EOI >> 4), APIC_EOI_ACK, 0);
+}
+```
+
+如何抑制IO APIC的EOI Message 广播？
 
 ## Spurious Interrupt
 
@@ -430,3 +466,4 @@ LDR寄存器的取值是在初始化时就由x2APIC ID决定的，可以称之�
 
 ### Self IPI Register
 该寄存器是一个只写的寄存器，试图读取会造成#GP，仅0-7位有效，代表了Interrupt Vector。写入该寄存器的效果等价于通过写入ICR发送一个Edge Triggered、Fixed Interrupt的Self IPI。
+MSR 地址 `#define APIC_SELF_IPI	0x3F0`。
