@@ -1,4 +1,117 @@
-# isr管理
+# IDT
+IDT的位置由IDTR寄存器保存。所以在代码中加载IDT的代码如下：
+```C
+static inline void native_load_idt(const struct desc_ptr *dtr)
+{
+	asm volatile("lidt %0"::"m" (*dtr));
+}
+```
+而其中struct desc_ptr的一个实现则长成这个样子：
+```C
+/* Must be page-aligned because the real IDT is used in a fixmap. */
+static gate_desc idt_table[IDT_ENTRIES] __page_aligned_bss;
+
+static struct desc_ptr idt_descr __ro_after_init = {
+	.size		= IDT_TABLE_SIZE - 1,
+	.address	= (unsigned long) idt_table,
+};
+```
+
+```C
+/*
+ * Linux IRQ vector layout.
+ *
+ * There are 256 IDT entries (per CPU - each entry is 8 bytes) which can
+ * be defined by Linux. They are used as a jump table by the CPU when a
+ * given vector is triggered - by a CPU-external, CPU-internal or
+ * software-triggered event.
+ *
+ * Linux sets the kernel code address each entry jumps to early during
+ * bootup, and never changes them. This is the general layout of the
+ * IDT entries:
+ *
+ *  Vectors   0 ...  31 : system traps and exceptions - hardcoded events
+ *  Vectors  32 ... 127 : device interrupts
+ *  Vector  128         : legacy int80 syscall interface
+ *  Vectors 129 ... INVALIDATE_TLB_VECTOR_START-1 except 204 : device interrupts
+ *  Vectors INVALIDATE_TLB_VECTOR_START ... 255 : special interrupts
+ *
+ * 64-bit x86 has per CPU IDT tables, 32-bit has one shared IDT table.
+ *
+ * This file enumerates the exact layout of them:
+ */
+```
+前32个system traps和exception，每个CPU都有一套定义
+
+1. IST_INDEX_NMI 类似的是值得IST索引
+```C
+static const __initconst struct idt_data def_idts[] = {
+	INTG(X86_TRAP_DE,		asm_exc_divide_error),
+	ISTG(X86_TRAP_NMI,		asm_exc_nmi, IST_INDEX_NMI),
+	INTG(X86_TRAP_BR,		asm_exc_bounds),
+	INTG(X86_TRAP_UD,		asm_exc_invalid_op),
+	INTG(X86_TRAP_NM,		asm_exc_device_not_available),
+	INTG(X86_TRAP_OLD_MF,		asm_exc_coproc_segment_overrun),
+	INTG(X86_TRAP_TS,		asm_exc_invalid_tss),
+	INTG(X86_TRAP_NP,		asm_exc_segment_not_present),
+	INTG(X86_TRAP_SS,		asm_exc_stack_segment),
+	INTG(X86_TRAP_GP,		asm_exc_general_protection),
+	INTG(X86_TRAP_SPURIOUS,		asm_exc_spurious_interrupt_bug),
+	INTG(X86_TRAP_MF,		asm_exc_coprocessor_error),
+	INTG(X86_TRAP_AC,		asm_exc_alignment_check),
+	INTG(X86_TRAP_XF,		asm_exc_simd_coprocessor_error),
+	ISTG(X86_TRAP_DF,		asm_exc_double_fault, IST_INDEX_DF),
+	ISTG(X86_TRAP_DB,		asm_exc_debug, IST_INDEX_DB),
+	ISTG(X86_TRAP_MC,		asm_exc_machine_check, IST_INDEX_MCE),
+	INTG(X86_TRAP_CP,		asm_exc_control_protection),
+	SYSG(X86_TRAP_OF,		asm_exc_overflow),
+	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_compat),
+};
+```
+2. special interrupt ,apic 和smp的中断, 从255 - 236好特殊设备中断
+```C
+/*
+ * The APIC and SMP idt entries
+ */
+static const __initconst struct idt_data apic_idts[] = {
+	INTG(RESCHEDULE_VECTOR,			asm_sysvec_reschedule_ipi),
+	INTG(CALL_FUNCTION_VECTOR,		asm_sysvec_call_function),
+	INTG(CALL_FUNCTION_SINGLE_VECTOR,	asm_sysvec_call_function_single),
+	INTG(REBOOT_VECTOR,			asm_sysvec_reboot),
+	INTG(THERMAL_APIC_VECTOR,		asm_sysvec_thermal),
+	INTG(THRESHOLD_APIC_VECTOR,		asm_sysvec_threshold),
+	INTG(DEFERRED_ERROR_VECTOR,		asm_sysvec_deferred_error),
+	INTG(LOCAL_TIMER_VECTOR,		asm_sysvec_apic_timer_interrupt),
+	INTG(X86_PLATFORM_IPI_VECTOR,		asm_sysvec_x86_platform_ipi),
+	INTG(POSTED_INTR_VECTOR,		asm_sysvec_kvm_posted_intr_ipi),
+	INTG(POSTED_INTR_WAKEUP_VECTOR,		asm_sysvec_kvm_posted_intr_wakeup_ipi),
+	INTG(POSTED_INTR_NESTED_VECTOR,		asm_sysvec_kvm_posted_intr_nested_ipi),
+	INTG(IRQ_WORK_VECTOR,			asm_sysvec_irq_work),
+	INTG(SPURIOUS_APIC_VECTOR,		asm_sysvec_spurious_apic_interrupt),
+	INTG(ERROR_APIC_VECTOR,			asm_sysvec_error_interrupt),
+}
+```
+
+3. FIRST_SYSTEM_VECTOR(236) - FIRST_EXTERNAL_VECTOR(32) 中断设置common_interrupt()
+```C
+common_interrupt()
+	handle_irq(desc, regs);
+		generic_handle_irq_desc(desc);
+			desc->handle_irq(desc)
+```
+
+```C
+handle_level_irq() => irq_set_chip_and_handler(i, chip, handle_level_irq);
+hpet_msi_init() => irq_domain_set_info(domain, virq, arg->hwirq, info->chip, NULL,  handle_edge_irq, arg->data, "edge");
+```
+
+chip_types->handler
+终于是时候看一眼这个handler长什么样子了，在代码中这个handler可以设置为几种情况：
+- handle_level_irq
+- handle_edge_irq
+- handle_edge_eoi_irq
+- handle_percpu_irq
+## isr管理
 
 ## 中断线程化
 
