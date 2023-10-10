@@ -114,13 +114,43 @@ static struct desc_ptr idt_descr
 
 ## 中断初始化
 
-64位Linux启动大的方向上需要经过 实模式 -> 保护模式 -> 长模式 第三种模式的转换
+64位Linux启动大的方向上需要经过 实模式 -> 保护模式 -> 长模式 第三种模式的转换。
+
+intel 80x86系列的CPU可以分别在16位实模式和32位保护模式下运行。
+1. Intel将所有的80x86系列CPU，包括最新信号的CPU硬件都设计为加电即进入16位实模式状态运行，将CPU硬件逻辑设计为加电瞬间强制将CS的值置为0xF000、IP的值置为0xFFF0, 这样CS:IP就指向0xFFFF0这个地址位置，0xFFFF0指向了BIOS的地址范围。BIOS程序的入口地址就是0xFFFF0,BIOS程序的第一条指令就设计在这个位置。
+2. BIOS启动过程中一项至关重要的工作：在内存中建立中断向量表和中断服务程序。
+3. BIOS程序在内存最开始的位置(0x00000)用1KB的内存空间(0x00000 ~ 0x003FF)构建中断向量表，在紧挨着它的位置用256字节的内存空间构建BIOS数据区(0x00400 ~ 0x004FF),并在大约57KB以后的位置(0x0E05B)加载了8KB左右的与中断向量表相应的若干中断服务程序。中断向量表中有256个中断向量，每个中断向量占4字节，其中两个字节是CS的值，两个字节是IP的值。每个中断向量都指向一个具体的中断服务程序。
+
+
+
+sdsd
 
 1. 第一次初始化：实模式下的初始化，在实模式下也有一个BIOS的中断向量表，这个中断向量表提供了一些类似于BIOS的系统调用一样的方法。比如Linux在初始化时需要获取物理内存的详情，就 是调用了BIOS的相应中断来获取的。
 2. 第二次初始化: 在进入到保护模式后，会全新初始化一个空的中断描述符表 IDT(gate_desc idt_table[IDT_ENTRIES] ), 供 kernel 使用;Linux Kernel提供256个大小的中断描述符表。
 3. 第三次初始化: 在进入到长模式后，在x86_64_start_kernel先初始化(idt_setup_early_handler)前(early_idt_handler_array)32个异常类型的中断(即上面定义的 idt_table 的前32项)；
 
-idt_setup_early_traps： 注入2个中断处理函数，early_idts
+- 全局变量`static gate_desc idt_table[IDT_ENTRIES]`保存256个中断处理函数,gate_desc 结构体是一个在 x86 中被称为门的 16 字节数组, 保存中断处理程序的地址信息和信息。
+- 静态初始化的`struct idt_data early_idts`包含`X86_TRAP_DB`和`X86_TRAP_BP`， 用于debug处理。32位架构时，额外定义page_fault异常。
+
+- idt_setup_early_traps： 注入early_idts2个中断处理函数用于debug，将`idt_table`地址加载到`IDTR`寄存器中。
+
+```C
+struct gate_struct {
+    u16        offset_low;    // 0-15 bits – 段选择器偏移，处理器用它作为中断处理程序的入口指针基址。
+    u16        segment;       // 16-31 bits – 段选择器基址，包含中断处理程序入口指针。
+    struct idt_bits    bits;
+    u16        offset_middle; // 48-63 bits – 中断处理程序基址的第二部分。
+    u32        offset_high;   // 64-95 bits – 中断处理程序基址的第三部分。
+    u32        reserved;      // 6-127 bits – CPU 保留位。
+};
+struct idt_bits {
+    u16        ist    : 3, // IST – 在 x86_64 上的一个新的机制。
+            zero    : 5,
+            type    : 5,   // Type – 描述了 IDT 条目的类型。(即：中断门、任务门、陷阱门)
+            dpl    : 2,    // DPL – 描述符特权等级。
+            p    : 1;      // P – 段存在标志。
+};
+```
 idt_setup_early_pf： 注入缺页异常中断处理程序
 trap_init： 注入trap部分的中断处理程序
 idt_setup_ist_traps： 更新部分异常的中断处理程序

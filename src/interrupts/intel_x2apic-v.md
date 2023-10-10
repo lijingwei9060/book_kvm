@@ -1,12 +1,21 @@
 # 概念
 
 lapic需要虚拟的内容：
-1. virtual apic state： lapic寄存器虚拟化， apic-register virtualization
+1. virtual apic state： lapic寄存器虚拟化， apic-register virtualization，virtual apic page对应apic的寄存器，地址保存在VMCS[vm-execution control]中。
 2. apic-access 使能
 3. x2apic
 4. virtual-interrupt delivery
 5. post interrupt
 
+## VMCS VM-Execution Controls
+VMCS 中有中断和 APIC 虚拟化相关的控制位，启用这些特性后，处理器会模拟对 APIC 的大多数访问，跟踪 vAPIC 状态并交付中断——这些都在 non-root 模式下进行，不触发 VM Exit。处理器根据 VMM 指定的 virtual-APIC page 跟踪 vAPIC 状态。
+
+1. Virtual-interrupt delivery：启用对挂起虚拟中断的评估和交付，支持模拟写入控制中断优先级的 APIC 寄存器（MMIO 或 MSR）。
+2. Use TPR shadow：启用通过 CR8 模拟对 APIC 任务优先级寄存器 TPR 的访问（MMIO 或 MSR）。
+3. Virtualize APIC accesses：启用 MMIO 访问 APIC 的虚拟化，处理器访问 VMM 指定的 APIC-access page 时触发 VM Exit，或模拟访问。
+4. Virtualize x2APIC mode：启用基于 MSR 访问 APIC。
+5. APIC-register virtualization：对大多数 APIC 寄存器的读都重定向到 virtual-APIC page，而写操作会定向到 APCI-access page 触发 VM Exit。
+6. Process posted Interrupts：允许软件在数据结构中发送中断，并向另一个逻辑处理器发送通知，收到通知的目标处理器会将发送来的中断复制到 virtual-APIC page 做进一步处理。
 
 ## virtual apic state
 
@@ -14,8 +23,8 @@ lapic需要虚拟的内容：
 
 我们知道，x86 CPU中一共有三种访问APIC的方式：
 1. 通过CR8来访问TPR寄存器（仅IA32-e即64位模式）
-2. 通过MMIO来访问APIC的寄存器，这是xAPIC模式提供的访问方式
-3. 通过MSR来访问APIC的寄存器，这是x2APIC模式提供的访问方式
+2. 通过MMIO来访问APIC的寄存器, 基地址位 IA32_APIC_BASE MSR 的 4K 页，这是xAPIC模式提供的访问方式
+3. 通过MSR来访问APIC的寄存器，使用 RDMSR 和 WRMSR 访问, 这是x2APIC模式提供的访问方式
 
 无论哪种方式，Guest对APIC的访问都可以配置为访问Virtual-APIC Page，下面几节会分别介绍三种访问方式的具体配置和虚拟化方式。
 
@@ -27,23 +36,59 @@ Virtual-APIC Page中的寄存器的偏移量，vapic与APIC中对应的寄存器
 ### CR8-Based TPR Accesses
 默认情况下，Non-root模式下进行MOV CR8操作，会直接操作CPU硬件的CR8寄存器从而操作其APIC的TPR寄存器的第4-7位。
 
-1. 为了实现CR8寄存器的虚拟化，可以利用Primary Processor-Based VM-Execution Controls.CR8-Load Exiting[bit 19]和Primary Processor-Based VM-Execution Controls.CR8-Store Exiting[bit 20]这两个位，分别可以让Guest在Mov-to-CR8和Mov-from-CR8时发生VM Exit（VM Exit No.28 Control-Register Accesses），从而实现Trap-and-Emulate。
+1. 为了实现CR8寄存器的虚拟化，可以利用Primary Processor-Based VM-Execution Controls.CR8-Load Exiting[bit 19]和Primary Processor-Based VM-Execution Controls.CR8-Store Exiting[bit 20]这两个位，分别可以让Guest在Mov-to-CR8和Mov-from-CR8时发生VM Exit（EXIT_REASON_CR_ACCESS, VM Exit No.28 Control-Register Accesses），从而实现Trap-and-Emulate(handle_cr kvm_get_cr8 kvm_set_cr8)。
 2. 另一种更好的方式是设置Primary Processor-Based VM-Execution Controls.Use TPR Shadow[bit 21] = 1，这样Guest在访问CR8时实际上会访问Virtual-APIC Page中的Virtual TPR (VTPR)寄存器的第4-7位。
 
-### Memory-Mapped APIC Accesses
-默认情况下，Non-root模式下CPU访问APIC的MMIO地址（HPA, Host Physical Address），会直接访问到CPU的APIC。
+处理器针对以下操作执行 Task-Priority Register, TPR 虚拟化：
 
-为了不让Guest访问到Host的APIC，早期采取的做法是利用Hypervisor对Shadow Page Table或EPT的控制，令Guest在访问落在APIC的MMIO区间的GPA (Guest Physical Address)时VM Exit，从而实现Trap-and-Emulate。
+1. MOV to CR8 指令的虚拟化
+2. 对 `APIC-access page` 080H 偏移写操作的虚拟化
+3. 对 ECX =808H，WRMSR 指令的虚拟化
 
-现在已经有了更好的做法：当Secondary Processor-Based VM-Execution Controls.Virtualize APIC Accesses[bit 0] = 1时，可以通过设置`APIC-Access Address`（VMCS[0x2014]/VMCS[0x2015](64 bit full/high)）指定一个APIC-Access Page，Non-root模式下对HPA落在APIC-Access Page的内存访问默认的处理是引起一个VM Exit（VM Exit No.44 APIC Access）。
+IF “virtual-interrupt delivery” is 0
+    THEN
+        IF VTPR[7:4] < TPR threshold (see Section 23.6.8)
+            THEN cause VM exit due to TPR below threshold;(EXIT_REASON_TPR_BELOW_THRESHOLD, handle_tpr_below_threshold)
+        FI;
+    ELSE
+        perform PPR virtualization (see Section 28.1.3);
+        evaluate pending virtual interrupts (see Section 28.2.1);
+FI;
+由 TPR 虚拟化触发的 VM Exit 类似 trap。
 
-Virtualize APIC Accesses 功能可以单独开启，此时它的作用仅仅是将Guest APIC访问的VM Exit从EPT Violaton改为了APIC Access，对Guest的APIC访问仍需要以Trap-and-Emulate方式实现。但是，若进一步开启其他APIC虚拟化功能，则可以将Guest APIC访问转变为访问Virtual-APIC Page中的虚拟寄存器。
 
-APIC Access VM Exit发生在Pagewalk之后，更进一步说是在页表项的A/D位被设置后，因为Pagewalk完成前还未获知HPA。另外，APIC-Access Page不能位于大页，否则可能失效。
+### Memory-Mapped APIC Accesses(XAPIC?)
+默认情况下，Non-root模式下CPU访问APIC的MMIO地址（HPA, Host Physical Address），会直接访问到CPU的APIC, 默认的MMIO地址为0xfee00000。
+
+为了不让Guest访问到Host的APIC，早期采取的做法是利用Hypervisor对Shadow Page Table或EPT的控制，令Guest在访问落在APIC的MMIO区间的GPA (Guest Physical Address)时VM Exit(EXIT_REASON_EPT_VIOLATION)，从而实现Trap-and-Emulate(`handle_ept_violation`)。KVM会从vmcs中得到GUEST_PHYSICAL_ADDRESS地址、退出的原因EXIT_QUALIFICATION。
+
+现在已经有了更好的做法：当Secondary Processor-Based VM-Execution Controls.Virtualize APIC Accesses[bit 0] = 1时，可以通过设置`APIC-Access Address`（VMCS[0x2014]/VMCS[0x2015](64 bit full/high)）指定一个APIC-Access Page，Non-root模式下对HPA落在APIC-Access Page的内存访问默认的处理是引起一个VM Exit（ `EXIT_REASON_APIC_ACCESS` VM Exit No.44 APIC Access ）。
+
+Virtualize APIC Accesses 功能可以单独开启，此时它的作用仅仅是将Guest APIC访问的VM Exit从EPT Violaton改为了APIC Access(`EXIT_REASON_APIC_ACCESS`)，对Guest的APIC访问仍需要以Trap-and-Emulate(`handle_apic_access`)方式实现。但是，若进一步开启其他APIC虚拟化功能，则可以将Guest APIC访问转变为访问Virtual-APIC Page中的虚拟寄存器。
+
+APIC Access VM Exit(`EXIT_REASON_APIC_ACCESS`)发生在Pagewalk之后，更进一步说是在页表项的A/D位被设置后，因为Pagewalk完成前还未获知HPA。另外，APIC-Access Page不能位于大页，否则可能失效。
 
 这里所说的内存访问指的是所谓的`Linear Access`，不包括Pagewalk时产生的内存访问等不使用Linear Address进行的内存访问，软件最好保证不要让Non-Linear Access访问到APIC-Access Page。
 
 APIC-access address：申请4K空间，通过ept map到GPA的0xfee00000。
+
+APIC-access page and virtual-APIC page in VMCS field， 虚拟机访问apic-access page，将获得对应的v-apic page.
+- APIC-access page: 4Kb物理地址，kvm->kvm_arch->apic_access_page, 这个在KVM代码中alloc_apic_access_page
+- virtual-apic page：4Kb物理地址， kvm_vcpu->apic->regs
+
+```C
+int kvm_create_lapic(struct kvm_vcpu *vcpu): // 申请 page
+    vcpu->arch.apic = apic;
+	  apic->regs = (void *)get_zeroed_page(GFP_KERNEL);
+    apic->vcpu = vcpu;
+```
+
+
+alloc_apic_access_page： 分配apic access page
+vmx_vcpu_reset: it writes the APIC-access page and virtual-apic page to VMCS.
+
+申请一个kvm_userspace_mem， gpa地址为0xfee00000ULL，大小一个页面，指向kvm->kvm_arch->apic_access_page。
+
 #### Memory Reads
 
 若满足下列任意条件，则对APIC-Access Page的读取会引起APIC Access VM Exit：
@@ -228,7 +273,7 @@ VPPR更新的三个时机，选择的依据如下：
 
 真正的区别在于Interrupt Acknowledgement和Interrupt Delivery：
 
-首先来看传统的处理方法，Hypervisor会手动设置VIRR和VISR的位，然后通过Event Injection机制在紧接着的下一次VM Entry时注入一个中断向量号，调用Guest的IDT中注册的中断处理例程。如果Guest正处在屏蔽外部中断的状态，即Guest的RFLAGS.IF = 0或Guest Non-Register State.Interruptibility State（VMCS[0x4824](32 bit)）的Bit 0 (Blocking by STI)和Bit 1 (Blocking by MOV-SS)不全为零，将不允许在VM Entry时进行Event Injection。为了向vCPU注入中断，可以临时设置Primary Processor-Based VM-Execution Controls.Interrupt-Window Exiting = 1，然后主动VM Entry进入Non-root模式。一旦CPU进入能够接收中断的状态，即RFLAGS.IF = 1且Interruptibility State[1:0] = 0，便会产生一个VM Exit（VM Exit No.7 Interrupt Window），此时Hypervisor便可注入刚才无法注入的中断，并将Interrupt-Window Exiting重置为0。
+首先来看传统的处理方法，Hypervisor会手动设置VIRR和VISR的位，然后通过Event Injection机制在紧接着的下一次VM Entry时注入一个中断向量号，调用Guest的IDT中注册的中断处理例程。如果Guest正处在屏蔽外部中断的状态，即Guest的RFLAGS.IF = 0或Guest Non-Register State.Interruptibility State（VMCS[0x4824](32 bit)）的Bit 0 (Blocking by STI)和Bit 1 (Blocking by MOV-SS)不全为零，将不允许在VM Entry时进行Event Injection。为了向vCPU注入中断，可以临时设置Primary Processor-Based VM-Execution Controls.Interrupt-Window Exiting = 1，然后主动VM Entry进入Non-root模式。一旦CPU进入能够接收中断的状态，即RFLAGS.IF = 1且Interruptibility State[1:0] = 0，便会产生一个VM Exit（VM Exit No.7 Interrupt Window），此时Hypervisor便可注入刚才无法注入的中断，并将Interrupt-Window Exiting重置为0。
 
 Virtual-Interrupt Delivery解决了上述做法中的两个问题，第一个是需要Hypervisor手动模拟Interrupt Acknowledgement、Interrupt Delivery，第二个是有时需要产生Interrupt Window VM Exit以正确注入中断。
 
@@ -263,9 +308,9 @@ TPR virtualization：
 1. 首先进行PPR virtualization，更新VPPR寄存器的值
 2. 其次根据RVI和VPPR的值evaluate pending virtual interrupts
 
-EOI virtulization：
+#### EOI virtulization：
 
-1. 根据SVI，清除VISR中对应位
+1. 根据SVI(Servicing Virtual Interrupt，表示正在处理的中断中最大的Vector)，清除VISR中对应位
 2. 若VISR中还有非零位，设置SVI = VISRV，即VISR中优先级最高的Vector号，否则设置SVI = 0
 3. 然后进行PPR virtualization，更新VPPR寄存器的值
 4. 检查EOI-Exit Bitmap[Vector]，其中Vector为SVI的旧值，即被EOI的中断
