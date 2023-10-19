@@ -12,19 +12,6 @@ CPU物理核有Local APIC，CPU Core之间通过Processor System Bus 互联，�
 
 操作系统是通过acpi表来发现ioapic的，当然有些平台也已经支持通过pcie协议来发现ioapic，其他外设比如大部分的legacy设备的中断都是需要通过ioapic进行路由，那么不同设备的中断是如何通过ioapic投递的呢？原来ioapic维护了一个redirection table，当某个设备中断到达ioapic时，它会根据Redirection Table格式化出一个message signal interrupt 发往相应的cpu。
 
-Redirection Table Entry, 64bits
-
-- 56-63: destination
-- 48-55: extensted destination
-- 17-48: reserved
-- 16: mask
-- 15: E/L: 触发模式，edge边缘触发还是level水平触发
-- 14: RIRR： Remote IRR（水平触发），0 ： reset when eoi received from local apic；1：set when local-apics accept level-interrupt sent by io-apic; 
-- 13: H/L
-- 12: status
-- 11: L/P
-- 8-10: delivery mode: Fixed(000) Lowest Priority(001) SMI(010) NMI(100) INIT(101) ExtInt(111)
-- 0-7: interrupt vector  
 
 
 ## 终端重映射

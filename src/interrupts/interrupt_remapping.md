@@ -1,30 +1,56 @@
+# intro
+
 Intel VT-d 虚拟化方案主要目的是解决IO虚拟化中的安全和性能这两个问题，这其中最为核心的技术就是DMA Remapping和Interrupt Remapping。 DMA Remapping通过IOMMU页表方式将直通设备对内存的访问限制到特定的domain中，在提高IO性能的同时完成了直通设备的隔离，保证了直通设备DMA的安全性。Interrupt Remapping则提供IO设备的中断重映射和路由功能，来达到中断隔离和中断迁移的目的，提升了虚拟化环境下直通设备的中断处理效率。
 
-下面对VT-d Interrupt Remapping机制进行一点分析，主要参考资料是Intel VT-d SPEC Chapter 5。
-
-1 Interrupt Remapping 简介
-Interrupt Remapping的出现改变了x86体系结构上的中断投递方式，外部中断源发出的中断请求格式发生了较大的改变， 中断请求会先被中断重映射硬件截获后再通过查询中断重映射表的方式最终投递到目标CPU上。 这些外部设备中断源则包括了中断控制器(I/OxAPICs)以及MSI/MSIX兼容设备PCI/PCIe设备等。 Interrupt Remapping是需要硬件来支持的，这里的硬件应该主要是指的IOMMU（尽管intel手册并没有直接说明），Interrupt Remapping的Capability是通过Extended Capability Register来报告的。
-
-在没有使能Interrupt Remapping的情况下，设备中断请求格式称之为_Compatibility format_，其结构主要包含一个32bit的Address和一个32bit的Data字段，Address字段包含了中断要投递的目标CPU的APIC ID信息，Data字段主要包含了要投递的vecotr号和投递方式。结构如下图：
+使用iommu，可以改变虚拟机外设中断的投递方式。以msi中断为例，msi msg里不再需要填写相关的中断信息，而是转换成`interrput index`的方式。中断的管理信息（投递方式、目标cpu信息、vector信息）存放在一个叫irte的内存区域里，每个iommu最多可以有64k个irte，iommu通过`interrupt index`找到对应的irte，iommu的irte基址信息存放在iommu的`IRTA（Interrupt Remapping Table Address）`寄存器里。
 
 
 
-其中Address的bit 4为Interrupt Format位，用来标志这个Request是Compatibility format（bit4=0）还是Remapping format (bit 4=1)。
-
-在开启了Interrupt Remapping之后，设备的中断请求格式称之为_Remapping format_，其结构同样由一个32bit的Address和一个32bit的Data字段构成。但与Compatibility format不同的是此时Adress字段不再包含目标CPU的APIC ID信息而是提供了一个16bit的HANDLE索引，并且Address的bit 4为"1"表示Request为Remapping format。同时bit 3是一个标识位(SHV)，用来标志Request是否包含了SubHandle，当该位置位时表示Data字段的低16bit为SubHandle索引。Remapping format的中断请求格式如下图：
 
 
 
-在Interrupt Remapping模式下，硬件查询系统软件在内存中预设的中断重映射表(Interrupt Remapping Table)来投递中断。中断重映射表由中断重映射表项(Interrupt Remapping Table Entry)构成，每个IRTE占用128bit（具体格式介绍见文末），中断重映射表的基地址存放在Interrupt Remapping Table Address Register中。硬件通过下面的方式去计算中断的interrupt_index：
+## IRTE
 
-if (address.SHV == 0) {
+### Redirection Table Entry
+
+
+ioapic维护了一个redirection table，当某个设备中断到达ioapic时，它会根据Redirection Table格式化出一个message signal interrupt 发往相应的cpu。
+
+在没有使能Interrupt Remapping的情况下，设备中断请求格式称之为`Compatibility format`，其结构主要包含一个32bit的Address和一个32bit的Data字段，Address字段包含了中断要投递的目标CPU的APIC ID信息，Data字段主要包含了要投递的vecotr号和投递方式。在开启了Interrupt Remapping之后，设备的中断请求格式称之为`Remapping format`，其结构同样由一个32bit的Address和一个32bit的Data字段构成。但与`Compatibility format`不同的是此时Adress字段不再包含目标CPU的APIC ID信息而是提供了一个16bit的HANDLE索引，并且Address的bit 4为"1"表示Request为`Remapping format`。同时bit 3是一个标识位(SHV)，用来标志Request是否包含了SubHandle，当该位置位时表示Data字段的低16bit为SubHandle索引。
+
+
+中断请求的格式有两种（Compatibility Format和Remappable Format），在Compatibility Format格式下，address需要包含中断的Destination ID信息，Data需要包含中断的delivery Mode、Trigger Mode等信息，并且bit 4的interrupt Format需要清0。而在Remappable Format模式下，addess主要保存的是Handle信息，并且bit 4置1，data保存subhandle信息，iommu通过Handle及subhandle找到对应的irte。
+
+Redirection Table Entry(64bits):
+- 56-63: destination
+- 48-55: extensted destination
+- 17-48: reserved
+- 16: mask
+- 15: E/L: 触发模式，edge边缘触发还是level水平触发
+- 14: RIRR： Remote IRR（水平触发），0 ： reset when eoi received from local apic；1：set when local-apics accept level-interrupt sent by io-apic; 
+- 13: H/L
+- 12: status
+- 11: L/P
+- 8-10: delivery mode: Fixed(000) Lowest Priority(001) SMI(010) NMI(100) INIT(101) ExtInt(111)
+- 0-7: interrupt vector  
+
+address的bit 4为Interrupt Format位，用来标志这个Request是Compatibility format（bit4=0）还是Remapping format (bit 4=1)。
+
+
+
+
+在Interrupt Remapping模式下，硬件查询系统软件在内存中预设的中断重映射表(Interrupt Remapping Table)来投递中断。中断重映射表由中断重映射表项(Interrupt Remapping Table Entry)构成，每个IRTE占用128bit（具体格式介绍见文末），中断重映射表的基地址存放在Interrupt Remapping Table Address Register中。Remappable Format时，不同的中断号可以共享同一个handle（最终对应同一个irte），比如同一个网卡设备的多个队列中断；也可设置每个中断使用独立的irte，这通过address的bit 3（SHV）位来标识（默认置1，使用共享模式）。iommu根据SHV以及handle值来查找interrupte_index。硬件通过下面的方式去计算中断的interrupt_index：
+
+```C
+if (address.SHV == 0) { // 独享中断号
     interrupt_index = address.handle;
-} else {
+} else {  // 共享中断号
     interrupt_index = (address.handle + data.subhandle);
 }
+```
 中断重映射硬件通过interrupt_index去重映射表中索引对应的IRTE，中断重映射硬件可以缓存那些经常使用的IRTE以提升性能。(注:由于handle为16bit，故每个IRT包含65536个IRTE，占用1MB内存空间)
 
-2 外设的中断投递方式和中断处理
+## 外设的中断投递方式和中断处理
 针对不同的中断源，需要采用不同的方式来投递Remapping格式的中断。
 
 对I/OxAPIC而言，其Remapping格式中断投递格式如下图，软件需要按图中的格式来发起Remapping中断请求，这就要求需要修改“中断重定向表项”(Interrupt Redirection Table Entry)，读者可以参考wiki对比下RTE相比于Compatibility格式有哪些不同。值得注意的是bit48这里需要设置为"1"用来标志此RTE为Remapping format，并且RTE的bit10:8固定为000b(即没有SubHandle)。而且vector字段必须和IRTE的vector字段相同！
