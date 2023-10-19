@@ -1,4 +1,15 @@
 # IDT
+
+IDTR记录了IDT表的位置，64位CPU每个CPU都有一个IDT表，32位的所有CPU共用一个IDT表。
+
+1. 0-31： system traps and exceptions - hardcoded events， `struct idt_data def_idts`
+2. 32-127: 外部设备中断
+3. 128： int80 系统调用中断
+4. 129 - INVALIDATE_TLB_VECTOR_START-1 except 204 : device interrupts
+5. INVALIDATE_TLB_VECTOR_START(236) ... 255 : special interrupts, `struct idt_data apic_idts`
+
+static bool idt_setup_done 表示中断向量表初始化完成。
+
 IDT的位置由IDTR寄存器保存。所以在代码中加载IDT的代码如下：
 ```C
 static inline void native_load_idt(const struct desc_ptr *dtr)
@@ -41,9 +52,7 @@ static struct desc_ptr idt_descr __ro_after_init = {
  * This file enumerates the exact layout of them:
  */
 ```
-前32个system traps和exception，每个CPU都有一套定义
-
-1. IST_INDEX_NMI 类似的是值得IST索引
+1. 前32个system traps和exception，每个CPU都有一套定义。`IST_INDEX_NMI` 类似的是值得IST索引
 ```C
 static const __initconst struct idt_data def_idts[] = {
 	INTG(X86_TRAP_DE,		asm_exc_divide_error),
@@ -68,7 +77,7 @@ static const __initconst struct idt_data def_idts[] = {
 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_compat),
 };
 ```
-2. special interrupt ,apic 和smp的中断, 从255 - 236好特殊设备中断
+2. special interrupt ,apic 和smp的中断, 从255 - 236号特殊设备中断
 ```C
 /*
  * The APIC and SMP idt entries
@@ -92,9 +101,9 @@ static const __initconst struct idt_data apic_idts[] = {
 }
 ```
 
-3. FIRST_SYSTEM_VECTOR(236) - FIRST_EXTERNAL_VECTOR(32) 中断设置common_interrupt()
+3. FIRST_SYSTEM_VECTOR(236) - FIRST_EXTERNAL_VECTOR(32) 中断设置`common_interrupt()`,对INT n指令，n在32和255之间，对应的都是中断门。启动的时候会默认设置中断处理函数为`common_interrupt()`，后续驱动会设置真正的中断处理函数，真正的中断处理函数会从这个函数`common_interrupt`进入。
 ```C
-common_interrupt()
+common_interrupt() // 所有设备中断都会从这个地方入口，入口对应的vector设置了中断处理函数就执行，如果没有设置中断处理函数就应答eoi
 	handle_irq(desc, regs);
 		generic_handle_irq_desc(desc);
 			desc->handle_irq(desc)
