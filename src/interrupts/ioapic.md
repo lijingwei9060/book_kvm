@@ -50,3 +50,20 @@ x86_dtb_init();
             dtb_add_ioapic(dn);
                 mp_register_ioapic()
 ```
+
+## Posted interrupt
+
+static int disable_irq_remap: 全局变量，是否禁用了irq remap。
+static struct irq_remap_ops *remap_ops： x86架构上的irq remap操作函数，有intel(`intel_irq_remap_ops`)、amd(`amd_iommu_irq_ops`)和hyperv(`hyperv_irq_remap_ops`)。
+static int eim_mode： true代表IRQ_REMAP_X2APIC_MODE， false代表IRQ_REMAP_XAPIC_MODE
+```C
+irq_remapping_prepare(void)
+    remap_ops = &intel_irq_remap_ops;
+```
+
+设置irq_chip具备posted interrupt能力
+```C
+static int __init intel_enable_irq_remapping(void)
+    irq_remapping_enabled = 1;
+	set_irq_posting_cap();
+```
