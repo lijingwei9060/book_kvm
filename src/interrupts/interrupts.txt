@@ -1,0 +1,98 @@
+            CPU0       CPU1       CPU2       CPU3       
+   0:         42          0          0          0  IR-IO-APIC    2-edge      timer
+   8:          0          0          0          0  IR-IO-APIC    8-edge      rtc0
+   9:          0     506919          0          0  IR-IO-APIC    9-fasteoi   acpi
+  16:          0          0          0          0  IR-IO-APIC   16-fasteoi   i801_smbus
+  24:          0          0          0          0  IR-PCI-MSI 458752-edge      PCIe PME, pciehp
+  25:          0          0          0          0  IR-PCI-MSI 464896-edge      PCIe PME
+  27:          0          0          0          0  IR-PCI-MSI 12058624-edge      PCIe PME
+  29:          0          0          0          0  IR-PCI-MSI 30408704-edge      PCIe PME
+  32:          0          0          0          0  IR-PCI-MSI 48758784-edge      PCIe PME
+  33:          0          0          0          0  IR-PCI-MSI 48791552-edge      PCIe PME
+  35:          0          0          0          0  IR-PCI-MSI 69730304-edge      PCIe PME
+  36:          0          0          0          0  IR-PCI-MSI 69763072-edge      PCIe PME
+  38:          0          0          0          0  IR-PCI-MSI 91226112-edge      PCIe PME
+  40:          0          0          0          0  IR-PCI-MSI 112721920-edge      PCIe PME
+  41:          0          0          0          0  IR-PCI-MSI 327680-edge      xhci_hcd
+  43:          0          0          0          0  IR-PCI-MSI 49283072-edge      aacraid
+  44:          0          0          0          0  IR-PCI-MSI 49283073-edge      aacraid
+  45:          0          0          0          0  IR-PCI-MSI 49283074-edge      aacraid
+  46:          0          0          0          0  IR-PCI-MSI 49283075-edge      aacraid
+  58:          0          0          0          0  IR-PCI-MSI 288768-edge      ahci[0000:00:11.5]
+  59:          0          0          0          0  IR-PCI-MSI 49283087-edge      aacraid
+  60:          0          0          0          0  IR-PCI-MSI 49283088-edge      aacraid
+  61:          0          0          0          0  IR-PCI-MSI 49283089-edge      aacraid
+  86:          0          0          0          0  IR-PCI-MSI 376832-edge      ahci[0000:00:17.0]
+  89:          0          0          0          0  IR-PCI-MSI 31981568-edge      i40e-0000:3d:00.0:misc
+ 104:          0          0          0          0  DMAR-MSI    6-edge      dmar6
+ 105:          0          0          0          0  DMAR-MSI    5-edge      dmar5
+ 106:          0          0          0          0  DMAR-MSI    4-edge      dmar4
+ 107:          0          0          0          0  DMAR-MSI    3-edge      dmar3
+ 108:          0          0          0          0  DMAR-MSI    2-edge      dmar2
+ 109:          0          0          0          0  DMAR-MSI    1-edge      dmar1
+ 110:          0          0          0          0  DMAR-MSI    0-edge      dmar0
+ 111:          0          0          0          0  DMAR-MSI    7-edge      dmar7
+ 138:          0          0          0          0  IR-PCI-MSI 31981609-edge      i40e-0000:3d:00.0:fdir-TxRx-0
+ 139:          0          0          0          0  IR-PCI-MSI 31981610-edge      i40iw
+ 140:          2          0          0          0  IR-PCI-MSI 31981611-edge      CEQ
+ 141:          0          0          0          0  IR-PCI-MSI 31981612-edge      CEQ
+ 142:          0          0          0          0  IR-PCI-MSI 31981613-edge      CEQ
+ 178:          0          0          0          0  IR-PCI-MSI 31981649-edge      CEQ
+ 179:          0          0          0          0  IR-PCI-MSI 31981650-edge      CEQ
+ 222:          0          0          0          0  IR-PCI-MSI 31983616-edge      i40e-0000:3d:00.1:misc
+ 263:          0          0          0          0  IR-PCI-MSI 31983657-edge      i40e-0000:3d:00.1:fdir-TxRx-0
+ 264:          0          0          0          0  IR-PCI-MSI 31983658-edge      i40iw
+ 265:          2          0          0          0  IR-PCI-MSI 31983659-edge      CEQ
+ 266:          0          0          0          0  IR-PCI-MSI 31983660-edge      CEQ
+ 267:          0          0          0          0  IR-PCI-MSI 31983661-edge      CEQ
+ 268:          0          0          0          0  IR-PCI-MSI 31983662-edge      CEQ
+ 348:          0          0          2          0  IR-PCI-MSI 70785024-edge      nip87s3
+ 349:          0          0          0     156924  IR-PCI-MSI 70785025-edge      nip87s3-TxRx-0
+ 350:          0          0          0          0  IR-PCI-MSI 70785026-edge      nip87s3-TxRx-1
+ 351:          0          0          0          0  IR-PCI-MSI 70785027-edge      nip87s3-TxRx-2
+ 352:          0          0          0          0  IR-PCI-MSI 70785028-edge      nip87s3-TxRx-3
+ 353:          0          0          0          0  IR-PCI-MSI 70785029-edge      nip87s3-TxRx-4
+ 354:          0          0          0          0  IR-PCI-MSI 70785030-edge      nip87s3-TxRx-5
+ 355:          0          0          0          0  IR-PCI-MSI 70785031-edge      nip87s3-TxRx-6
+ 356:          0          0          0          0  IR-PCI-MSI 70785032-edge      nip87s3-TxRx-7
+ 443:          0          0          0          0  IR-PCI-MSI 70254592-edge      lpfc:sp
+ 444:          0          0          0          0  IR-PCI-MSI 70254593-edge      lpfc:fp
+ 446:          0          0          0          0  IR-PCI-MSI 113246208-edge      lpfc:sp
+ 447:          0          0          0          0  IR-PCI-MSI 113246209-edge      lpfc:fp
+ 449:          0          0          0          0  IR-PCI-MSI 65536-edge      ioat-msix
+ 451:          0          0          0          0  IR-PCI-MSI 67584-edge      ioat-msix
+ 452:          0          0          0          0  IR-PCI-MSI 69632-edge      ioat-msix
+ 453:          0          0          0          0  IR-PCI-MSI 71680-edge      ioat-msix
+ 454:          0          0          0          0  IR-PCI-MSI 73728-edge      ioat-msix
+ 455:          0          0          0          0  IR-PCI-MSI 75776-edge      ioat-msix
+ 456:          0          0          0          0  IR-PCI-MSI 77824-edge      ioat-msix
+ 457:          0          0          0          0  IR-PCI-MSI 79872-edge      ioat-msix
+ 459:          0          0          0          0  IR-PCI-MSI 67174400-edge      ioat-msix
+ 461:          0          0          0          0  IR-PCI-MSI 67176448-edge      ioat-msix
+ 462:          0          0          0          0  IR-PCI-MSI 67178496-edge      ioat-msix
+ 463:          0          0          0          0  IR-PCI-MSI 67180544-edge      ioat-msix
+ 464:          0          0          0          0  IR-PCI-MSI 67182592-edge      ioat-msix
+ 465:          0          0          0          0  IR-PCI-MSI 67184640-edge      ioat-msix
+ 466:          0          0          0          0  IR-PCI-MSI 67186688-edge      ioat-msix
+ 467:          0          0          0          0  IR-PCI-MSI 67188736-edge      ioat-msix
+ 468:          0          0          0          0  IR-PCI-MSI 12582912-edge      nvidia
+ 469:          0          0          0          0  IR-PCI-MSI 91750400-edge      nvidia
+ NMI:      25287      25287      25287      25287   Non-maskable interrupts
+ LOC:  258164925  258270606  258356000  258234840   Local timer interrupts
+ SPU:          0          0          0          0   Spurious interrupts
+ PMI:      25287      25287      25287      25287   Performance monitoring interrupts
+ IWI:          2          0          1          0   IRQ work interrupts
+ RTR:         37          0          0          0   APIC ICR read retries
+ RES:     190000     179878     180903     178956   Rescheduling interrupts
+ CAL:    1788238    1816840    1809028    1857636   Function call interrupts
+ TLB:     288191     294316     297160     296250   TLB shootdowns
+ TRM:          0          0          0          0   Thermal event interrupts
+ THR:          0          0          0          0   Threshold APIC interrupts
+ DFR:          0          0          0          0   Deferred Error APIC interrupts
+ MCE:          0          0          0          0   Machine check exceptions
+ MCP:        774        775        775        775   Machine check polls
+ ERR:          0
+ MIS:          0
+ PIN:         63         47         45         53   Posted-interrupt notification event
+ NPI:          0          0          0          0   Nested posted-interrupt event
+ PIW:        271        237        259        248   Posted-interrupt wakeup event
