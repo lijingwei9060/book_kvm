@@ -97,6 +97,29 @@ apic_intr_mode_init() // x86架构的cpu初始化bsp的中断投递模式
 intel_irq_remapping_alloc
 
 ```
+pcie设备为msi-x申请中断号
+```C
+ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter)
+    vectors = pci_enable_msix_range(adapter->pdev, adapter->msix_entries, vector_threshold, vectors); // vectors为tx + rx + 1，收发队列+管理， 不超过cpu数量，确保配置空间可以保存
+        __pci_enable_msix_range(dev, entries, minvec, maxvec, NULL, 0); // affinity=NULL
+            pci_setup_msix_device_domain(dev, hwsize) // 
+            msix_capability_init(dev, entries, nvec, affd)
+                ret = msix_setup_interrupts(dev, entries, nvec, affd);
+                    ret = msix_setup_msi_descs(dev, entries, nvec, masks);
+                    ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
+                        msi_domain_alloc_irqs_all_locked(&dev->dev, MSI_DEFAULT_DOMAIN, nvec);
+                            ret = msi_domain_alloc_simple_msi_descs(dev, info, ctrl);
+                            __msi_domain_alloc_irqs(dev, domain, ctrl)
+                                virq = __irq_domain_alloc_irqs(domain, -1, desc->nvec_used, dev_to_node(dev), &arg, false, desc->affinity);
+                                    irq_domain_alloc_irqs_locked(domain, irq_base, nr_irqs, node, arg, realloc, affinity);
+                                        ret = irq_domain_alloc_irqs_hierarchy(domain, virq, nr_irqs, arg);
+                                        ret = irq_domain_trim_hierarchy(virq + i);
+                                        irq_domain_insert_irq(virq + i);
+                                            irq_domain_set_mapping(domain, data->hwirq, data);
+                                                radix_tree_insert(&domain->revmap_tree, hwirq, irq_data);
+                                ret = msi_init_virq(domain, virq + i, vflags);
+
+```
 ## Posted interrupt
 
 static int disable_irq_remap: 全局变量，是否禁用了irq remap。
