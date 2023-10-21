@@ -16,15 +16,26 @@ IOAPIC (I/O Advanced Programmable Interrupt Controller) 属于 Intel 芯片组�
 ## 数据结构
 
 X86上有3个终端芯片， ioapic、ioapic-ir、lapic： 
-static struct irq_chip ioapic_chip, ioapic_ir_chip;
+```C
+static struct irq_chip ioapic_chip;
+static struct irq_chip ioapic_ir_chip;
 static struct irq_chip lapic_controller;
-static struct irq_chip dmar_msi_controller 
+static struct irq_chip dmar_msi_controller；
+
+static const struct irq_domain_ops msi_domain_ops; // 上一层为 intel_ir_domain_ops，调用了irq_domain_alloc_irqs_parent 分配中断号
+
+static struct irq_chip intel_ir_chip; // INTEL-IR
+static const struct irq_domain_ops intel_ir_domain_ops; // intel_setup_irq_remapping
+struct irq_remap_ops intel_irq_remap_ops; // intel架构使用这个ops
 
 static const struct irq_domain_ops x86_vector_domain_ops 
 static const struct irq_domain_ops mp_ioapic_irqdomain_ops;
 static const struct irq_domain_ops ioapic_irq_domain_ops 
 
 static struct msi_domain_info dmar_msi_domain_info
+
+```
+
 
 struct irq_domain *x86_vector_domain
 static struct irq_domain *irq_default_domain = x86_vector_domain
@@ -37,7 +48,7 @@ early_irq_init()
     arch_early_irq_init(void)  // 配置lapic上的中断处理函数
         irq_domain_alloc_named_fwnode("VECTOR"); 
         irq_domain_create_tree(fn, &x86_vector_domain_ops, NULL); // 设置irq_domain的ops为x86_vector_domain_ops
-        irq_set_default_host(x86_vector_domain); // 这只irq_default_domain为x86_vector_domain，为所有irq_domain的root
+        irq_set_default_host(x86_vector_domain); // 设置irq_default_domain为x86_vector_domain，为所有irq_domain的root
         
         x86_vector_alloc_irqs()
             irqd->chip = &lapic_controller;  // 对应的中断控制器为lapic
@@ -59,6 +70,33 @@ x86_dtb_init();
                 mp_register_ioapic()
 ```
 
+INTEL-IR: 中断控制器，
+```C
+apic_intr_mode_init() // x86架构的cpu初始化bsp的中断投递模式
+    default_setup_apic_routing() // 64位cpu初始化apic的路由，检查APIC IDS / bios_cpu_apicid 配置合适的APIC模式 (pic/ xapic/x2apic)
+        enable_IR_x2apic() // 设置x2apic 和 ir，使能ir、pi
+            ir_stat = irq_remapping_prepare(); // 初始化平台iommu的ir_map_ops, 用于支持ir、dmar和pi
+                intel_prepare_irq_remapping()
+*                   intel_setup_irq_remapping(struct intel_iommu *iommu) // 初始化iommu的ir_table, 包含65536个irte，和对应设置的bitmap
+                        irq_domain_alloc_named_id_fwnode("INTEL-IR", iommu->seq_id); // 设置irq_domain的名字为INTEL-IR-%seq_id, 就是说可以有多个iommu
+                        irq_domain_create_hierarchy(arch_get_ir_parent_domain(),  0, INTR_REMAP_TABLE_ENTRIES, fn, &intel_ir_domain_ops, iommu); // 创建irq_domain, parent为x86_vector_domain，ops为intel_ir_domain_ops 
+                            __irq_domain_publish(domain); // 将domain放到全局列表上irq_domain_list
+                        irq_domain_update_bus_token(iommu->ir_domain,  DOMAIN_BUS_DMAR); 将ir_domain设置为DOMAIN_BUS_DMAR
+                        init_ir_status(iommu)；
+                        iommu_set_irq_remapping(iommu, eim_mode); // 写入iommu寄存器的irtable物理地址和中断模式，x2apic？
+*           ir_stat = irq_remapping_enable(); // 启动iommu的ir
+                intel_enable_irq_remapping(); // 设置irq_chip具备posted interrupt能力
+                    iommu_enable_irq_remapping(iommu); //写入寄存器DMA_GCMD_IRE，使能ire。删除DMA_GCMD_CFI cimpatibility-format msi能力
+                    irq_remapping_enabled = 1; // ir 设置完成
+                    set_irq_posting_cap();
+                irq_remapping_modify_x86_ops();
+                    x86_apic_ops.restore = irq_remapping_restore_boot_irq_mode;
+            try_to_enable_x2apic(ir_stat); // 使能x2apic
+                x2apic_enable(); // 写入msr(MSR_IA32_APICBASE)，x2apic已经可以使用
+
+intel_irq_remapping_alloc
+
+```
 ## Posted interrupt
 
 static int disable_irq_remap: 全局变量，是否禁用了irq remap。
