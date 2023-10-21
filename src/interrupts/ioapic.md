@@ -30,9 +30,17 @@ struct irq_domain *x86_vector_domain
 static struct irq_domain *irq_default_domain = x86_vector_domain
 
 ```C
-arch_early_irq_init(void)
-    x86_vector_alloc_irqs()
-        irqd->chip = &lapic_controller;
+early_irq_init()
+    init_irq_default_affinity(); // 设置默认的irq亲和性irq_default_affinity
+    initcnt = arch_probe_nr_irqs(); // 初始化当前阶段的初始的中断数量(PIC中的中断数量，所以大部分是16)，这个数量可能超过256，和idt什么关系呢
+    irq_insert_desc(i, desc);  // 初始化pic上面的中断处理，处理节点为bsp，这个地方貌似没有具体的处理函数
+    arch_early_irq_init(void)  // 配置lapic上的中断处理函数
+        irq_domain_alloc_named_fwnode("VECTOR"); 
+        irq_domain_create_tree(fn, &x86_vector_domain_ops, NULL); // 设置irq_domain的ops为x86_vector_domain_ops
+        irq_set_default_host(x86_vector_domain); // 这只irq_default_domain为x86_vector_domain，为所有irq_domain的root
+        
+        x86_vector_alloc_irqs()
+            irqd->chip = &lapic_controller;  // 对应的中断控制器为lapic
 ```
 
 ```C
