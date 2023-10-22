@@ -102,22 +102,36 @@ pcie设备为msi-x申请中断号
 ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter)
     vectors = pci_enable_msix_range(adapter->pdev, adapter->msix_entries, vector_threshold, vectors); // vectors为tx + rx + 1，收发队列+管理， 不超过cpu数量，确保配置空间可以保存
         __pci_enable_msix_range(dev, entries, minvec, maxvec, NULL, 0); // affinity=NULL
-            pci_setup_msix_device_domain(dev, hwsize) // 
-            msix_capability_init(dev, entries, nvec, affd)
+            pci_msi_domain_supports(dev, MSI_FLAG_PCI_MSIX, ALLOW_LEGACY); // 检查msi-x是否初始化完成，irq_domain 已经准备好
+            pci_msi_supported(dev, nvec); // msi是否支持，不支持也报错
+            hwsize = pci_msix_vec_count(dev); // 读取配置空间中msi-x中的支持中断数量，作为中断数量上限，申请的irq不能超过这个数，否则没法保存到配置空间
+            rc = pci_setup_msi_context(dev);
+            pci_setup_msix_device_domain(dev, hwsize) // Setup a device MSI-X interrupt domain
+            msix_capability_init(dev, entries, nvec, affd) // configure device's MSI-X capability
+                dev->msix_enabled = 1; // Mark it enabled so setup functions can query it
                 ret = msix_setup_interrupts(dev, entries, nvec, affd);
                     ret = msix_setup_msi_descs(dev, entries, nvec, masks);
-                    ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
-                        msi_domain_alloc_irqs_all_locked(&dev->dev, MSI_DEFAULT_DOMAIN, nvec);
+*                   ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
+                        irq_domain_is_hierarchy => msi_domain_alloc_irqs_all_locked(&dev->dev, MSI_DEFAULT_DOMAIN, nvec);
                             ret = msi_domain_alloc_simple_msi_descs(dev, info, ctrl);
                             __msi_domain_alloc_irqs(dev, domain, ctrl)
                                 virq = __irq_domain_alloc_irqs(domain, -1, desc->nvec_used, dev_to_node(dev), &arg, false, desc->affinity);
                                     irq_domain_alloc_irqs_locked(domain, irq_base, nr_irqs, node, arg, realloc, affinity);
+                                        irq_domain_alloc_descs(irq_base, nr_irqs, 0, node, affinity); // 申请nr_irqs个desc
+                                            virq = __irq_alloc_descs(-1, hint, cnt, node, THIS_MODULE, affinity);
+                                                ret = alloc_descs(start, cnt, node, affinity, owner);
+                                                    desc = alloc_desc(start + i, node, flags, mask, owner);
+*                                                   irq_insert_desc(start + i, desc);
+                                                    irq_sysfs_add(start + i, desc);
+                                                    irq_add_debugfs_entry(start + i, desc);
+                                        irq_domain_alloc_irq_data(domain, virq, nr_irqs)
                                         ret = irq_domain_alloc_irqs_hierarchy(domain, virq, nr_irqs, arg);
                                         ret = irq_domain_trim_hierarchy(virq + i);
                                         irq_domain_insert_irq(virq + i);
                                             irq_domain_set_mapping(domain, data->hwirq, data);
                                                 radix_tree_insert(&domain->revmap_tree, hwirq, irq_data);
                                 ret = msi_init_virq(domain, virq + i, vflags);
+                pci_intx_for_msi(dev, 0);  // Disable INTX
 
 ```
 ## Posted interrupt
