@@ -18,27 +18,46 @@ IOAPIC (I/O Advanced Programmable Interrupt Controller) 属于 Intel 芯片组�
 X86上有3个终端芯片， ioapic、ioapic-ir、lapic： 
 ```C
 static struct irq_chip ioapic_chip;
-static struct irq_chip ioapic_ir_chip;
-static struct irq_chip lapic_controller;
 static struct irq_chip dmar_msi_controller；
+static const struct irq_domain_ops msi_domain_ops; // 上一层为 intel_ir_domain_ops ，调用了irq_domain_alloc_irqs_parent 分配中断号
 
-static const struct irq_domain_ops msi_domain_ops; // 上一层为 intel_ir_domain_ops，调用了irq_domain_alloc_irqs_parent 分配中断号
 
+// INTEL-IR
 static struct irq_chip intel_ir_chip; // INTEL-IR
 static const struct irq_domain_ops intel_ir_domain_ops; // intel_setup_irq_remapping
 struct irq_remap_ops intel_irq_remap_ops; // intel架构使用这个ops
 
-static const struct irq_domain_ops x86_vector_domain_ops 
-static const struct irq_domain_ops mp_ioapic_irqdomain_ops;
-static const struct irq_domain_ops ioapic_irq_domain_ops 
+// IR-IO-APIC IO-APIC
+static struct irq_chip ioapic_ir_chip; // IR-IO-APIC
+static struct irq_chip ioapic_chip;    // IO-APIC 上一层为 Vector
+const struct irq_domain_ops mp_ioapic_irqdomain_ops;
+ioapic->irqdomain = irq_domain_create_hierarchy(parent, 0, hwirqs, fn, cfg->ops, (void *)(long)ioapic); // 动态创建出来的irq_domain
 
-static struct msi_domain_info dmar_msi_domain_info
+// Local-APIC --edge
+static struct irq_chip lapic_chip; // 这个很特别，只处理timer， 只处理lvt0寄存器
+
+// APIC
+static struct irq_chip lapic_controller;
+static const struct irq_domain_ops x86_vector_domain_ops 
+struct irq_domain *x86_vector_domain
+static struct irq_domain *irq_default_domain = x86_vector_domain; // 默认的中断控制器
+
+// DMAR-MSI
+static struct irq_chip dmar_msi_controller; // DMAR-MSI
+static struct msi_domain_info dmar_msi_domain_info;
+static struct msi_domain_ops dmar_msi_domain_ops
+
+// IR-PCI-MSIX IR-PCI-MSI 上一层为 x86_vector_domain(APIC)/iommu->ir_domain(INTEL-IR)
+bool msi_create_device_irq_domain(); // 动态为每个PCI-E设备创建irq_domain, 模板指向pci_msix_template/pci_msi_template
+static const struct msi_domain_template pci_msix_template;
+static const struct msi_domain_template pci_msi_template;
+
+
 
 ```
 
 
-struct irq_domain *x86_vector_domain
-static struct irq_domain *irq_default_domain = x86_vector_domain
+
 
 ```C
 early_irq_init()
@@ -150,3 +169,36 @@ static int __init intel_enable_irq_remapping(void)
     irq_remapping_enabled = 1;
 	set_irq_posting_cap();
 ```
+
+
+## MSI Interrupt Controller
+pci_alloc_irq_vectors() // Allocate multiple device interrupt vectors
+    pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags, NULL)() // Enable MSI interrupt mode on device
+        __pci_enable_msi_range()
+            pci_setup_msi_device_domain() // Setup a device MSI interrupt domain
+                pci_create_device_domain()
+                    msi_create_device_irq_domain(&pdev->dev, MSI_DEFAULT_DOMAIN, tmpl, hwsize, NULL, NULL) // Create a device MSI interrupt domain
+
+pci_create_ims_domain() // Create a secondary IMS domain for a PCI device
+
+
+## pci设备设置irq_domain的过程
+
+pcie_port_probe_service
+
+int pci_scan_root_bus_bridge(struct pci_host_bridge *bridge)
+    static int pci_scan_bridge_extend(struct pci_bus *bus, struct pci_dev *dev, int max, unsigned int available_buses, int pass) //  Scan buses behind a bridge
+    unsigned int pci_scan_child_bus(struct pci_bus *bus) // Scan devices below a bus
+        static unsigned int pci_scan_child_bus_extend(struct pci_bus *bus, unsigned int available_buses) // Scan devices below a bus
+            int pci_scan_slot(struct pci_bus *bus, int devfn)
+                struct pci_dev *pci_scan_single_device(struct pci_bus *bus, int devfn)
+                    void pci_device_add(struct pci_dev *dev, struct pci_bus *bus)
+                        int pcibios_device_add(struct pci_dev *dev)
+                            msidom = dev_get_msi_domain(&dev->bus->dev);
+                            if (!msidom) msidom = x86_pci_msi_default_domain; // x86_vector_domain, 就是说msi、msi-x的parent就是vector
+                            dev_set_msi_domain(&dev->dev, msidom);
+
+
+static int dmar_pci_bus_add_dev(struct dmar_pci_notify_info *info)
+    void intel_irq_remap_add_device(struct dmar_pci_notify_info *info) // Store the MSI remapping domain pointer in the device if enabled.
+        dev_set_msi_domain(&info->dev->dev, map_dev_to_ir(info->dev))
