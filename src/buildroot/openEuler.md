@@ -28,3 +28,9 @@ virsh-edit your-virt-host-name
     <qemu:arg value='-s'/>
 </qemu:commandline>
 ```
+
+
+## loglevel
+/etc/default/grub
+
+loglevel=7
