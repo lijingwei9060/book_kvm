@@ -1,8 +1,46 @@
 # 概念
 
-IOAPIC (I/O Advanced Programmable Interrupt Controller) 属于 Intel 芯片组的一部分，也就是说通常位于南桥。像 PIC 一样，连接各个设备，负责接收外部 IO 设备 (Externally connected I/O devices) 发来的中断，典型的 IOAPIC 有 24 个 input 管脚(INTIN0~INTIN23)，没有优先级之分。I/O APIC提供多处理器中断管理，用于CPU核之间分配外部中断，在某个管脚收到中断后，按一定规则将外部中断处理成中断消息发送到Local APIC。
+APIC (Advanced Programmable Interrupt Controller)是90年代Intel为了应对将来的多核趋势提出的一整套中断处理方案，用于取代老旧的8259A PIC。这套方案适用于多核（Multi-Processor）机器，每个CPU拥有一个Local APIC，整个机器拥有一个或多个IOAPIC，设备的中断信号先经由IOAPIC汇总，再分发给一个或多个CPU的Local APIC。为了配合APIC，还推出了MPSpec (Multiprocessor Specification)，为BIOS向OS提供中断配置信息的方式提供了规范。
+
+自90年代以来，PCI总线发展出了MSI (Message Signalled Interrupt)，目前的机器中是以MSI为主要的中断机制，IOAPIC作为辅助，但CPU处仍使用Local APIC接收和处理中断。当时提出的MPSpec经过演化目前已成为了ACPI规范的一部分，BIOS可以通过ACPI表向OS报告中断配置情况（e.g. IOAPIC的引脚连接到哪个设备）。
+
+初代奔腾（Pentium）上初次引入Local APIC时，它是外置的Intel 82489DX芯片。在一些奔腾型号以及P6 family（即从奔腾Pro到奔腾3）上则将其改为了内置，但功能保持不变。自奔腾4及至强（Xeon）开始取消了APIC Bus以及一部分相关设置，于是改称xAPIC，目前Intel CPU的默认模式就是xAPIC。后来又增加了x2APIC模式作为xAPIC的扩展，这个功能需要手动开启，并且必须配合VT-d的中断重映射功能使用。
+
+在P6 family的时代，各CPU的APIC间通过一条APIC Bus通信，IPI (Inter Processor Interrupt)消息以及IOAPIC/MSI的中断消息都在APIC Bus上传输。从奔腾4开始，取消了APIC Bus，APIC间的通信改走System Bus，IPI消息和中断消息都通过System Bus传输。
+
+典型的 IOAPIC 有 24 个 input 管脚(INTIN0~INTIN23)，没有优先级之分。I/O APIC提供多处理器中断管理，用于CPU核之间分配外部中断，在某个管脚收到中断后，按一定规则将外部中断处理成中断消息发送到Local APIC。IOAPIC: IOAPIC的主要作用是中断的分发。最初有一条专门的APIC总线用于IOAPIC和LAPIC通信，在Pentium4 和Xeon 系列CPU出现后，他们的通信被合并到系统总线中。
+
+
+APIC包含LAPIC(local apic)和IO APIC。
+1. LAPIC负责传递中断信号到指定的CPU，包含在每个核中一个，也就是一颗cpu可以有多个LAPIC。
+2. IOAPIC负责收集IO设备的中断信号，并投递到LAPIC，是一颗cpu一个，现在系统中最多8个IOAPIC。
+3. LAPIC包含内部时钟，定时设备，32位寄存器，2条额外的中断信号线LINT0和LINT1，连接到IOAPIC。
+
 
 ## 寄存器
+
+IOAPIC寄存器: IOAPIC寄存器的默认地址是在FEC00000h，其中Index，Data，IRQ Pin Assertion， EOI寄存器是可以直接访问的，其他的寄存器则需要通过读写Index/Data 寄存器的方式去访问（先把8-bit Index写到Index，然后从Data寄存器读写对应的内容）。
+
+直接访问寄存器：
+| register | start address | width(bit) | R/W | Description |
+|----------|---------------| ---------- | ----| ----------- |
+| Index    | 0xFEC00000h   | 8          | R/W | 索引寄存器，用于指定访问的寄存器索引 |
+| Data     | 0xFEC00010h   | 32         | R/W | 数据寄存器   |
+| IRQ Pin Assertion | 0xFEC00020h | 32  | WO  | 使用MSI时,IRQ写[4:0] |
+| EOI      | 0xFEC00040h   | 32         | WO  | 针对Level IRQ有效 |
+
+间接访问寄存器，需要通过index和data寄存器进行读写：
+
+| register       | start address | width(bit) | R/W | Description |
+|----------------|---------------| ---------- | ----| ----------- |
+| Indentification| Index 00h     | 32         | R/W |  APIC ID    |
+| Version        | Index 01h     | 32         | RO  |  IOAPIC 的硬件版本 | 
+| Reserved       | Index 02-0Fh  | -          | RO  | reserved |
+| Redtb0         | index 10h-11h | 64         | R/W | |
+| Redtb23        | -             | 64         | R/W | |
+| Reserved       | - FF          | -          | RO  | reserved     |
+
+
 和 LAPIC 一样，IOAPIC 的寄存器同样是通过映射一片物理地址空间实现的：
 
 - IOREGSEL(I/O REGISTER SELECT REGISTER): 选择要读写的寄存器
@@ -10,7 +48,53 @@ IOAPIC (I/O Advanced Programmable Interrupt Controller) 属于 Intel 芯片组�
 - IOAPICVER(IOAPIC VERSION REGISTER): IOAPIC 的硬件版本
 - IOAPICARB(IOAPIC ARBITRATION REGISTER): IOAPIC 在总线上的仲裁优先级
 - IOAPICID(IOAPIC IDENTIFICATION REGISTER): IOAPIC 的 ID，在仲裁时将作为 ID 加载到 IOAPICARB 中
-- IOREDTBL(I/O REDIRECTION TABLE REGISTERS): 有 0-23 共 24 个，对应 24 个引脚，每个长 64bit。当该引脚收到中断信号时，将根据该寄存器产生中断消息送给相应的 LAPIC
+- IOREDTBL(I/O REDIRECTION TABLE REGISTERS): 有 0-23 共 24 个，对应 24 个引脚,每个管脚对应一个RTE (Redirection Table Entry)。每个RTE长 64bit。当该引脚收到中断信号时，将根据该寄存器产生中断消息送给相应的 LAPIC.这些管脚本身并没有优先级的区分，但是RTE中会有Vector，LAPIC会基于Vector设定优先级。
+
+Redirection Table Entry(64bits):
+- 56-63: RW, 目的字段，physical mode(Destination Mode = 0)时其值为APIC ID; Logical Mode时(Destination Mode = 1) 代表一组CPU。
+- 48-55: extensted destination
+- 17-48: reserved
+- 16: interrupt Mask， 中断屏蔽位，RW。1： 对应的中断管脚被屏蔽，中断会被忽略；0： 中断会发送到LAPIC。
+- 15: RO，触发模式，edge边缘触发还是level水平触发
+- 14: RIRR： Remote IRR，RO， 只对水平触发有效，（水平触发），0 ： lapic发送eoi；1：lapic收到然后ack，还没有eoi; 
+- 13: RW，Interrupt Input Pin Polarity，中断管脚的极性，是高电平还是低电平，0：高，1：低。
+- 12: Delivery status，RO，传送状态，0： idle表示没有中断，1：send pending，ioapic已经收到还没有发给lapic。
+- 11: 目的地模式，RW，0：physical mode， 1： logical mode.
+- 8-10: delivery mode, 传送模式，RW
+  - Fixed(000)： 发送给目标中多有的CPU
+  - Lowest Priority(001)，发送给目标中优先级最低的cpu
+  - SMI(010)：系统管理终端，vector为0，edge触发
+  - NMI(100)： 发送不可屏蔽中断，edge触发，没有vector
+  - INIT(101)： 发送目标init中断，edge触发
+  - ExtInt(111)： 发送目标中断，会认为是PIC发送的中断
+- 0-7: interrupt vector  ，RW， 从10h-FEh，前16个保留
+
+### ioapic拓扑结构
+
+MP spec为PIC和APIC共存的平台规定了三种模式：PIC mode、Virtual Wire Mode、Symmetric I/O Mode。
+三种模式中，PIC mode和Virtual Wire Mode互斥存在。Symmetric I/O Mode是所有MP平台最终进入的模式。Spec规定，为了PC/AT compatibility，系统在RESET后首先进入PIC mode或者Virtual Wire mode，操作系统（或BIOS）在适当时候切换入Symmetric I/O Mode。
+
+IMCR，Interrupt Mode Configuration Register，中断模式配置寄存器，控制当前系统的中断模式——PIC还是APIC？当系统RESET后，该寄存器清0，系统默认进入PIC模式。此时BSP（Boot Startup Processor，多处理器系统中第一个启动的CPU）的NMI和INTR脚为硬连线，直接从外部接入，不经过APIC。
+
+对IMCR写1，可将系统切换至Symmetric I/O Mode模式。此时外部中断直接通过APIC到达CPU，NMI则连接LAPIC的LINT1脚。
+
+Virtual Wire Mode:虚拟接线模式，该模式主要是为了向前兼容，可以理解为就是PIC。在这种模式下，IOAPIC会把8259A的模拟硬件产生的中断信号直接送给BSP。
+
+
+### 使能IOAPIC
+
+### 检测IOAPIC
+acpi
+### 中断投递过程
+设备中断传递大致流程如下(假设设备接在IOAPIC IRQ3，而且PRT3的设置是 电平触发，低有效，Physical Mode APICID23H)，Fixed Delivery Mode Vector为20H：
+
+1. 设备通过拉低IRQ信号线产生一个中断。
+2. 检测到低电平的有效信号之后，IOAPIC 把PRT03 中的Remote IRR(Interrupt Request Register) 和Delivery Status bit设置起来。
+3. 使用PRT03中的信息，IOAPIC组成一个中断信息，使用写内存的方式发送给系统总线上。因为是APICID23H，所以LAPIC 23h将会识别这个中断信息是给它的，其他的Local APIC会忽略这个信息。
+4. LAPIC 23h会把IRR中对应的bit设置起来（20h），表示Vector 20h有一个中断请求等待送给CPU。LAPIC会判断当前最高优先级的中断能否发送给CPU处理。
+5. CPU清掉IRR 设置ISR表示中断开始被处理，处理完成以后写LAPIC EOI寄存器，LAPIC会清掉ISR。同时IOAPIC的EOI寄存器也会被写。
+6. IOAPIC 收到EOI的写操作以后，它会比较PRT中的vector，在这里它会把PRT03的Remote IRR清零，之后它由可以识别IRQ3上的中断了。
+
 
 
 ## 数据结构
@@ -22,10 +106,7 @@ static struct irq_chip dmar_msi_controller；
 static const struct irq_domain_ops msi_domain_ops; // 上一层为 intel_ir_domain_ops ，调用了irq_domain_alloc_irqs_parent 分配中断号
 
 
-// INTEL-IR
-static struct irq_chip intel_ir_chip; // INTEL-IR
-static const struct irq_domain_ops intel_ir_domain_ops; // intel_setup_irq_remapping
-struct irq_remap_ops intel_irq_remap_ops; // intel架构使用这个ops
+
 
 // IR-IO-APIC IO-APIC
 static struct irq_chip ioapic_ir_chip; // IR-IO-APIC
@@ -47,10 +128,19 @@ static struct irq_chip dmar_msi_controller; // DMAR-MSI
 static struct msi_domain_info dmar_msi_domain_info;
 static struct msi_domain_ops dmar_msi_domain_ops
 
-// IR-PCI-MSIX IR-PCI-MSI 上一层为 x86_vector_domain(APIC)/iommu->ir_domain(INTEL-IR)
-bool msi_create_device_irq_domain(); // 动态为每个PCI-E设备创建irq_domain, 模板指向pci_msix_template/pci_msi_template
+// INTEL-IR
+static struct irq_chip intel_ir_chip; // INTEL-IR
+static const struct irq_domain_ops intel_ir_domain_ops; // intel_setup_irq_remapping
+struct irq_remap_ops intel_irq_remap_ops; // intel架构使用这个ops
+cap_caching_mode(iommu->cap) => iommu->ir_domain->msi_parent_ops = &virt_dmar_msi_parent_ops;
+                                iommu->ir_domain->msi_parent_ops = &dmar_msi_parent_ops;
+
+
+// IR-PCI-MSIX IR-PCI-MSI 上一层为 x86_vector_domain(APIC)/iommu->ir_domain(INTEL-IR), iommu->ir_domain的parent为x86_vector_domain
+bool msi_create_device_irq_domain(); // 动态为每个PCI-E设备创建irq_domain, 模板指向 pci_msix_template / pci_msi_template
 static const struct msi_domain_template pci_msix_template;
 static const struct msi_domain_template pci_msi_template;
+static const struct irq_domain_ops msi_domain_ops;
 
 
 
@@ -116,6 +206,17 @@ apic_intr_mode_init() // x86架构的cpu初始化bsp的中断投递模式
 intel_irq_remapping_alloc
 
 ```
+
+## IR PCI 设备初始化
+
+rootfs_initcall(ir_dev_scope_init);
+	ret = dmar_dev_scope_init(); // 分析每一个pci设备，如果是在acpi的dmar下面，就会配置相关的irq_domain信息
+        dmar_acpi_dev_scope_init();
+        dmar_pci_bus_add_dev(info);
+            intel_irq_remap_add_device(info);
+                dev_set_msi_domain(&info->dev->dev, map_dev_to_ir(info->dev)); // 设置pci设备的irq_domain为iommu->irq_domain
+
+## pci驱动申请中断
 pcie设备为msi-x申请中断号
 ```C
 ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter)
@@ -153,6 +254,43 @@ ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter)
                 pci_intx_for_msi(dev, 0);  // Disable INTX
 
 ```
+
+
+## 中断响应过程
+desc->handler
+handle_fasteoi_irq: irq handler for transparent controllers
+handle_edge_irq: 边缘触发的中断处理函数， 中断控制器需要按照顺序ack
+
+1. state = IRQS_REPLAY | IRQS_WAITING
+2. irq_chip.irq_ack()
+3. handle_irq_event(desc) 
+4. ~IRQS_PENDING 
+5. IRQD_IRQ_INPROGRESS 
+6. handle_irq_event_percpu(desc) 
+   1. 线程化 => lockdep_hardirq_threaded()
+   2. action->handler(irq, action->dev_id)
+   3. IRQ_WAKE_THREAD => __irq_wake_thread(desc, action)
+7. ~ IRQD_IRQ_INPROGRESS
+如果运行过程中IRQS_PENDING，说明 reply状态时需要unmask，直接处理就好了，应为另外一个cpu在设置IRQS_PENDING的同时mask并ack了。
+
+
+handle_level_irq: 水平触发，需要先ack, mask， handle， unmask
+
+1. mask_ack_irq(desc)
+2. ~(IRQS_REPLAY | IRQS_WAITING)
+3. handle_irq_event(desc)
+   1. ~IRQS_PENDING
+   2. IRQD_IRQ_INPROGRESS
+   3. handle_irq_event_percpu(desc)
+   4. ~IRQD_IRQ_INPROGRESS
+4. cond_unmask_irq(desc): 正常level中断(不是IRQF_ONESHOT， 或者单发没有唤醒线程)
+
+handle_fasteoi_irq: 透明中断控制器，level-triggered interrupt for the I/O APIC controller
+1. ~(IRQS_REPLAY | IRQS_WAITING)
+2. handle_irq_event(desc)
+3. cond_unmask_eoi_irq(desc, chip);
+
+
 ## Posted interrupt
 
 static int disable_irq_remap: 全局变量，是否禁用了irq remap。
