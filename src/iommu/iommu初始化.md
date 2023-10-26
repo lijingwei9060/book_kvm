@@ -3,132 +3,29 @@
 1. 服务器开机由BIOS/UEFI负责检测并初始化DMAR（即VT-d硬件），为其分配相应的物理地址，并且以ACPI表中的DMAR（DMA Remapping Reporting）表的形式告知VT-d硬件的存在。
 2. OS启动后加载对应驱动，驱动从ACPI中读取信息。
 
-## BIOS与IOMMU
+GAW的定义：Guest Address Width: Physical addressability limit within a partition (virtual machine),可以理解为从虚拟机角度看到的物理地址宽度。举个例子，如果一个虚拟机只能访问2G内存，那么GAW就是31。
 
-在服务器启动过程中，bios通过DMAR ACPI 表（DMA Remapping Reporting Structure）来检测iommu硬件，而在remapping structures这个list里面目前支持5种类型信息。
+AGAW的定义：Adjusted Guest Address Width。为了保证9个bit长度的步长转化，GAW和AGAW之间的转换伪代码如下, 对应的函数是guestwidth_to_adjustwidth。
+sagaw： Supported Adjusted Guest Address Widths： 
 
-BIOS收集IOMMU相关的信息，通过ACPI中的特定表组织数据，放置在内存中，等操作系统接管硬件后，它会加载驱动，驱动再详细解析ACPI表中的信息。
-DMA Remapping Reporting Structure，
-- 0：DMA Remapping Hardware unit Definition(DRHD) Structure， 用来描述真实的iommu硬件的结构
-- 1: Reserved Memory Region Reporting(RMRR) Structure
-- 2: Root Port ATS Capability Reporting(ATSR) Structure
-- 3: Remapping Hardware Static Affinity(RHSA)  Structure
-- 4: ACPI Name-space Device Declaration(ANDD) Structure
-- 5: Soc Integrated Address Tranlation Cache(SATC) Reporting structure
-- 5+: Reserve
+R = (GAW - 12) MOD 9;
+if (R == 0) {
+    AGAW = GAW;
+} else {
+    AGAW = GAW + 9 - R;
+}
+if (AGAW > 64)
+    AGAW = 64;
 
-对应代码宏定义如下：
-```C
-/* Values for subtable type in struct acpi_dmar_header */
-enum acpi_dmar_type {
-	ACPI_DMAR_TYPE_HARDWARE_UNIT = 0,
-	ACPI_DMAR_TYPE_RESERVED_MEMORY = 1,
-	ACPI_DMAR_TYPE_ROOT_ATS = 2,
-	ACPI_DMAR_TYPE_HARDWARE_AFFINITY = 3,
-	ACPI_DMAR_TYPE_NAMESPACE = 4,
-	ACPI_DMAR_TYPE_SATC = 5,
-	ACPI_DMAR_TYPE_RESERVED = 6	/* 6 and greater are reserved */
-};
-```
+AGAW的最小长度是30个bit，参考以下规范定义（context-entry格式里的内容）：
 
-##  DMA Remapping Reporting Structure
-
-
-| Field                  | Byte Length | Byte Offset | Description    |
-| ---------------------- | ----------- | ----------- | ------------------------------------------------------------ |
-| Signature              | 4           | 0           | “DMAR”. Signature for the DMA Remapping Description table.  |
-| Length                 | 4           | 4           | Length, in bytes |
-| Revision               | 1           | 8           | 1 |
-| Checksum               | 1           | 9           | Entire table must sum to zero. |
-| OEMID                  | 6           | 10          | OEM ID  |
-| OEM Table ID           | 8           | 16          | For DMAR description table, the Table ID is the manufacturer model ID. |
-| OEM Revision           | 4           | 24          | OEM Revision of DMAR Table for OEM Table |
-| Creator ID             | 4           | 28          | Vendor ID of utility that created the table. |
-| Creator Revision       | 4           | 32          | Revision of utility that created the table.   |
-| Host Address Width     | 1           | 36          | DMA 物理地址宽度 = HAW +1， 最大可访问的物理地址由该值决定 |
-| Flags                  | 1           | 37          | Bit 0: INTR_REMAP， 0表示不支持中断重映射，1表示支持. Bits 1-7:Reserved. |
-| Reserved               | 10          | 38          | Reserved (0).  |
-| Remapping Structures[] | -           | 48          | 对应真实的DMAR设备结构列表：DMA Remapping Hardware Unit Definition (DRHD) ,  Reserved Memory Region Reporting (RMRR) ， Root Port ATS Capability Reporting (ATSR) |
-
-内核数据结构定义：
+• 000b: 30-bit AGAW (2-level page table)
+• 001b: 39-bit AGAW (3-level page table)
+• 010b: 48-bit AGAW (4-level page table)
+• 011b: 57-bit AGAW (5-level page table)
+• 100b: 64-bit AGAW (6-level page table)
 
 ```C
-struct acpi_table_header {
-	char signature[ACPI_NAMESEG_SIZE];	/* ASCII table signature */
-	u32 length;		/* Length of table in bytes, including this header */
-	u8 revision;		/* ACPI Specification minor version number */
-	u8 checksum;		/* To make sum of entire table == 0 */
-	char oem_id[ACPI_OEM_ID_SIZE];	/* ASCII OEM identification */
-	char oem_table_id[ACPI_OEM_TABLE_ID_SIZE];	/* ASCII OEM table identification */
-	u32 oem_revision;	/* OEM revision number */
-	char asl_compiler_id[ACPI_NAMESEG_SIZE];	/* ASCII ASL compiler vendor ID */
-	u32 asl_compiler_revision;	/* ASL compiler version */
-};
-
-struct acpi_table_dmar {
-    struct acpi_table_header header;	/* Common ACPI table header */
-    u8 width;		/* Host Address Width */
-    u8 flags;
-    u8 reserved[10];
-};
-
-struct acpi_dmar_header {
-	u16 type;
-	u16 length;
-};
-
-```
-
-## DRHD（DMA Remapping Hardware Unit Definition）表
-一个DMAR结构体用于唯一定义系统中存在的一个VT-d重定向硬件。其结构体如下所示：
-
-| Field                 | Byte Length | Byte Offset | Description  |
-| --------------------- | ----------- | ----------- | ----------------------------- |
-| Type                  | 2           | 0           | 0 - DMA Remapping Hardware Unit Definition (DRHD) structure   |
-| Length                | 2           | 2           | 16 + size of Device Scope Structure|
-| Flags                 | 1           | 4           | Bit 0: INCLUDE_PCI_ALL， 1： DRHD表示除了Device Scope特别制定的设备，该domain都收到该DMAR设备管理（BIOS IOxAPIC HPET）， 0表示该DMAR设备只管理Device Scope中的设备。 Bits 1-7: Reserved. |
-| Reserved              | 1           | 5           | Reserved (0).   |
-| Segment Number        | 2           | 6           | The PCI Segment associated with this unit.  可以理解为 PCIE中的domain |
-| Register Base Address | 8           | 8           | DMAR相关寄存器地址？？？？   |
-| Device Scope []       | -           | 16          | 每个Entry可以用来指明一个PCI endpoint device，一个PCI sub-hierarchy，或者其他设备，如I/O xAPIC或者HPET。|
-
-```C
-struct acpi_dmar_hardware_unit { // type = 0, hardware unit definition
-	struct acpi_dmar_header header;
-	u8 flags;
-	u8 size;		/* Size of the register set */
-	u16 segment;
-	u64 address;		/* Register Base Address */
-};
-
-struct acpi_dmar_device_scope {
-	u8 entry_type; // endpoint/bridge/ioapic/hpet/namespace
-	u8 length;
-	u16 reserved;
-	u8 enumeration_id;
-	u8 bus;
-};
-
-```
-
-- segment number可以理解为与某个dma remapping unit关联的pci domain；
-- device scope也就是每个dmar unit下可以关联不同的设备；
-- INCLUDE_PCI_ALL当这个bit被设置上时驱动会扫描pcie bus下面的所有设备并把这些设备跟这个dmar unit 关联起来，如果这个bit没有设置上则驱动需要解析device scope 然后把这个scope下面的设备跟这个dmar unit关联起来。
-- register base address它定义一系列的register。
-
-```C
-struct dmar_drhd_unit {
-        struct list_head list;          /* list of drhd units   */
-        struct  acpi_dmar_header *hdr;  /* ACPI header          */
-        u64     reg_base_addr;          /* register base address*/
-        struct  dmar_dev_scope *devices;/* target device array  */
-        int     devices_cnt;            /* target device count  */
-        u16     segment;                /* PCI domain           */
-        u8      ignored:1;              /* ignore drhd          */
-        u8      include_all:1;
-        struct intel_iommu *iommu;
-}; 
-
 struct intel_iommu {
         void __iomem    *reg; /* Pointer to hardware regs, virtual addr */
         u64             reg_phys; /* physical address of hw register set */
@@ -153,74 +50,17 @@ struct intel_iommu {
  }
 
 ```
+初始化过程：
+
+1. 从acpi表中读取drhd，创建iommu设备，获取iommu的capability、映射iommu的IO地址空间。
+2. 初始化iommu的remapping，分配irte空间，将物理地址设置IRTA寄存器。
+3. 使能iommu的remapping模式。
+4. 检查iommu的interrupt post能力， 如果有就设置intel_irq_remap_ops.capabiliy或上IRQ_POSTING_CAP，后续vcpu启动时会检查该标志。
+5. 重新安装irq remapping的操作函数
+6. irq_domain？
+7. pci？
 
 
-## RMRR（Reserved Memory Region Reporting）
-RMRR表用于表示BIOS或者UEFI为了DMA的使用而保留的一些系统物理内存，这些内存从操作系统的角度来看其属性为Reserved Memory，因为有一些比较传统的设备（比如USB、UMA显卡等）可能会需要用到一些固定的，或者专用的系统内存，这时候就需要BIOS或UEFI为其保留。即保留的内存的范围（Reserved Memory Region Base Address和Reserved Memory Region Limit Address）和针对的物理设备（Segment Number和Device Scope）。
-
-```C
-/* 1: Reserved Memory Definition */
-struct acpi_dmar_reserved_memory {
-	struct acpi_dmar_header header;
-	u16 reserved;
-	u16 segment;
-	u64 base_address;	/* 4K aligned base address */
-	u64 end_address;	/* 4K aligned limit address */
-    // device scope[]
-};
-
-```
-## ATSR（Root Port ATS Capability Reporting）表
-ATS是Address Translation Services的意思，它是PCIe Capability的一种，用于表示PCIe设备是否支持经过PCIe Root Port翻译过的地址。ATSR表只适用于那种PCIe设备支持Device-TLB的系统中，即PCIe设备带有地址转换加速功能。一个ATSR表表示一个支持ATS功能的PCIe Root-Port，其结构主要包括两方面信息：Segment Number用于定位PCIe Root-Port；Device Scope用于定位位于该PCIe Root-Port下面的设备。
-
-```C
-struct acpi_dmar_atsr {
-	struct acpi_dmar_header header;
-	u8 flags;
-	u8 reserved;
-	u16 segment;
-    // device scope
-};
-```
-
-## RHSA（Remapping Hardware Status Affinity）表
-　　RHSR表适用于NUMA（Non-Uniform Memory）系统（即不同的CPU Socket都可能会单独连接一些内存条，不同的CPU Socket对同一物理内存的访问路径可能是不同的），并且系统中的VT-d重定向硬件分布于不同的Node上。该表用于表示VT-d重定向硬件从属于哪个Domain。
-
-```C
-/* 3: Remapping Hardware Static Affinity Structure */
-struct acpi_dmar_rhsa {
-	struct acpi_dmar_header header;
-	u32 reserved;
-	u64 base_address;
-	u32 proximity_domain;
-};
-```
-## ANDD（ACPI Name-space Device Declaration）表
-一个ANDD表用于表示一个以ACPI name-space规则命名，并且可发出DMA请求的设备。ANDD可以和前面提到的Device Scope Entry结合一起时候。
-其中ACPI Device Number，相当于在该VT-d硬件管辖范围内的以ACPI name-space规则命名的硬件ID号，前面Device Scope Entry值需要这个ID号，就可以找到该ANDD表，并从该表的ACPI Object Name区域找到具体的设备。
-
-```C
-/* 4: ACPI Namespace Device Declaration Structure */
-
-struct acpi_dmar_andd {
-	struct acpi_dmar_header header;
-	u8 reserved[3];
-	u8 device_number;
-	char device_name[1];
-};
-```
-
-
-
-
-## summary
-
-总的来说就是软件看来有几个IOMMU单元，每个单元负责哪些pci设备。
-
-详细见qemu代码build_dmar_q35，
-AcpiTableDmar就是DMA Remapping Reporting Structure，它后面就是DRHD，DRHD就是IOMMU硬件单元，DeviceScope紧跟着DRHD，就是这个DRHD负责处理的那些pci设备。如果DRHD支持device iotlb，还要上报ATSR。
-
-重点说一下RMRR，因为以前在HP ProLiant DL360 Gen9机器做DPDK开发时碰到过问题(Device is ineligible for IOMMU domain attach due to platform RMRR requirement)，HP的服务器带外管理和正常的流量共用一个网卡，这个网卡只能把流量DMA到一个firmware规定的物理内存区域(RMRR)，如果不在这个区域firmware就拿不到流量，把这个网卡绑定到vfio-pci后，网卡DMA的目的地址是dpdk进程的虚拟地址，虚拟地址对应着大页内存的物理地址，大概率和firmware上报的RMRR不同，所以vfio-pci就报错不让绑定，解决办法就是升级firmware，在BIOS中disable 网卡shared memory功能。
 
 
 
@@ -253,58 +93,46 @@ struct iommu_table_entry {
 };
 ```
 
-# Intel IOMMU初始化过程
+## Intel架构解析ACPI表创建IOMMU设备
 
 
 全局变量：
 3个kmem_cache：iova_cache（”iommu_iova”）、iommu_domain_cache（”iommu_domain”）、iommu_devinfo_cache（”iommu_devinfo”）
-int dmar_table_initialized：表示dmar表是否初始化，如果parse_dmar_table成功就设为1；
-struct acpi_table_header dmar_tbl：dmar表的地址
-int dmar_dev_scope_status： dev scope初始化状态，1未开始，0表示完成，负数失败
+- int dmar_table_initialized：表示dmar表是否初始化，如果parse_dmar_table成功就设为1；
+- struct acpi_table_header dmar_tbl：dmar表的地址
+- int dmar_dev_scope_status： dev scope初始化状态，1未开始，0表示完成，负数失败
+- iommu_device_list： 全局链表，iommu列表
+- iommu_detected： 是否检测到了iommu设备
+- pci_acs_enable： PCI ACS支持
 
 
-内核启动后从ACPI中获取DMAR table，解析ACPI表中两项：DRHD,DMA Engine Reporting Structure 和 RMRR, Reserved memory Region Reporting Structure。调用`detect_intel_iommu`，它只检测了类型为`ACPI_DMAR_TYPE_HARDWARE_UNIT`的数据，也就是IOMMU硬件单元，还尝试读了IOMMU硬件的capability和extended capability，如果都成功说明IOMMU可以初始化，设置给x86_init.iommu.iommu_init = intel_iommu_init，在内存管理模块初始化后再进行调用初始化相关内存管理模块。初始化iommu内存管理数据在`rootfs_initcall(pci_iommu_init)`中，在pci子系统初始化后执行。
+内核启动后从ACPI中获取DMAR table，解析ACPI表中两项：DRHD,DMA Engine Reporting Structure 和 RMRR, Reserved memory Region Reporting Structure。
+
+start_kernel() -> mm_core_init() -> mem_init() -> pci_iommu_alloc() -> detect_intel_iommu();
+
+- dmar_table_detect();
+- dmar_validate_one_drhd
+- iommu_detected = 1
+- pci_acs_enable = 1 
+- x86_init.iommu.iommu_init = intel_iommu_init 在内存管理模块初始化后再进行调用初始化相关内存管理模块
+
+调用`detect_intel_iommu`，它只检测了类型为`ACPI_DMAR_TYPE_HARDWARE_UNIT`的数据，也就是IOMMU硬件单元，读取IOMMU硬件的capability和extended capability，如果都成功说明IOMMU可以初始化，设置给x86_init.iommu.iommu_init = intel_iommu_init，在内存管理模块初始化后再进行调用初始化相关内存管理模块。初始化iommu内存管理数据在`rootfs_initcall(pci_iommu_init)`中，在pci子系统初始化后执行。
 
 detect_intel_iommu执行时还没有memory allocator，所以干的活很简单，但intel_iommu_init执行时memory allocator已经形成，所以intel_iommu_init就大量分配内存建立iommu的数据结构，主要是`struct dmar_drhd_unit`和`struct intel_iommu`。
 
+- `dmar_parse_one_drhd`解析DRHD，对应创建dmaru和iommu设备。
+  - 将dmaru挂载到全局链表上`dmar_drhd_units`。
+  - 初始化IOMMU
+    - 读取IOMMU硬件的capability和extended capability
+    - segment、version
+    - 配置agaw
+    - 分配PMU
+    - PASID
+    - 注册sysfs
+    - 注册iommu_ops = intel_iommu_ops, 将IOMMU设备追加到全局链表iommu_device_list，会触发iommu group探测`bus_iommu_probe`
+
 detect_intel_iommu函数主要作用就是获取dmar acpi表，然后解析表里面的相关信息如果表里面remapping structure为drhd则通过cb函数来验证dma remapping hardware unit是否可用，具体是`dmar_validate_one_dh`， 然后指定iommu_init函数入口为intel_iommu_init。
 
-```C
-int __init detect_intel_iommu(void)
-{
-        int ret;
-        struct dmar_res_callback validate_drhd_cb = {
-                .cb[ACPI_DMAR_TYPE_HARDWARE_UNIT] = &dmar_validate_one_drhd,
-                .ignore_unhandled = true,
-        };
-
-        down_write(&dmar_global_lock);
-        ret = dmar_table_detect();
-        if (ret)
-                ret = !dmar_walk_dmar_table((struct acpi_table_dmar *)dmar_tbl,
-                                            &validate_drhd_cb);
-        if (ret && !no_iommu && !iommu_detected && !dmar_disabled) {
-                iommu_detected = 1;
-                /* Make sure ACS will be enabled */
-                pci_request_acs(); //?
-        }
-
-#ifdef CONFIG_X86
-       if (!ret) {
-            x86_init.iommu.iommu_init = intel_iommu_init;
-            x86_platform.iommu_shutdown = intel_iommu_shutdown;
-        }
-#endif
-
-       if (dmar_tbl) {
-            acpi_put_table(dmar_tbl);
-            dmar_tbl = NULL;
-        }
-        up_write(&dmar_global_lock);
-
-        return ret ? 1 : -ENODEV;
-}
-```
 
 intel_iommu_init: 分配内存建立iommu的数据结构，主要是`struct dmar_drhd_unit`和`struct intel_iommu`。
 1. dmar_table_init：解析dmar表中不同类型的remapping structures。
@@ -314,12 +142,21 @@ intel_iommu_init: 分配内存建立iommu的数据结构，主要是`struct dmar
 5. init_no_remapping_devices();
 6. init_dmars()：对dma remapping 做一些初始化的工作。具体的比如把每个drhd关联到struct intel_iommu，假设系统当中如果有n个dma硬件则系统会创建一个大小为n* sizeof(struct intel_iommu*)的g_iommu数组，
 7. init_iommu_pm_ops()
+8. 注册sysfs， iommu_device_sysfs_add
+9. 注册device，iommu_device_register
+10. 注册pmu，iommu_pmu_register
 
 iommu_init_mempool：为iova, iommu_dmoain, devinfo创建内存池。
 
-dmar_table_init：调用`parse_dmar_table`解析dmar表中不同类型的remapping structures,解析成功并有IOMMU设备设置全局变量`dmar_table_initialized`为1。当前IOMMU设备类型支持6类，它们分别是HARDWARE_UNIT，RESERVED_MEMORY，ROOT_ATS ，HARDWARE_AFFINITY，NAMESPACE, SATC。其中hardware_unit指的就是iommu硬件，而ATS指的是pcie 的一个重要feature这里我们也不细说。HARDWARE_AFFINITY具体指的是Remapping Hardware Status Affinity(RHSA)信息，主要因为在numa架构下iommu硬件可能会跨node，而通过RHSA信息来报告cpu和内存跟每个iommu硬件的亲和性，从而 保证了iommu硬件的perfomace。RESERVED_MEMORY 类型的structures描述的是专门给一些设备预留的DMA内存信息，RMRR 的内存区域必须是4k对齐的，原则上RMRR只针对一些legacy设备比如USB，UMA graphics等设备来使用，而其他设备类型一般不建议使用RMRR。
+dmar_table_init：调用`parse_dmar_table`解析dmar表中不同类型的remapping structures,解析成功并有IOMMU设备设置全局变量`dmar_table_initialized`为1。当前IOMMU设备类型支持6类，它们分别是HARDWARE_UNIT，RESERVED_MEMORY，ROOT_ATS ，HARDWARE_AFFINITY，NAMESPACE, SATC。
+- hardware_unit指的就是iommu硬件
+- ATS指的是pcie 的一个重要feature。
+- HARDWARE_AFFINITY具体指的是Remapping Hardware Status Affinity(RHSA)信息，主要因为在numa架构下iommu硬件可能会跨node，而通过RHSA信息来报告cpu和内存跟每个iommu硬件的亲和性，从而 保证了iommu硬件的perfomace。
+- RESERVED_MEMORY 类型的structures描述的是专门给一些设备预留的DMA内存信息，RMRR 的内存区域必须是4k对齐的，原则上RMRR只针对一些legacy设备比如USB，UMA graphics等设备来使用，而其他设备类型一般不建议使用RMRR。
 
 dmar_parse_one_drhd： 接些ACPI DMAR表中的DRHD信息，初始化`acpi_dmar_hardware_unit` 与 `dmar_drhd_unit dmaru`对象，初始化dmaru的信息，包括寄存器地址，寄存器表达4K页面大小(1 << size +12 )，是否包含所的有device，以及device列表。此时的device scope列表只是分配空间没有进行初始化。通过alloc_iommu分配intel_iommu对象，检查iommu的地址转换能力，注册pmu。
+
+
 
 ```C
 ├─dmar_table_init
@@ -334,7 +171,7 @@ dmar_parse_one_drhd： 接些ACPI DMAR表中的DRHD信息，初始化`acpi_dmar_
     |       |  ├─alloc_iommu
     |       |  |   |- ida_alloc_range // 给intel_iommu分配一个未使用的seq_id
     |       |  |   |- map_iommu
-    |       |  |   |- sagaw: supported address widths, smts slts // 判断iommu的地址转换能力，address width 
+    |       |  |   |- sagaw: supported address widths, smts slts // 判断iommu的地址转换能力，address width ，//根据iommu寄存器中SAGAW field确定能支持的最大位宽
     |       |  |   |- msagaw:max sagaw, gcmd
     |       |  |   |- alloc_iommu_pmu(iommu) 
     |       |  |   |- pasid_supported(iommu)
@@ -348,22 +185,7 @@ dmar_parse_one_drhd： 接些ACPI DMAR表中的DRHD信息，初始化`acpi_dmar_
     |       |─dmar_parse_one_andd
     |       |-dmar_parse_one_satc
 ```
-
-```C
-struct dmar_res_callback cb = {
-  .print_entry = true,
-  .ignore_unhandled = true,
-  .arg[ACPI_DMAR_TYPE_HARDWARE_UNIT] = &drhd_count,
-  .cb[ACPI_DMAR_TYPE_HARDWARE_UNIT] = &dmar_parse_one_drhd,
-  .cb[ACPI_DMAR_TYPE_RESERVED_MEMORY] = &dmar_parse_one_rmrr,
-  .cb[ACPI_DMAR_TYPE_ROOT_ATS] = &dmar_parse_one_atsr,
-  .cb[ACPI_DMAR_TYPE_HARDWARE_AFFINITY] = &dmar_parse_one_rhsa,
-  .cb[ACPI_DMAR_TYPE_NAMESPACE] = &dmar_parse_one_andd,
-};
-  
-```
-
-dmar_dev_scope_init: 这个函数里面主要是初始化每个dmar unit(iommu硬件)下挂载的设备。
+dmar_dev_scope_init: 这个函数里面主要是初始化每个dmar unit(iommu硬件)下挂载的设备。device scope也就是文章开头所描述的每个dmar unit下可以关联不同的设备；一个是INCLUDE_PCI_ALL这个标志位，当这个bit被设置上时驱动会扫描pcie bus下面的所有设备并把这些设备跟这个dmar unit 关联起来，如果这个bit没有设置上则驱动需要解析device scope 然后把这个scope下面的设备跟这个dmar unit关联起来。
 
 ```C
 ├─dmar_dev_scope_init
@@ -385,7 +207,15 @@ dmar_init_reserved_ranges: 这个函数主要是reserved一些iova ranges防止�
 
 init_no_remapping_devices: 这个函数的主要作用是忽略下面没有设备或者只有gfx设备(显卡驱动不会调用dma相关的api进行相关的操作)的dmar unit硬件。绝大多数gfx drivers不会调用standard PCI DMA APIs来分配DMA buffers，这与IOMMU有冲突。因此如果一个DMA remapping hardware unit中如果只有gdx devices，则根据cmdline配置来决定iommu是否需要将它们bypass掉。[Graphics driver workarounds to provide unity map](https://lkml.org/lkml/2007/4/24/226)
 
-init_dmars: 对 intel_iommu 做详细的初始化设置。把每个drhd关联到struct intel_iommu，假设系统当中如果有n个dma硬件则系统会创建一个大小为n* sizeof(struct intel_iommu*)的g_iommu数组，首先通过intel_iommu_init_qi 为每个iommu初始化`Invalidation Translation Caches` 机制。目前有两种一种是Register-based invalidation interface，另外一种是Queued invalidation interface；其次通过iommu_init_domains 为每个intel_iommu分配domain_ids和dmar_domains，同时为每个intel_iommu分配root_entry即root_table的基址，然后写到基址寄存器RTADDR_REG当中，写DMAR_GCMD_REG的SRTP位进行设置。
+init_dmars:
+1. 对 intel_iommu 做详细的初始化设置。把每个drhd关联到struct intel_iommu，假设系统当中如果有n个dma硬件则系统会创建一个大小为n* sizeof(struct intel_iommu*)的g_iommu数组，
+2. intel_pasid_max_id
+3. 通过`intel_iommu_init_qi` 为每个iommu初始化`Invalidation Translation Caches`缓存失效 机制。目前有两种一种是Register-based invalidation interface，另外一种是Queued invalidation interface；如果支持queued invalidate就是用qi否则使用register based invalidate。
+4. 通过`iommu_init_domains` 为每个intel_iommu分配domain_ids和dmar_domains，同时为每个intel_iommu分配root_entry即root_table的基址，然后写到基址寄存器RTADDR_REG当中，写DMAR_GCMD_REG的SRTP位进行设置。FLPT_DEFAULT_DID?
+5. init_translation_status
+6. iommu_alloc_root_entry
+7. iommu_flush_write_buffer
+8. iommu_set_root_entry
 
 intel_iommu_init_qi：
 - 分配相关数据结构，其中包括了一个作为Invalidation Queue的page
@@ -584,6 +414,11 @@ bus_set_iommu
 - struct iommu_group: 一个group下面可以对应多个或者一个硬件设备
 - struct dmar_domain: dmar_domain里面存储的是iova->hpa的转换页表（即一个IOVA映射空间），一个dmar_domain可以为多个或者一个设备服务。
 - struct iommu_domain: iommu_domain作为dmar_domain的成员，主要存放iommu核心层的通用数据信息，如iommu_ops，同时作为group和dmar_domain的关联，一个iommu_domain里面可以有多个iommu_group，然后每个iommu_group通过iommu_domain最终找到dmar_domain进行转换。
+
+
+根据bdf号进行iova转换流程：
+1. device to domain mapping 
+2. addrss translation
 
 
 
