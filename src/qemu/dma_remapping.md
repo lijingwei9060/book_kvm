@@ -27,19 +27,7 @@ Requests with address-space-identifier: 包含地址空间描述标志的DMA Req
 
 
 
-Root-table是一个4K页，共包含了256项root-entry，分别覆盖了PCI的Bus0-255，每个root-entry占16-Byte，记录了当前PCI Bus上的设备映射关系，通过PCI Bus Number进行索引。 Root-table的基地址存放在Root Table Address Register当中。Root-entry中记录的关键信息有：
 
-Present Flag：代表着该Bus号对应的Root-Entry是否呈现，CTP域是否初始化；
-Context-table pointer (CTP)：CTP记录了当前Bus号对应点Context Table的地址。
-同样每个context-table也是一个4K页，记录一个特定的PCI设备和它被分配的Domain的映射关系，即对应Domain的DMA地址翻译结构信息的地址。 每个root-entry包含了该Bus号对应的context-table指针，指向一个context-table，而每张context-table包又含256个context-entry， 其中每个entry对应了一个Device Function号所确认的设备的信息。通过2级表项的查询我们就能够获得指定PCI被分配的Domain的地址翻译结构信息。Context-entry中记录的信息有：
-
-Present Flag：表示该设备对应的context-entry是否被初始化，如果当前平台上没有该设备Preset域为0，索引到该设备的请求也会被block掉。
-Translation Type：表示哪种请求将被允许；
-Address Width：表示该设备被分配的Domain的地址宽度；
-Second-level Page-table Pointer：二阶页表指针提供了DMA地址翻译结构的HPA地址（这里仅针对Requests-without-PASID而言）；
-Domain Identifier: Domain标志符表示当前设备的被分配到的Domain的标志，硬件会利用此域来标记context-entry cache，这里有点类似VPID的意思；
-Fault Processing Disable Flag：此域表示是否需要选择性的disable此entry相关的remapping faults reporting。
-因为多个设备有可能被分配到同一个Domain，这时只需要将其中每个设备context-entry项的 Second-level Page-table Pointer 设置为对同一个Domain的引用， 并将Domain ID赋值为同一个Domian的就行了。
 
 2 DMA隔离和地址翻译
 VT-d中引入root-table和context-table的目的比较明显，这些额外的table的存在就是为了记录每个直通设备和其被分配的Domain之间的映射关系。 有了这个映射关系后，DMA隔离的实现就变得非常简单。 IOMMU硬件会截获直通设备发出的请求，然后根据其Request ID查表找到对应的Address Translation Structure即该Domain的IOMMU页表基地址， 这样一来该设备的DMA地址翻译就只会按这个Domain的IOMMU页表的方式进行翻译，翻译后的HPA必然落在此Domain的地址空间内（这个过程由IOMMU硬件中自动完成）， 而不会访问到其他Domain的地址空间，这样就达到了DMA隔离的目的。

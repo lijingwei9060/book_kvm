@@ -61,6 +61,19 @@ struct intel_iommu {
 7. pci？
 
 
+## pasid
+
+IOMMU 是被“多个 I/O 设备 + 多个进程”共享，所以需要有区分设备的 StreamID（ARM）或 Requester ID/BDF（x86），以及区分进程的 SubstreamID（ARM）或 PASID（x86），在查找 I/O page table 之前，得先查找 device table。
+
+PASID（Process Address Space ID）是一种标识符，用于在设备和系统内存之间建立映射关系。PASID的主要用途是为每个进程或虚拟机分配唯一的标识符，以便在设备访问系统内存时进行身份验证和隔离。
+
+通过使用PASID，IOMMU可以实现以下功能：
+
+1. 隔离：每个进程或虚拟机都有自己的PASID，可以确保设备只能访问其分配的内存区域，从而提高系统的安全性和隔离性。
+2. 身份验证：通过PASID，IOMMU可以验证设备访问请求的来源，以确保只有经过授权的进程或虚拟机可以访问系统内存。
+3. 性能优化：PASID可以帮助IOMMU在设备和系统内存之间建立快速的映射关系，从而提高数据传输的效率和性能。
+
+PASID enables multiple address spaces per device, up to a million in theory (1 << 20).
 
 
 
@@ -432,3 +445,12 @@ https://www.eet-china.com/mp/a118067.html
 https://www.owalle.com/2021/11/01/iommu-code/
 
 
+
+
+## api
+
+- struct iommu_domain
+- struct dmar_domain
+- struct iommu_domain_info
+- struct intel_iommu
+static void intel_flush_iotlb_all(struct iommu_domain *domain)

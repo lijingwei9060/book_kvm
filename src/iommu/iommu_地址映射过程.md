@@ -16,24 +16,7 @@ ARM smmu的寄存器(STRTAB_BASE)保存着这些表在内存中的基地址，�
 
 ## Intel IOMMU 工作模式
 
-```C
-const struct iommu_ops intel_iommu_ops = {//caq:和arm_smmu_ops 并列的一个iommu_ops实例
-.capable = intel_iommu_capable,//caq:该iommu 硬件的能力
-.domain_alloc = intel_iommu_domain_alloc,//caq:分配 dmar_domain,并返回 iommu_domain
-.domain_free = intel_iommu_domain_free,//caq:释放 dmar_domain
-.attach_dev = intel_iommu_attach_device,//caq:将一个设备attach 到一个iommu_domain
-.detach_dev = intel_iommu_detach_device,//caq:将一个设备 从一个iommu_domain 进行detach 掉
-.map = intel_iommu_map,//caq:将iova 与phy addr 进行map
-.unmap = intel_iommu_unmap,//caq:解除某段iova的map
-.iova_to_phys = intel_iommu_iova_to_phys,//caq:获取iova map的phyaddr
-.add_device = intel_iommu_add_device,//caq:将一个 设备添加到 iommu_group中
-.remove_device = intel_iommu_remove_device,//caq:将一个 设备从iommu_group中 移除
-.get_resv_regions = intel_iommu_get_resv_regions,//caq:获取 某个设备的 保存内存区域
-.put_resv_regions = intel_iommu_put_resv_regions,//caq:从某个设备 的保留内存区域摘除
-.device_group = pci_device_group,//caq:获取一个dev的iommu_group
-.pgsize_bitmap = INTEL_IOMMU_PGSIZES,//caq:固定4k
-};
-```
+
 
 intel vt-d iommu可以工作于legacy和scale模式。
 
@@ -41,9 +24,91 @@ legacy mode： `Root Table Address Register`指向root table，`translation Tabl
 
 scale mode： `Root Table Address Register`指向root table，`translation Table Mode`是01b，root/context/PASID-directory/PASID-tables是真正的物理地址。scale mode同时支持Requests without address-space-identifier和Requests with address-space-identifier，如果没有PASID，那么就取context table中默认的RID_PASID。bus查root table，dev和function查context table，context table的结果指向PASID directory，PASID directory的结果指向PASID table，PASID table的结果同时包含first level pagetable, second level pagetable和PASID Granular Translation Type (PGTT)，PGTT中指明进行first level/second level/nested/passthrough translation。
 
-# 数据结构
+
+RTADDR_REG: root table address register,
+1. 63:12, RW, root Table Address， 4k大小并对其的地址， SRTP Global Command Register
+2. 11: RW, RTT root table type, 0 root tabkle, 1 extended root table, TES = 1 in global status register运行过程中不能修改他
+
+Root-table是一个4K页，共包含了256项root-entry，分别覆盖了PCI的Bus0-255，每个root-entry占16-Byte，记录了当前PCI Bus上的设备映射关系，通过PCI Bus Number进行索引。 Root-table的基地址存放在Root Table Address Register当中。
+Root-entry，128bit中记录的关键信息有：
+
+1. 0： Present Flag：代表着该Bus号对应的Root-Entry是否呈现，CTP域是否初始化；
+2. 12：63， Context-table pointer (CTP)：CTP记录了当前Bus号对应点Context Table的地址，指向一个4KB地址。
+
+Extend-root-table，在支持Extended-Context-Support (ECS=1 in Extended Capability Register)的硬件上，如果RTADDR_REG的RTT=1，则它指向的是一个extended root-table。
+1. 0： lower present， 说明lower-context-table 是否present。
+2. 12:63: lower CONTEXT-TABLE POINTER， lctp，指向4K对齐的地址，该bus对应的lower-context-table 地址
+3. 64： up present， upper—context-table 是否present
+4. 76-127： upper context table pointer， 该bus对应的upper—context-table地址，4K对齐
+
+同样每个context-table也是一个4K页，记录一个特定的PCI设备和它被分配的Domain的映射关系，即对应Domain的DMA地址翻译结构信息的地址。 每个root-entry包含了该Bus号对应的context-table指针，指向一个context-table，而每张context-table包又含256个context-entry， 其中每个entry对应了一个Device Function号所确认的设备的信息。通过2级表项的查询我们就能够获得指定PCI被分配的Domain的地址翻译结构信息。
+
+Context-entry 128bit， 只能支持requests-without-PASID，其中记录的信息有：
+
+1. 0： Present Flag：表示该设备对应的context-entry是否被初始化，如果当前平台上没有该设备Preset域为0，索引到该设备的请求也会被block掉。
+2. 1： Fault Processing Disable Flag：此域表示是否需要选择性的disable此entry相关的remapping faults reporting。
+3. 2-3： Translation Type：表示哪种请求将被允许；
+4. Address Width：表示该设备被分配的Domain的地址宽度；
+5. HAW-1：12， Second-level Page-table Pointer：二阶页表指针提供了DMA地址翻译结构的HPA地址（这里仅针对Requests-without-PASID而言）；
+6. 87:72： Domain Identifier: Domain标志符表示当前设备的被分配到的Domain的标志，硬件会利用此域来标记context-entry cache，这里有点类似VPID的意思；
+
+
+因为多个设备有可能被分配到同一个Domain，这时只需要将其中每个设备context-entry项的 Second-level Page-table Pointer 设置为对同一个Domain的引用， 并将Domain ID赋值为同一个Domian的就行了。
+
+
+一个Extended root entry可以同时索引一个lower-context-table和一个upper-context-table，这两者都是4-KB大小、包含128个extended-context-entries。
+
+1. lower-context-table 对应了特定bus（root entry索引）上device#为0-15的PCI设备
+2. upper-context-table 对应了特定bus（root entry索引）上device#为16-31的PCI设备
+
+Extended-context-entries既支持requests-without-PASID，也支持requests-with-PASID。对于前者，entry结构与上述regular context entry一致；对于后者，其结构如下所示：
+REF： https://nimisolo.github.io/post/vtd-dma-remapping/
+
+
+First-level Translation
+Extended-Context-Entry可以被配置为通过First-level Translation来翻译requests-with-PASID。这种配置下Extended-Context-Entry包含了指向PASID-table的指针和大小，而requests-with-PASID中的PASID-number作为PASID-table中的offset来索引一个PASID-entry。在PASID-entry中包含了相应进程地址空间的first-level translation structure的指针。
+
+Second-level Translation
+Extended-Context-Entry可以被配置为使用second-level translation。这种配置下，Extended-Context-Entry中包含了指向second-level translation structure的指针。
+
+second-level translation可以用来转换requests-without-PASID，也可以在nested translation过程中用来转换requests-with-PASID的first-level translation。（这种使用方式还不太明白，或许和嵌套虚拟化相关，L1虚拟机向L2虚拟机呈现vt-d dma remapping功能时或许会用到）
+
+## 如何划分domain
+
+## 数据结构
+
+```C
+const struct iommu_ops intel_iommu_ops = {//caq:和arm_smmu_ops 并列的一个iommu_ops实例
+	.capable = intel_iommu_capable,//caq:该iommu 硬件的能力
+	.domain_alloc = intel_iommu_domain_alloc,//caq:分配 dmar_domain,并返回 iommu_domain
+	.domain_free = intel_iommu_domain_free,//caq:释放 dmar_domain
+	.attach_dev = intel_iommu_attach_device,//caq:将一个设备attach 到一个iommu_domain
+	.detach_dev = intel_iommu_detach_device,//caq:将一个设备 从一个iommu_domain 进行detach 掉
+	.map = intel_iommu_map,//caq:将iova 与phy addr 进行map
+	.unmap = intel_iommu_unmap,//caq:解除某段iova的map
+	.iova_to_phys = intel_iommu_iova_to_phys,//caq:获取iova map的phyaddr
+	.add_device = intel_iommu_add_device,//caq:将一个 设备添加到 iommu_group中
+	.remove_device = intel_iommu_remove_device,//caq:将一个 设备从iommu_group中 移除
+	.get_resv_regions = intel_iommu_get_resv_regions,//caq:获取 某个设备的 保存内存区域
+	.put_resv_regions = intel_iommu_put_resv_regions,//caq:从某个设备 的保留内存区域摘除
+	.device_group = pci_device_group,//caq:获取一个dev的iommu_group
+	.pgsize_bitmap = INTEL_IOMMU_PGSIZES,//caq:固定4k
+};
+```
 
 root table：init_dmars分配intel_iommu中的root_entry(这个是VA),根据node信息分配到对应的内存中，大小为4K, 写入对应CPU的RTADDR_REG寄存器中(这个是PA)。
+
+iommu_alloc_root_entry 对`intel_iommu`分配一个用作iommu root entry的page，存储在iommu->root_entry中, 这个HVA地址
+iommu_set_root_entry 设置root table地址为iommu->root_entry的物理地址：设置DMAR_RTADDR_REG（Root Table Address Register），设置root table基地址，写DMAR_GCMD_REG的SRTP位进行设置。
+## cache 管理
+DMA Remapping转换过程中可能会有多种translation caches，在软件改变转换表时需要invalid相关old caches。vt-d中提供了两种invalid的方式：Register-based invalidation interface 和 Queued invalidation interface，如果需要支持irq remapping，则必须用后者，故我们分析后者（vt-d spec ch6.5.2）。
+对于平台上的每个active的iommu，通过 intel_iommu_init_qi 对其进行初始化设置：
+- 分配相关数据结构，其中包括了一个作为Invalidation Queue的page
+- 将DMAR_IQT_REG（Invalidation Queue Tail Register）设置为0
+- 设置DMAR_IQA_REG（Invalidation Queue Address Register）：IQ的地址和大小
+- 设置DMAR_GCMD_REG（Global Command Register）使能QI功能
+- 等待DMAR_GSTS_REG（Global Status Register）的QIES置位，表示使能成功
+设置flush.flush_context和flush.flush_iotlb两个钩子
 
 ## walk root tbl
 
