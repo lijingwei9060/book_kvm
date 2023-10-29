@@ -146,7 +146,7 @@ detect_intel_iommu执行时还没有memory allocator，所以干的活很简单�
 
 detect_intel_iommu函数主要作用就是获取dmar acpi表，然后解析表里面的相关信息如果表里面remapping structure为drhd则通过cb函数来验证dma remapping hardware unit是否可用，具体是`dmar_validate_one_dh`， 然后指定iommu_init函数入口为intel_iommu_init。
 
-
+## Step2 intel_iommu_init初始化
 intel_iommu_init: 分配内存建立iommu的数据结构，主要是`struct dmar_drhd_unit`和`struct intel_iommu`。
 1. dmar_table_init：解析dmar表中不同类型的remapping structures。
 2. dmar_dev_scope_init()： 主要是初始化每个dmar unit(iommu硬件)下挂载的设备。

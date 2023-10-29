@@ -75,6 +75,32 @@ second-level translation可以用来转换requests-without-PASID，也可以在n
 
 ## 如何划分domain
 
+
+## static identity domain
+hw_pass_through指的是iommu硬件上是否支持paas through翻译模式即iova就是真实的物理地址不需要再走一遍从iova转换到hpa的流程。
+
+如果iommu硬件支持hw且iommu配置了pt则这种场景下硬件的DMA到达iommu之后不需要走页表翻译直接跟memory controller进行交互就可以了。但是iommu硬件是如何知道哪些设备的dma要走页表进行转换，哪些设备的dma不需要进行地址转换呢？答案在iommu硬件单元的contex_entry中，设备在通过bus号在root table里面找到相应的root_entry，然后再通过devfn在context table里面找到对应的context_entry，然后才能找到真正的页表。而从vt-d的spec来看，contex_entry的format里面有一个标志位(TT)来表明这个设备的DMA是否是paasthroug。而这个TT位是在设备添加到iommu_domain中，即`domain_add_dev_info` 这个函数并最佳终走到`domain_context_mapping_one`设置的。
+
+si_domain_init
+
+Identity mapping for IOMMU defines a single domain to 1:1 map all pci devices to all usable memory. This reduces map/unmap overhead in DMA API's and improve IOMMU performance. On 10Gb network cards, Netperf shows no performance degradation compared to non-IOMMU performance. This method may lose some of DMA remapping benefits like isolation. The patch sets up identity mapping for all pci devices to all usable memory. In the DMA API's, there is no overhead to maintain page tables, invalidate iotlb, flush cache etc. 32 bit DMA devices don't use identity mapping domain in order to access memory beyond 4GB. When kernel option iommu=pt, pass through is first tried. If pass through succeeds, IOMMU goes to pass through. If pass through is not supported in hw or fail for whatever reason, IOMMU goes to identity mapping.  
+
+在iommu=pt的场景下，由于静态映射的存在所以直接返回paddr。
+
+1. 如果这个设备不是pci设备且这个设备有RMRR，则返回False.
+2. 如果这个设备是pci设备，则下面几种情况会返回False：
+   1. 这个pci设备有rmrr
+   2. iommu_identity_mapping 的值不是IDENTMAP_ALL
+   3. 是pci设备但不是pcie设备，则如果设备不是 root bus 或者说pci设备的种类是pci bridge
+   4. 是pcie设备且pcie 设备是pcie bridge
+
+
+int domain_context_mapping_one(): 
+1. 默认的dmar的转换类型为 translation = CONTEXT_TT_MULTI_LEVEL;
+2. if (hw_pass_through && domain_type_is_si(domain)) => translation = CONTEXT_TT_PASS_THROUGH;
+
+int si_domain_init(hw)
+
 ## 数据结构
 
 ```C
@@ -100,6 +126,8 @@ root table：init_dmars分配intel_iommu中的root_entry(这个是VA),根据node
 
 iommu_alloc_root_entry 对`intel_iommu`分配一个用作iommu root entry的page，存储在iommu->root_entry中, 这个HVA地址
 iommu_set_root_entry 设置root table地址为iommu->root_entry的物理地址：设置DMAR_RTADDR_REG（Root Table Address Register），设置root table基地址，写DMAR_GCMD_REG的SRTP位进行设置。
+
+
 ## cache 管理
 DMA Remapping转换过程中可能会有多种translation caches，在软件改变转换表时需要invalid相关old caches。vt-d中提供了两种invalid的方式：Register-based invalidation interface 和 Queued invalidation interface，如果需要支持irq remapping，则必须用后者，故我们分析后者（vt-d spec ch6.5.2）。
 对于平台上的每个active的iommu，通过 intel_iommu_init_qi 对其进行初始化设置：
@@ -110,11 +138,17 @@ DMA Remapping转换过程中可能会有多种translation caches，在软件改�
 - 等待DMAR_GSTS_REG（Global Status Register）的QIES置位，表示使能成功
 设置flush.flush_context和flush.flush_iotlb两个钩子
 
-## walk root tbl
+SRTP: Hardware invalidates all DMA remapping hardware translation caches as part of SRTP flow.
 
+## walk root tbl
+ 
 root table address = virt_to_phys(iommu->root_entry)
 
+所有的iommu单元应该共享root table和context table，只是不通的设备关联的iommu不同。在scource id为bdf时使用bdf进行查找root table， 使用pasid时需要查找context table。
 
+Scale mode & support pasid => extend root table
+
+iommu->root_entry 保存hva地址，4K页面，写入物理地址， flag(DMA_RTADDR_SMT) 到寄存器RTADDR_REG.
 
 
 ## 管理过程
