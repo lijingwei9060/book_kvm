@@ -130,15 +130,23 @@ iommu_set_root_entry 设置root table地址为iommu->root_entry的物理地址�
 
 ## cache 管理
 DMA Remapping转换过程中可能会有多种translation caches，在软件改变转换表时需要invalid相关old caches。vt-d中提供了两种invalid的方式：Register-based invalidation interface 和 Queued invalidation interface，如果需要支持irq remapping，则必须用后者，故我们分析后者（vt-d spec ch6.5.2）。
+
 对于平台上的每个active的iommu，通过 intel_iommu_init_qi 对其进行初始化设置：
-- 分配相关数据结构，其中包括了一个作为Invalidation Queue的page
-- 将DMAR_IQT_REG（Invalidation Queue Tail Register）设置为0
-- 设置DMAR_IQA_REG（Invalidation Queue Address Register）：IQ的地址和大小
-- 设置DMAR_GCMD_REG（Global Command Register）使能QI功能
-- 等待DMAR_GSTS_REG（Global Status Register）的QIES置位，表示使能成功
-设置flush.flush_context和flush.flush_iotlb两个钩子
+- 分配相关数据结构，其中包括了一个作为`Invalidation Queue`的page
+- 将`DMAR_IQT_REG（Invalidation Queue Tail Register）`设置为0
+- 设置`DMAR_IQA_REG（Invalidation Queue Address Register）`：IQ的地址和大小
+- 设置`DMAR_GCMD_REG（Global Command Register）`使能QI功能
+- 等待`DMAR_GSTS_REG（Global Status Register）`的QIES置位，表示使能成功
+- 设置flush.flush_context和flush.flush_iotlb两个钩子
+
+通过`intel_iommu_init_qi` 为每个iommu初始化`Invalidation Translation Caches`缓存失效 机制。目前有两种一种是Register-based invalidation interface，另外一种是Queued invalidation interface；如果支持queued invalidate就是用qi否则使用register based invalidate。
+
+iommu->ecap标志中有queued invalidation support功能标志位，表示硬件是否支持。
+iommu->qi, 有256个int，1个4K页面（HVA，保存虚拟地址），保存标志位状态，
 
 SRTP: Hardware invalidates all DMA remapping hardware translation caches as part of SRTP flow.
+
+
 
 ## walk root tbl
  
