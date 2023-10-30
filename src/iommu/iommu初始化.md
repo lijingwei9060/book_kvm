@@ -147,6 +147,10 @@ detect_intel_iommu执行时还没有memory allocator，所以干的活很简单�
 detect_intel_iommu函数主要作用就是获取dmar acpi表，然后解析表里面的相关信息如果表里面remapping structure为drhd则通过cb函数来验证dma remapping hardware unit是否可用，具体是`dmar_validate_one_dh`， 然后指定iommu_init函数入口为intel_iommu_init。
 
 ## Step2 intel_iommu_init初始化
+
+- struct acpi_dmar_hardware_unit: 代表acpi传递过来的dmar表，也代表一个dmar 硬件。
+- struct dmar_drhd_unit: 室内和解析过得结构，代表一个dmar硬件，后续的iommu初始化根据这个结构来初始化。
+
 intel_iommu_init: 分配内存建立iommu的数据结构，主要是`struct dmar_drhd_unit`和`struct intel_iommu`。
 1. dmar_table_init：解析dmar表中不同类型的remapping structures。
 2. dmar_dev_scope_init()： 主要是初始化每个dmar unit(iommu硬件)下挂载的设备。
@@ -254,9 +258,15 @@ for_each_online_node(nid) {
 }
 ```
 
-bus_set_iommu(&pci_bus_type, &intel_iommu_ops):这个函数主要是为pci_bus设置intel_iommu_ops，并通过iommu_bus_init做一些初化的工作。具体的工作包括
+bus_set_iommu(&pci_bus_type, &intel_iommu_ops):这个函数主要是为pci_bus设置`intel_iommu_ops`，并通过`iommu_bus_init`做一些初化的工作。具体的工作包括
 1. 为bus注册通知回调函数
-2. 还有就是通过add_iommu_group给每个设备创建iommu_group，一个iommu_group可以对一个设备也可以对应多个设备，至于具体是如何分组我们看一下具体的函数实现，这段逻辑最终会调用到pci_device_group函数。这个函数的核心逻辑在于`pci_acs_path_enabled`，简单来说如果是pcie的设备则检查该设备到root complex的路径上如果都开启了ACS则这个设备就单独成一个iommu_group，如果不是则找到它的alias group就行了比如如果这个是传统的pci bus(没有pcie这些ACS的特性)则这个pci bus下面的所有设备就组合成一个iommu_group。
+2. 还有就是通过`device_group`给每个设备创建iommu_group，一个iommu_group可以对一个设备也可以对应多个设备，最终调用`intel_iommu_device_group`。核心逻辑在`pci_device_group`函数，
+   1. 如果不是pci/pcie设备直接每个设备分配一个group
+   2. 对于pci设备，如果已经分配了alias group，直接返回alias group。
+   3. 通过`pci_acs_path_enabled`找到当前设备的最近支持acs的父亲总线，这个就是一个最小group。
+   4. 简单来说如果是pcie的设备则检查该设备到root complex的路径上如果都开启了ACS则这个设备就单独成一个iommu_group，如果不是则找到它的alias group就行了比如如果这个是传统的pci bus(没有pcie这些ACS的特性)则这个pci bus下面的所有设备就组合成一个iommu_group。
+   5. 对最小的group调用`get_pci_alias_group`对同一总线上的设备使用相同的alias group。
+   6. 依然没有发现group就新建。
 
 那么为什么要对设备进行分组呢？
 
@@ -356,6 +366,8 @@ pci_iommu_init
       └─for_each_iommu
              └─iommu_enable_translation
 ```
+
+
 单独分析init_dmars，有点复杂。
 ```c
 init_dmars
@@ -383,7 +395,7 @@ init_dmars
           ├─dmar_alloc_hwirq
           └─request_irq(irq, dmar_fault)
 ```
-有四种domain，init_dmars中用到了IOMMU_DOMAIN_IDENTITY，这个类型的domain只能有一个，kvm和dpdk会用到IOMMU_DOMAIN_UNMANAGED，一个qemu或者一个dpdk进程一个domain。IOMMU_DOMAIN_BLOCKED和IOMMU_DOMAIN_DMA是内核用到，它和iommu group有关系，一个group对应一个domain，一个group有可能有多个dev，这个和pci硬件结构有关系，详见函数pci_device_group。
+有四种domain，init_dmars中用到了`IOMMU_DOMAIN_IDENTITY`，这个类型的domain只能有一个，kvm和dpdk会用到`IOMMU_DOMAIN_UNMANAGED`，一个qemu或者一个dpdk进程一个domain。`IOMMU_DOMAIN_BLOCKED`和`IOMMU_DOMAIN_DMA`是内核用到，它和iommu group有关系，一个group对应一个domain，一个group有可能有多个dev，这个和pci硬件结构有关系，详见函数pci_device_group。
 ```c
 /*
  * This are the possible domain-types
@@ -394,6 +406,35 @@ init_dmars
  *	IOMMU_DOMAIN_DMA	- Internally used for DMA-API implementations. This flag allows IOMMU drivers to implement certain optimizations for these domains
  */
 ```
+
+在`iommu_subsys_init` 设置默认的domain type ，有多重 IOMMU_DOMAIN_DMA_FQ(translated), IOMMU_DOMAIN_IDENTITY(Passthrough)。
+- 如果内核参数iommu=pt，这个default domain就是唯一类型为IOMMU_DOMAIN_IDENTITY的si；
+- 如果内核参数iommu=nopt就是类型为IOMMU_DOMAIN_DMA的domain；
+- 内核参数没有iommu，默认为IOMMU_DOMAIN_IDENTITY。
+
+业务逻辑：
+1. 设置bus总线的iommu_ops为intel_iommu_ops, 不同的厂商肯定不同，注册这个ops是为了后续分配dev与group、domain、feature管理。
+2. 给设备注册group，默认每个dev都是一个group，对于不支持acs的pci设备，按照最小功能范围分配group，多个设备可以通过alias指向同一个group。
+3. 给设备分配一个domain，因为现在还没有决定设备用途，所以分配默认domain，不同的参数配置会导致默认domain不同，其实也就两种可能不进行地址转换和进行地址转换。
+4. 获取当前设备在acpi中的reserve 内存信息建立mapping(如dev和ioapic的关系)如果有就在domain中通过iommu_map建立iova到phys的地址转换，iova和phys相同，实际没有转换。
+
+```C
+iommu_device_register(&iommu->iommu, &intel_iommu_ops, NULL); // 
+    bus_iommu_probe(iommu_buses[i]) // 对总线检测设备所属group
+        probe_iommu_group(dev) // 检测设备所属的group，如果device已经属于某个group直接返回
+            __iommu_probe_device(dev) // 调用总线上的dev->bus->iommu_ops->probe_device(dev)
+                iommu_dev = intel_iommu_probe_device(dev);
+                group = iommu_group_get_for_dev(dev);
+                iommu_device_link(iommu_dev, dev);
+                        pci_device_group//真正决定group的函数
+        probe_alloc_default_domain(bus, group); //现在还没有决定这个设备的用途，所以给内核管理的dev分配default domain, 不同的配置default domain不一样， 参考iommu_subsys_init
+        iommu_group_create_direct_mappings(group); //对系统保留区分建立mapping，如dev和ioapic的关系
+*		ret = __iommu_group_dma_first_attach(group); // 创建这个dev在IOMMU中的转换表
+        __iommu_group_dma_finalize(group);
+```
+
+
+
 单独分析bus_set_iommu，这个函数中有个default domain，如果内核参数iommu=pt，这个default domain就是唯一类型为IOMMU_DOMAIN_IDENTITY的si，如果内核参数iommu=nopt就是类型为IOMMU_DOMAIN_DMA的domain，内核参数没有iommu，默认为IOMMU_DOMAIN_IDENTITY。
 ```c
 bus_set_iommu

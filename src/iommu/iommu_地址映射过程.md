@@ -159,6 +159,11 @@ Scale mode & support pasid => extend root table
 iommu->root_entry 保存hva地址，4K页面，写入物理地址， flag(DMA_RTADDR_SMT) 到寄存器RTADDR_REG.
 
 
+dmar_fault
+
+
+dmar_set_interrupt
+
 ## 管理过程
 
 struct context_entry *iommu_context_addr(struct intel_iommu *iommu, u8 bus, u8 devfn, int alloc) // 根据BDF在iommu查找对应的context entry，没有也可以创建

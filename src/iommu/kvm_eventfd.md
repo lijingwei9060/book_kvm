@@ -51,3 +51,12 @@ ioeventfd： 提供一种机制，可以通过文件描述符fd来接收Guest的
 
 
 ## irqfd
+
+irqfd基于eventfd机制，qemu中将一个gsi(全局系统中断号)与eventfd捆绑后，向kvm发送注册irqfd请求，kvm收到请求后将带有gsi信息的eventfd加入到与irqfd有关的等待队列中，一旦有进程向该eventfd写入，等待队列中的元素就会唤醒，并调用相应的唤醒函数(irqfd_wakeup)向guest注入中断(irqfd_inject)。
+
+kvm_irqfd_assign: 
+irqfd_wakeup 
+
+static void irqfd_inject(struct work_struct *work) // 触发中断
+irqfd_shutdown // 关闭中断
+int kvm_set_irq(struct kvm *kvm, int irq_source_id, u32 irq, int level, bool line_status)
