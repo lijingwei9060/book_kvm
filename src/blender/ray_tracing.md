@@ -78,3 +78,59 @@ Blinn-Phong Model
 radiant intensity: the reaidant(luminous) intensity is the power per unit solid angle emitted by a point light source.
 
 solid angles: radio of subtended area on sphere to raidus squared, 3维立体角，面积除以半径平方，4pi的立体角，steraians
+
+
+## Prob
+
+## 蒙特卡洛积分monte carlo intergration
+
+渲染方程： 光纤传播方式， rendering equation
+light transport： brbf
+
+连续变量 contrinue variable
+概率密度函数 probability Density Function
+变量的期望： expected value of x E[x] = xp(x)的积分
+蒙特卡洛积分monte carlo intergration，定积分 $\int_a^bf(x)dx$，在积分域内多次采样，平均值乘以长度。
+
+黎曼积分： 长方形面积积分
+
+蒙特卡洛积分monte carlo intergration： 
+蒙特卡洛估算： monte carlo estimator 
+统一蒙特卡洛管算子： uniform mento carlo estimator $F_N = \frac{b-a}{N} \sum_{i=1}^{N}f(X_i)$
+
+=> monto carlo integration $\int f(x)dx = \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{p(X_i)} \quad X_i ~ p(x)$ , 定积分采样多，误差少
+
+## Path Tracing
+
+color bleeding： 全局光照内的效果
+The Cornell box： 康奈尔盒子，全局光照效果
+
+渲染方程是正确的，自己发出+四面八方反射
+
+$$L_o(p,w_o)=L_e(p,w_o)+\int_{\Omega+}L_i(p,w_i)f_r(p,w_i,w_o)(n \cdot w_i)dw_i$$
+
+shade(p,wo):
+1. randomly choose N directions wi ~ pdf
+2. Lo = 0.0
+3. for each wi
+   1. trace a ray r(p, wi)
+   2. if ray r hit the light
+      1. Lo += (1/N) * L_i * f_r * cosine / pdf(wi)
+   3. Else if ray hit an object at q
+      1. Lo += (1/N) * shade(q, -wi) * f_r *consine / pdf(wi)
+4. return Lo
+
+如果光多次弹跳：算多次弹跳，简化为下一个嵌套; 嵌套如何结束？cuting bounces， 能力损失。Russian roulette RR，俄罗斯轮盘，一定的概率停止path tracing， => 带rr的渲染方程
+
+N => one, 计算爆炸
+N != 1 Distributed Ray tracing 
+
+
+Ray Generation
+
+效率问题： spp samples per pixel，存在浪费的光线，好的pdf，不要平均
+
+直接光源： no rr
+间接光源： rr
+
+问题： 直接光源被阻挡blocked
