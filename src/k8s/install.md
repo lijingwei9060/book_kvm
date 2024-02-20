@@ -165,3 +165,153 @@ vi calico.yaml
   value: "172.16.0.0/16"
 
 kubectl apply -f calico.yaml
+
+```shell
+root@i-4A2FE681:~# kubectl get pods -A
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system   calico-kube-controllers-7ddc4f45bc-5nfk9   1/1     Running   0          16h
+kube-system   calico-node-58d5m                          1/1     Running   0          16h
+kube-system   calico-node-7sbbd                          1/1     Running   0          16h
+kube-system   calico-node-wcn4x                          1/1     Running   0          43s
+kube-system   coredns-857d9ff4c9-rmrpc                   1/1     Running   0          16h
+kube-system   coredns-857d9ff4c9-v97wz                   1/1     Running   0          16h
+kube-system   etcd-i-4a2fe681                            1/1     Running   0          16h
+kube-system   kube-apiserver-i-4a2fe681                  1/1     Running   0          16h
+kube-system   kube-controller-manager-i-4a2fe681         1/1     Running   0          16h
+kube-system   kube-proxy-nw82k                           1/1     Running   0          16h
+kube-system   kube-proxy-s849p                           1/1     Running   0          16h
+kube-system   kube-proxy-v927z                           1/1     Running   0          8s
+kube-system   kube-scheduler-i-4a2fe681                  1/1     Running   0          16h
+```
+
+```shell
+root@i-4A2FE681:~# kubectl get nodes
+NAME         STATUS   ROLES           AGE   VERSION
+i-4a2fe681   Ready    control-plane   16h   v1.29.2
+i-c96ca55e   Ready    <none>          16h   v1.29.2
+i-cc100c27   Ready    <none>          16h   
+```
+
+## helm 和仓库设置
+
+snap install helm --classic
+
+## 安装ingress-nginx
+
+添加 ingress-nginx 仓库
+```shell
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
+```
+如果helm repo访问不了：
+下载下面的文件，修改 regsitry.k8s.io -> k8s.mirror.nju.edu.cn
+```shell
+root@i-4A2FE681:~# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+namespace/ingress-nginx created
+serviceaccount/ingress-nginx created
+serviceaccount/ingress-nginx-admission created
+role.rbac.authorization.k8s.io/ingress-nginx created
+role.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx-admission created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+configmap/ingress-nginx-controller created
+service/ingress-nginx-controller created
+service/ingress-nginx-controller-admission created
+deployment.apps/ingress-nginx-controller created
+job.batch/ingress-nginx-admission-create created
+job.batch/ingress-nginx-admission-patch created
+ingressclass.networking.k8s.io/nginx created
+validatingwebhookconfiguration.admissionregistration.k8s.io/ingress-nginx-admission created
+```
+
+检查
+```shell
+root@i-4A2FE681:~# kubectl get pods -n ingress-nginx
+NAMESPACE              NAME                                        READY   STATUS             RESTARTS         AGE
+ingress-nginx          ingress-nginx-admission-create-tnnl8        0/1     Completed          0                6m23s
+ingress-nginx          ingress-nginx-admission-patch-fdpgg         0/1     Completed          0                6m23s
+ingress-nginx          ingress-nginx-controller-6ccc9bd7cb-fq7cm   1/1     Running            4 (106s ago)     6m23s
+
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+```
+
+## 安装gateway
+
+```shell
+root@i-4A2FE681:~# kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io created
+```
+
+## 安装dashboard
+```shell
+root@i-4A2FE681:~# helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+"kubernetes-dashboard" has been added to your repositories
+root@i-4A2FE681:~# helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+Release "kubernetes-dashboard" does not exist. Installing it now.
+NAME: kubernetes-dashboard
+LAST DEPLOYED: Tue Feb 20 02:25:23 2024
+NAMESPACE: kubernetes-dashboard
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+*********************************************************************************
+*** PLEASE BE PATIENT: kubernetes-dashboard may take a few minutes to install ***
+*********************************************************************************
+
+Get the Kubernetes Dashboard URL by running:
+  export POD_NAME=$(kubectl get pods -n kubernetes-dashboard -l "app.kubernetes.io/name=kubernetes-dashboard,app.kubernetes.io/instance=kubernetes-dashboard" -o jsonpath="{.items[0].metadata.name}")
+  echo https://127.0.0.1:8443/
+  kubectl -n kubernetes-dashboard port-forward $POD_NAME 8443:8443
+```
+
+创建 dashboard-admin 用户: kubectl create serviceaccount dashboard-admin -n kubernetes-dashboard
+绑定 clusterrolebinding: kubectl create clusterrolebinding dashboard-admin-rb --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:dashboard-admin
+生成配置文件: 
+cat > dashboard-admin-token.yaml<<EOF
+apiVersion: v1 
+kind: Secret 
+metadata: 
+  name: dashboard-admin-secret 
+  namespace: kubernetes-dashboard 
+  annotations: 
+    kubernetes.io/service-account.name: dashboard-admin 
+type: kubernetes.io/service-account-token
+EOF
+
+生成secret: kubectl apply -f dashboard-admin-token.yaml
+查看token: kubectl describe secret dashboard-admin-secret -n kubernetes-dashboard
+
+```text
+# kubernetes-dashboard/values.yaml
+metricsScraper:
+  ## Wether to enable dashboard-metrics-scraper
+  enabled: true
+```
+Dashboard Token 的默认有效时间是 15 分钟，到期后会自动退出登陆，不方便学习探索
+```txt
+# kubernetes-dashboard/values.yaml
+extraArgs:
+  - --token-ttl=43200 # 增加这一行，设置 token 过期时间为12小时
+```
+
+helm upgrade kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard -n kubernetes-dashboard -f values.yaml
+
+缺少ingress访问方法？
+
+## 安装metric Server 
+
+## 安装存储插件
