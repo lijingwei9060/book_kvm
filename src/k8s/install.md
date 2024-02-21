@@ -1,8 +1,25 @@
 ## preinstall
+
+### ubuntu配置dns
+
+```shell
+root@i-CC100C27:~# vim /etc/netplan/99_config.yaml 
+network:
+        version: 2
+        renderer: networkd
+        ethernets:
+            ens3:
+                dhcp4: true
+                dhcp6: true
+                nameservers:
+                  addresses: [10.201.33.181, 10.201.33.184]
+root@i-CC100C27:~# netplan apply
+root@i-CC100C27:~# ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+```
 ### 关闭swap
 ```shell
 swapoff -a
-sed -i '/ swap / s/^(.*)$/#1/g' /etc/fstab
+sed -i '/ swap / s/^/#/g' /etc/fstab
 ```
 
 ### 转 发 IPv4 并让 iptables 看到桥接流量
@@ -294,6 +311,22 @@ EOF
 
 生成secret: kubectl apply -f dashboard-admin-token.yaml
 查看token: kubectl describe secret dashboard-admin-secret -n kubernetes-dashboard
+```shell
+root@i-4A2FE681:~# kubectl describe secret dashboard-admin-secret -n kubernetes-dashboard
+Name:         dashboard-admin-secret
+Namespace:    kubernetes-dashboard
+Labels:       kubernetes.io/legacy-token-last-used=2024-02-20
+Annotations:  kubernetes.io/service-account.name: dashboard-admin
+              kubernetes.io/service-account.uid: 979e9feb-14e3-46fd-9889-68dbc86addfa
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IjF5X1lDYkVQSGhIVGxTOGNpbDlsRzdlalAyYXVsU3JGb1VCTkhHWmtFODAifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkYXNoYm9hcmQtYWRtaW4tc2VjcmV0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImRhc2hib2FyZC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6Ijk3OWU5ZmViLTE0ZTMtNDZmZC05ODg5LTY4ZGJjODZhZGRmYSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDpkYXNoYm9hcmQtYWRtaW4ifQ.QNSho60qE8WI70pd1xFz1GqfRS4oe79J9up0zaFvL1C7cSIESISJnkoTsHL45XmWXhJgQfnfflipc2cYuekg8uRm2qmP-aexNFDoYXq4szndDFh61naL6aERJAnOFDv9SVxSOBJ5ql7S97I6n0DAl3so5Em-lcuQ9azBmEnvzfFgoufqdVo-BCCaVjSx7DmF804FCc_nyeJnL9_6ZLM02IYgFRVG0D7iF-jEhuuJIQUl0xtFgvN1TH5xxkSSGwnPGUZxiHVG8Rc-OUFOeM0l098NeJO-4sjCK1aIm6-Sa3OjIMYqCmamswgz5zWmycLX14DJdwF5OYc2SIEUSk3QFA
+ca.crt:     1107 bytes
+namespace:  20 bytes
+```
 
 ```text
 # kubernetes-dashboard/values.yaml
@@ -310,8 +343,91 @@ extraArgs:
 
 helm upgrade kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard -n kubernetes-dashboard -f values.yaml
 
-缺少ingress访问方法？
+创建自签证书，并创建tls类型Secrets: 
+
+```shell
+root@i-4A2FE681:~# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout kube-dashboard.key -out kube-dashboard.crt -subj "/CN=dashboard.kube.com/O=k8s.dashboard.local"
+.............+....+........
+-----writing new private key to 'kube-dashboard.key'
+# 创建tls类型的Secret为ingress提供配置。
+root@i-4A2FE681:~# kubectl create secret tls dashboard-tls --key kube-dashboard.key --cert kube-dashboard.crt -n kubernetes-dashboard
+secret/dashboard-tls created
+
+# 查看secrets，可以看见类型为tls类型
+root@i-4A2FE681:~# kubectl get secret -n kubernetes-dashboard
+NAME                                         TYPE                                  DATA   AGE
+dashboard-admin-secret                       kubernetes.io/service-account-token   3      21h
+dashboard-tls                                kubernetes.io/tls                     2      21s
+kubernetes-dashboard-certs                   Opaque                                0      24h
+kubernetes-dashboard-csrf                    Opaque                                1      24h
+kubernetes-dashboard-key-holder              Opaque                                2      24h
+sh.helm.release.v1.kubernetes-dashboard.v1   helm.sh/release.v1                    1      24h
+sh.helm.release.v1.kubernetes-dashboard.v2   helm.sh/release.v1                    1      21h
+```
+配置Ingress规则: 
+```shell
+root@i-4A2FE681:~# cat ingress-dashboard.yaml 
+apiVersion: networking.k8s.io/v1   类型为v1
+kind: Ingress
+metadata:
+  name: dashboard-ingress
+  namespace: kubernetes-dashboard
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"   #注意这里：必须指定后端服务为HTTPS服务。
+spec:
+  ingressClassName: "nginx"  控制器的类型为nginx
+  tls:
+  - hosts:    
+    - k8s.dashboard.local   主机名
+    secretName: dashboard-tls  这里引用创建的secrets
+  rules:
+  - host: k8s.dashboard.local   
+    http:
+      paths:
+      - path: /
+        pathType: Prefix   起始与根都进行代理。
+        backend:   
+          service:
+            name: kubernetes-dashboard   service名称
+            port:     后端端口
+              number: 443
+```
+
+```shell
+root@i-4A2FE681:~# kubectl apply -f ingress-dashboard.yaml 
+ingress.networking.k8s.io/dashboard-ingress created
+
+root@i-4A2FE681:~# kubectl get ingress -A
+NAMESPACE              NAME                CLASS   HOSTS                 ADDRESS   PORTS     AGE
+kubernetes-dashboard   dashboard-ingress   nginx   k8s.dashboard.local             80, 443   50s
+```
 
 ## 安装metric Server 
 
 ## 安装存储插件
+
+
+## 卸载node
+
+```shell
+## master
+kubectl  delete nodes k8s-node1
+
+root@i-4A2FE681:~# kubeadm token create --print-join-command
+kubeadm join 10.16.161.64:6443 --token 24m1x0.po11fl3izrkfl6po --discovery-token-ca-cert-hash sha256:b34c9e4721367dbe8e73ef35e000101daba68ebfd71fc3ae0a488c49433d3e66 
+### node
+root@i-CC100C27:~# kubeadm join 10.16.161.64:6443 --token 24m1x0.po11fl3izrkfl6po --discovery-token-ca-cert-hash sha256:b34c9e4721367dbe8e73ef35e000101daba68ebfd71fc3ae0a488c49433d3e66
+[preflight] Running pre-flight checks
+[preflight] Reading configuration from the cluster...
+[preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap...
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+```
