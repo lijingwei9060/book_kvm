@@ -1,0 +1,1 @@
+https://kubernetes.renkeju.com/chapter_4/4.Manage_pod_resource_objects.html
