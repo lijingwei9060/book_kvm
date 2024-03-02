@@ -1,5 +1,11 @@
 # intro
 
+1. kubernetes原生的对象，由ks-apiserver连接api-server，直接获取更改etcd中kubernetes的原始数据(origin data)即可，操作的对象即kubernetes原生的configmap. deployment等对象。
+2. KS的CRD对象，ks-controller-manager的封装功能逻辑以crd对象的方式表现在etcd中，ks-apiserver通过连接k8s-apiserver操作etcd中的crd数据(crd data)即可，操作 ks-controller-manager 扩展的逻辑功能。
+3. 第三方的operator对象，如prometheus-operator等第三方完成的模块以operator的方式运行在系统中，其功能对应的对象也以crd的形式存放载etcd中，ks-apiserver也是通过和k8s-apiserver交互操作对应的crd完成。
+4. 普通的服务对象，如kenkins，sonarqube等以普通服务的方式运行在系统中，ks-apiserver直接通过网络调用和此类对象交互
+5. 多集群模式的API对象，通过tower分发到Member集群处理，如阿里云，腾讯云K8S集群。 以上，ks-apiserver通过内部API(inner API aggregate)聚合内部功能 ，并对外提供统一的API，即外部API(out API aggregate)。
+
 controller manager：
 controllers - crd - image： 
 - accessors.storage.kubesphere.io
