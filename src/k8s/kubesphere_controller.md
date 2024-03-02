@@ -6,6 +6,16 @@
 4. 普通的服务对象，如kenkins，sonarqube等以普通服务的方式运行在系统中，ks-apiserver直接通过网络调用和此类对象交互
 5. 多集群模式的API对象，通过tower分发到Member集群处理，如阿里云，腾讯云K8S集群。 以上，ks-apiserver通过内部API(inner API aggregate)聚合内部功能 ，并对外提供统一的API，即外部API(out API aggregate)。
 
+创建：
+1. ks-apiserver： Deploy+service
+2. User： admin
+3. ks-console： Deployment+ serviceaccount+service
+4. ks-controller-manager： deplyment + service
+5. ks-router-config： configmap
+6. ks-router： ingress controller
+7. kubesphere-config： configmap
+
+
 controller manager：
 controllers - crd - image： 
 - accessors.storage.kubesphere.io
