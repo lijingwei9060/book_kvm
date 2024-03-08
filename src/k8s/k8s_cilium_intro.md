@@ -19,6 +19,21 @@
 1. hubble：云原生工作负载的分布式网络和安全可观察性平台
 2. cillium-agent
 
+## 概念
+1. endpoint：相当于一个pod以及对应的ip，crd： ciliumendpoint
+2. identity： 每个endpoint都有一个标签表示，crd：ciliumidentities，bpf会用到
+
+
+## features
+1. datapath mode： tunnel，基于vxlan，overlay网络结构
+2. kubeproxy replacement：
+3. ipv6 big ip： linux kernel > 5.19
+4. bandwidth manager: linux kernel > 5.1
+5. host routing: linux kernel > 5.10, 否则legacy iptables
+6. masquerading： ebpf or iptables
+7. hubble relay： 
+8. native routing： 本地路由，在tunnel：disabled模式下启用
+
 ## 安装
 
 1. bpffs：/sys/fs/bpf
@@ -63,4 +78,29 @@ tc:
 lxc48c4aa0637ce(43) clsact/ingress bpf_lxc.o:[from-container] id 2901
 
 flow_dissector:
+
+# 下发 bpf_lxc.c from-container 程序: https://github.com/cilium/cilium/blob/master/bpf/bpf_lxc.c#L970-L1025
+tc filter show dev lxc3a01d529e083 ingress
+#filter protocol all pref 1 bpf chain 0 
+#filter protocol all pref 1 bpf chain 0 handle 0x1 bpf_lxc.o:[from-container] direct-action not_in_hw tag b07a0188f79fbd7b
+
+# 下发 bpf_host.c to-host 程序: https://github.com/cilium/cilium/blob/master/bpf/bpf_host.c#L1106-L1188
+tc filter show dev cilium_host ingress
+#filter protocol all pref 1 bpf chain 0 
+#filter protocol all pref 1 bpf chain 0 handle 0x1 bpf_host.o:[to-host] direct-action not_in_hw tag 7afe1afd2f393b1b
+
+# 下发 bpf_host.c from-host 程序: https://github.com/cilium/cilium/blob/master/bpf/bpf_host.c#L990-L1002
+tc filter show dev cilium_host egress
+#filter protocol all pref 1 bpf chain 0 
+#filter protocol all pref 1 bpf chain 0 handle 0x1 bpf_host.o:[from-host] direct-action not_in_hw tag 9b2b3e068f78309b
+
+# 下发 bpf_host.c from-netdev 程序: https://github.com/cilium/cilium/blob/master/bpf/bpf_host.c#L963-L988
+tc filter show dev eth0 ingress
+#filter protocol all pref 1 bpf chain 0 
+#filter protocol all pref 1 bpf chain 0 handle 0x1 bpf_netdev_eth0.o:[from-netdev] direct-action not_in_hw tag 524a2ea93d920b5f
+
+# 下发 bpf_host.c to-netdev 程序: https://github.com/cilium/cilium/blob/master/bpf/bpf_host.c#L1004-L1104
+tc filter show dev eth0 egress
+#filter protocol all pref 1 bpf chain 0 
+#filter protocol all pref 1 bpf chain 0 handle 0x1 bpf_netdev_eth0.o:[to-netdev] direct-action not_in_hw tag a04f5eef06a7f555 
 ```
