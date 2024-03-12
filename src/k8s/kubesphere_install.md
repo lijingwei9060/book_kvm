@@ -1,6 +1,7 @@
 # intro
 
 apt install socat conntrack ipset -y
+apt install linux-tools-common linux-tools-5.15.0-100-generic -y
 
 export KKZONE=cn
 curl -sfL https://get-kk.kubesphere.io | VERSION=v3.0.13 sh -
@@ -14,6 +15,23 @@ VERSION=v3.0.13 sh downloadKubekey.sh
 
 hostname小写
 
+
+```
+network:
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 10.16.161.24/24
+      nameservers:
+        addresses: [10.201.33.181, 10.201.33.189]
+      routes:
+        - to: default
+          via: 10.16.161.254
+  version: 2
+```
+
+ln -fs /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 ./kk create config --with-kubesphere  -f ./config.yaml
 
