@@ -213,6 +213,12 @@ i-cc100c27   Ready    <none>          16h
 
 snap install helm --classic
 
+
+## cilium
+helm repo add cilium https://helm.cilium.io/
+helm install cilium cilium/cilium --version 1.15.1 --namespace kube-system --set tunnel=disabled  --set autoDirectNodeRoutes=true
+
+
 ## 安装ingress-nginx
 
 添加 ingress-nginx 仓库
