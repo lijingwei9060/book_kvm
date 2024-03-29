@@ -144,3 +144,47 @@ map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
       dst_ip 已经是真实 Pod IP（POD4_IP）
    => encode_custom_prog_meta(ctx, ret, dst_sec_identity)
 ```
+
+
+
+### xdp
+
+xdp是物理网卡上的流量：
+1. 通过nodeport访问ep，或者ep的返回
+2. 不是nodeport就放行，放行到到tc ingress
+
+```C
+cil_xdp_entry()
+=> check_filters(ctx)
+   ctx_store_meta
+   ctx_skip_nodeport_clear
+   check_v4(ctx)
+      -> CILIUM_CALL_IPV4_FROM_NETDEV = tail_lb_ipv4(ctx)
+         DSR:
+         nodeport_lb4(ctx, ip4, l3_off, 0, err, is_dsr) // 1. 后端是本地ep、远端ep/2. 从其他ep返回
+            is_fragment
+            cilium_capture_in(ctx)
+            has_l4_header
+            ipv4/l3_off/l4_off/tuple
+            未知L4类型放行
+            lb4_fill_key(&key, &tuple)
+            lb4_lookup_service(&key, false, false) //通过key查找对应的svc
+            svc =>
+               1. 校验lb4 src range
+               2. svc 是l7lb，在xdp里面处理不了直接放行，需要bpf_host处理(tc ingress); 不是xdp就是hairpin，自己访问自己的svc
+               3. lb4访问lb6： lb4_to_lb6_service(svc), lb4_to_lb6(ctx, ip4, l3_off) => nat_46x64_recirc
+               4. lb4_local: 如果没有后端svc -> CILIUM_CALL_IPV4_NO_SERVICE = tail_no_service_ipv4
+               5. svc 不可路由： DROP_IS_CLUSTER_IP
+            no svc => 
+               NAT_46X64_RECIRC -> CILIUM_CALL_IPV6_FROM_NETDEV = tail_lb_ipv6
+               XFER_PKT_NO_SVC： 
+               DSR：  => nodeport_dsr_ingress_ipv4()
+               BPF-Masquerading off => 放行
+               NAT64: lb4 to lb6 -> CILIUM_CALL_IPV6_NODEPORT_NAT_INGRESS
+               other: -> CILIUM_CALL_IPV4_NODEPORT_NAT_INGRESS
+
+
+   check_v6(ctx)
+   bpf_xdp_exit(ctx, ret) // 直接返回，啥也不干
+
+```
