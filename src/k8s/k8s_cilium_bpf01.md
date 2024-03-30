@@ -79,6 +79,32 @@ tc filter add dev lxc09e1d2e egress bpf da obj bpf.o sec tc
 
 假设容器中 ping clusterip-service-ip，出发走到另外一台机器的pod容器，会经过 from-container -> from-host -> to-netdev -> from-netdev -> to-host BPF 程序。
 
+### ipcache map结构
+cilium_ipcache map保存的是整个集群的endpoint，其中tunnelendpoint说明endpoint所在的node，如果为0说明是本node
+
+root@master:/home/cilium# cilium map get cilium_ipcache
+Key               Value                                                    State   Error
+10.0.3.178/32     identity=4 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+10.0.3.61/32      identity=3729 encryptkey=0 tunnelendpoint=0.0.0.0        sync
+10.0.1.84/32      identity=4343 encryptkey=0 tunnelendpoint=192.168.56.3   sync
+192.168.56.3/32   identity=6 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+192.168.56.2/32   identity=1 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+10.0.3.17/32      identity=1 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+10.0.2.15/32      identity=1 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+10.0.3.7/32       identity=3729 encryptkey=0 tunnelendpoint=0.0.0.0        sync
+10.0.3.30/32      identity=22960 encryptkey=0 tunnelendpoint=0.0.0.0       sync
+10.0.1.38/32      identity=6 encryptkey=0 tunnelendpoint=192.168.56.3      sync
+0.0.0.0/0         identity=2 encryptkey=0 tunnelendpoint=0.0.0.0           sync
+10.0.1.36/32      identity=4 encryptkey=0 tunnelendpoint=192.168.56.3      sync
+
+### pod lxc ingress: pod出流量
+cil_from_container(ctx)
+   validate_ethertype(ctx, &proto)
+   IPV6 -> CILIUM_CALL_IPV6_FROM_LXC = 
+   IPv4 -> CILIUM_CALL_IPV4_FROM_LXC = tail_handle_ipv4(ctx) => __tail_handle_ipv4(ctx)
+   Arp passthrough => CTX_ACT_OK
+   arp response -> CILIUM_CALL_ARP = tail_handle_arp(ctx)
+
 1. cil_from_container： 来自容器的网络数据包，并根据数据包的协议类型执行相应的处理逻辑。IPv4、IPv6，ARP数据包。
    1. IPv4 -> tail_handle_ipv4
       1. ipv4 fragment
@@ -90,18 +116,17 @@ tc filter add dev lxc09e1d2e egress bpf da obj bpf.o sec tc
 
 handle_ipv4_from_lxc： 从容器到宿主机的packet
 
-```C
 __tail_handle_ipv4
 1. revalidate data pull
-2. ipv4 is fragment
-3. valid src ipv4
-4. ipv4 is igmp => mcast_ipv4_handle_igmp
-5. ip4->daddr is multicast -tail-> CILIUM_CALL_MULTICAST_EP_DELIVERY
-6. per packet lb => __per_packet_lb_svc_xlate_4 // 每个包都是lb？
+2. ipv4 is fragment: 如果没有启用fragmentation，收到的是fragmentation，就丢掉
+3. valid src ipv4： 在生成bpf程序的时候已经把地址写入到程序中，验证这个地址想不想等
+4. ip4->protocol == IPPROTO_IGMP => 组播， mcast_ipv4_handle_igmp(ctx, ipv4, data, data_end), 成员管理
+5. ip4->daddr is multicast -> CILIUM_CALL_MULTICAST_EP_DELIVERY = tail_mcast_ep_delivery(ctx)
+6. per packet lb => __per_packet_lb_svc_xlate_4(ctx, ip4) // 每个包都进行负载均衡
    svc = lb4_lookup_service(&key, is_defined(ENABLE_NODEPORT), false);
    L7LB -> CILIUM_CALL_IPV4_CT_EGRESS = tail_ipv4_ct_egress
    L4LB
-7. tail_ipv4_ct_egress
+7. tail_ipv4_ct_egress = TAIL_CT_LOOKUP4(CILIUM_CALL_IPV4_CT_EGRESS, tail_ipv4_ct_egress, CT_EGRESS,	is_defined(ENABLE_PER_PACKET_LB),CILIUM_CALL_IPV4_FROM_LXC_CONT, tail_handle_ipv4_cont)
 
 ct_state = (struct ct_state *)&ct_buffer.ct_state;
 tuple = (struct ipv4_ct_tuple *)&ct_buffer.tuple;
@@ -110,13 +135,13 @@ tuple->daddr = ip4->daddr;
 tuple->saddr = ip4->saddr;
 ct_buffer.l4_off = ETH_HLEN + ipv4_hdrlen(ip4);	
 
-
-select_ct_map4(ctx, CT_EGRESS, tuple)
+select_ct_map4(ctx, CT_EGRESS, tuple) : 连接状态跟踪，五元组（源IP、源端口、目的IP、目的端口、协议类型）、连接创建时间、到期时间、连接状态（新建、已建立、关闭等）和其他可能的标记信息。
 ct_buffer.ret = ct_lookup4(map, tuple, ctx, ip4, ct_buffer.l4_off,	CT_EGRESS, ct_state, &ct_buffer.monitor)
 map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
--tail-> tail_handle_ipv4_cont
+-> tail_handle_ipv4_cont
    => handle_ipv4_from_lxc(ctx, &dst_sec_identity, &ext_err)
-      dst_endpoint = lookup_ip4_remote_endpoint(ip4->daddr, cluster_id) // 查找目标网卡，外部网卡为world
+      union macaddr router_mac = NODE_MAC // 网关的mac地址也是写死的
+      dst_endpoint = lookup_ip4_remote_endpoint(ip4->daddr, cluster_id) // 根据目标IP从IPCACHE Map查找目标网卡，外部网卡为world
       ct_buffer = map_lookup_elem(&CT_TAIL_CALL_BUFFER4, &zero) // 申请ct buffer
       ct_status == CT_REPLY || ct_status == CT_RELATED => // Skip policy enforcement for return traffic.
          // return traffic to an ingress proxy,Stack will do a socket match and deliver locally
@@ -142,10 +167,162 @@ map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
       // TUNNEL_MODE && ENABLE_IPSEC => set_ipsec_encrypt(ctx, encrypt_key, tunnel_endpoint, SECLABEL_IPV4, false);
 
       dst_ip 已经是真实 Pod IP（POD4_IP）
+      
+      lookup_ip4_endpoint(ip4) // 根据目标IP从ENDPOINTS_MAP找endpoint，返回的可以是本地ep、host ep
+      
+      // SECLABEL 为发送vxlan报文时填写的 vni，其值为本端endpoint的identify，在编译时就确定好了，
+		// 注意vni用的不是目的endpoint的identify
+      // (a) the encap and redirect could not find the tunnel so fallthrough to nat46 and stack
+      // (b) the packet needs IPSec encap so push ctx to stack for encap
+		// (c) packet was redirected to tunnel device so return.
+      ipv4_local_delivery(ctx, ETH_HLEN, SECLABEL_IPV4, MARK_MAGIC_IDENTITY, ip4, ep, METRIC_EGRESS, from_l7lb, bypass_ingress_policy, false, 0)
+      encap_and_redirect_lxc(ctx, tunnel_endpoint, 0, 0, encrypt_key, &key, SECLABEL_IPV6, *dst_sec_identity, &trace)
+         ENABLE_HIGH_SCALE_IPCACHE && needs_encapsulation(dst_ip)
+         tunnel_endpoint
+         ENABLE_IPSEC
+         other => encap_and_redirect_with_nodeid(ctx, tunnel->ip4, 0, seclabel, dstid, trace)
+      __encap_and_redirect_lxc(ctx, tunnel_endpoint, 0,SECLABEL_IPV4,*dst_sec_identity, &trace) // Send the packet to egress gateway node through a tunnel
    => encode_custom_prog_meta(ctx, ret, dst_sec_identity)
+
+本地路由、主机路由、hairpin：
+
+
+redirect_ep将报文重定向到lxc接口或者lxc的peer接口，这主要取决于ENABLE_HOST_ROUTING是否被定义。如果ENABLE_HOST_ROUTING被定义了说明是host routing模式，可将报文直接重定向到lxc的peer接口，即pod内部的eth0。
+redirect_ep():
+needs_backlog || !is_defined(ENABLE_HOST_ROUTING) => ctx_redirect(ctx, ifindex, 0)
+from_tunnel => ctx_change_type(ctx, PACKET_HOST) // coming from overlay, we need to set packet type to HOST as otherwise we might get dropped in IP layer.
+ctx_redirect_peer(ctx, ifindex, 0)
+
+### host nic vxlan egress
+
+容器的出口流量对 cilium_vxlan 来说也是 egress，因此这里的程序是 to-overlay。程序位于 bpf_overlay.c 中，这个程序的处理很简单，如果是 IPv6 协议会将封包使用 IPv6 的地址封装一次。这里是 IPv4 ，直接返回 CTX_ACT_OK。将网络包交给内核网络栈，进入 eth0 接口。
+
+```shell
+[root@host]kubectl exec -n kube-system $cilium1 -c cilium-agent -- bpftool net show dev cilium_vxlan
+xdp:
+
+tc:
+cilium_vxlan(5) clsact/ingress bpf_overlay.o:[from-overlay] id 2699
+cilium_vxlan(5) clsact/egress bpf_overlay.o:[to-overlay] id 2707
+
+flow_dissector:
+```
+cil_to_overlay(ctx):
+1. 带宽管理
+2. nodeport： 
+   1. 源地址转换检查：ctx_snat_done(ctx)
+   2. 集群地址管理 handle_nat_fwd(ctx, cluster_id, &trace, &ext_err)
+   3. 其他通过
+
+### host nic egress
+
+egress 程序 to-netdev 位于 bpf_host.c。实际上没做重要的处理，只是返回 CTX_ACT_OK 交给内核网络栈继续处理：将网络包发送到 vxlan 隧道发送到对端，也就是节点 192.168.1.13 。中间数据的传输，实际上用的还是 underlaying 网络，从主机的 eth0 接口经过 underlaying 网络到达目标主机的 eth0 接口。
+
+```shell
+[root@host]kubectl exec -n kube-system $cilium1 -c cilium-agent -- bpftool net show dev eth0
+xdp:
+
+tc:
+eth0(2) clsact/ingress bpf_netdev_eth0.o:[from-netdev] id 2823
+eth0(2) clsact/egress bpf_netdev_eth0.o:[to-netdev] id 2832
+
+flow_dissector:
 ```
 
+### host nic ingress
+vxlan 网络包到达节点的 eth0 接口，也会触发 BPF 程序。
+```shell
+kubectl exec -n kube-system $cilium2 -c cilium-agent -- bpftool net show dev eth0
+xdp:
 
+tc:
+eth0(2) clsact/ingress bpf_netdev_eth0.o:[from-netdev] id 4556
+eth0(2) clsact/egress bpf_netdev_eth0.o:[to-netdev] id 4565
+
+flow_dissector:
+```
+这次触发的是 from-netdev，位于 bpf_host.c 中。
+```c
+from_netdev
+  if vlan
+    allow_vlan
+    return CTX_ACT_OK
+```
+对 vxlan tunnel 模式来说，这里的逻辑很简单。当判断网络包是 vxlan 的并确认允许 vlan 后，直接返回 CTX_ACT_OK 将处理交给内核网络栈。
+
+### host vxlan ingress
+
+网络包通过内核网络栈来到了接口 cilium_vxlan。
+```shell
+kubectl exec -n kube-system $cilium2 -c cilium-agent -- bpftool net show dev cilium_vxlan
+xdp:
+
+tc:
+cilium_vxlan(5) clsact/ingress bpf_overlay.o:[from-overlay] id 4468
+cilium_vxlan(5) clsact/egress bpf_overlay.o:[to-overlay] id 4476
+
+flow_dissector:
+```
+程序位于 bpf_overlay.c 中。
+```c
+cil_from_overlay
+   validate_ethertype
+   ctx_get_tunnel_key(ctx, &key, sizeof(key), 0) //调用bpf helper函数 ctx_get_tunnel_key 获取vxlan信息，保存到key中
+   ctx_set_tunnel_key(ctx, &key, sizeof(key), BPF_F_ZERO_CSUM_TX)
+   ctx_set_tunnel_opt(ctx, &dsr_opt, sizeof(dsr_opt))
+   -> CILIUM_CALL_IPV4_FROM_OVERLAY = tail_handle_ipv4
+      handle_ipv4()
+         fragment处理
+         多播处理 -> CILIUM_CALL_MULTICAST_EP_DELIVERY
+         ENABLE_NODEPORT => nodeport_lb4(ctx, ip4, ETH_HLEN, *identity, ext_err, &is_dsr);
+         lookup_ip4_remote_endpoint(ip4->saddr, 0) // 查询原始ep，准备解密
+         vtep：
+         cluster ip进行snat -> CILIUM_CALL_IPV4_INTER_CLUSTER_REVSNAT
+         IPSec: node_id = lookup_ip4_node_id(ip4->saddr), 发往协议栈
+         ENABLE_EGRESS_GATEWAY_COMMON(网关模式)：ret = ipv4_l3(ctx, ETH_HLEN, NULL, NULL, ip4); 修改ttl等
+         Deliver to local (non-host) endpoint:ipv4_local_delivery(ctx, ETH_HLEN, *identity, MARK_MAGIC_IDENTITY, ip4, ep, METRIC_INGRESS, false, false, true, 0);
+         to be going to the local host： ipv4_host_delivery(ctx, ip4);
+        lookup_ip4_endpoint 1#
+          map_lookup_elem
+        ipv4_local_delivery 2#
+          tail_call_dynamic 3#
+```
+(1)：lookup_ip4_endpoint 会在 eBPF map cilium_lxc 中检查目标地址是否在当前节点中（这个 map 只保存了当前节点中的 endpoint）。
+```shell
+kubectl exec -n kube-system $cilium2 -c cilium-agent -- cilium map get cilium_lxc | grep 10.42.0.51
+10.42.0.51:0    id=2826  flags=0x0000 ifindex=29  mac=96:86:44:A6:37:EC nodemac=D2:AD:65:4D:D0:7B   sync
+```
+这里查到目标 endpoint 的信息：id、以太网口索引、mac 地址。在 NODE2 的节点上，查看接口信息发现，这个网口是虚拟以太网设备 lxc65015af813d1，正好是 pod httpbin 接口 eth0 的对端。
+```shell
+ip link | grep -B1 -i d2:ad
+29: lxc65015af813d1@if28: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+    link/ether d2:ad:65:4d:d0:7b brd ff:ff:ff:ff:ff:ff link-netns cni-395674eb-172b-2234-a9ad-1db78b2a5beb
+
+kubectl exec -n default httpbin -- ip link
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+28: eth0@if29: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+    link/ether 96:86:44:a6:37:ec brd ff:ff:ff:ff:ff:ff link-netnsid
+```
+(2)：ipv4_local_delivery 的逻辑位于 l3.h 中，这里会 tail-call 通过 endpoint 的 LXC ID（29）定位的 BPF 程序。
+
+### pod lxc egress： pod入流量
+执行下面的命令并不会找到想想中的 egress to-container（与 from-container）。
+```shell
+kubectl exec -n kube-system $cilium2 -c cilium-agent -- bpftool net show | grep 29
+lxc65015af813d1(29) clsact/ingress bpf_lxc.o:[from-container] id 4670
+```
+前面用的 BPF 程序都是附加到接口上的，而这里是直接有 vxlan 附加的程序直接 tail call 的。to-container 可以在 bpf-lxc.c 中找到。
+```c
+handle_to_container
+  tail_ipv4_to_endpoint
+    ipv4_policy #1
+      policy_can_access_ingress
+    redirect_ep
+      ctx_redirect
+```
+(1)：ipv4_policy 会执行配置的策略
+(2)：如果策略通过，会调用 redirect_ep 将网络包发送到虚拟以太接口 lxc65015af813d1，进入到 veth 后会直达与其相连的容器 eth0 接口。
 
 ### xdp
 
