@@ -23,6 +23,7 @@ cilium-probe-kernel-hz.c probe测试的，忽略
 3. socket operations： attach到cgroup上，监控tcp。Socket Layer Enforcement： socket层的两个钩子，即sockops hook和socket send/recv hook(bpf_sockops.c)。用来监视管理Cilium endpoint关联的所有TCP套接字，包括任何L7代理。L7 策略：L7策略对象将代理流量重定向到Cilium用户空间代理实例。使用Envoy实例作为其用户空间代理。然后，根据配置的L7策略转发流量。
 4. endpoint策略： Cilium endpoint来继承实现。使用映射查找与身份和策略相关的数据包，该层可以很好地扩展到许多端点。根据策略，该层可能会丢弃数据包、转发到本地端点、转发到服务对象或转发到 L7 策略对象以获取进一步的L7规则。这是Cilium数据路径中的主要对象，负责将数据包映射到身份并执行L3和L4策略。
 
+
 ## conntrack管理
 
 cilium bpf ct list global | grep ICMP |head -n4
