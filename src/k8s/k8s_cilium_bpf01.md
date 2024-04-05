@@ -346,23 +346,95 @@ cil_xdp_entry()
             ipv4/l3_off/l4_off/tuple
             未知L4类型放行
             lb4_fill_key(&key, &tuple)
-            lb4_lookup_service(&key, false, false) //通过key查找对应的svc
-            svc =>
-               1. 校验lb4 src range
-               2. svc 是l7lb，在xdp里面处理不了直接放行，需要bpf_host处理(tc ingress); 不是xdp就是hairpin，自己访问自己的svc
-               3. lb4访问lb6： lb4_to_lb6_service(svc), lb4_to_lb6(ctx, ip4, l3_off) => nat_46x64_recirc
-               4. lb4_local: 如果没有后端svc -> CILIUM_CALL_IPV4_NO_SERVICE = tail_no_service_ipv4
-               5. svc 不可路由： DROP_IS_CLUSTER_IP
-            no svc => 
-               NAT_46X64_RECIRC -> CILIUM_CALL_IPV6_FROM_NETDEV = tail_lb_ipv6
-               XFER_PKT_NO_SVC： 
-               DSR：  => nodeport_dsr_ingress_ipv4()
-               BPF-Masquerading off => 放行
-               NAT64: lb4 to lb6 -> CILIUM_CALL_IPV6_NODEPORT_NAT_INGRESS
-               other: -> CILIUM_CALL_IPV4_NODEPORT_NAT_INGRESS
+            
 
 
    check_v6(ctx)
    bpf_xdp_exit(ctx, ret) // 直接返回，啥也不干
 
+```
+
+SNAT: 外部网络通过nodeport访问pod服务，外部入流量过程
+1. SVC lookup & DNAT
+2. endpoint remote?
+   1. tunnel or direct
+   2. BPF SNAT
+   3. fib_lookup()
+   4. Redirect
+
+SNAT: 外部网络通过nodeport访问pod服务，pod出流量经过host snat过程
+1. rev-snat xlation
+2. rev-dnat xlation
+3. fib_lookup()
+4. redirect
+
+入口都在xdp程序的nodeport_lb4(ctx, ip4, l3_off, 0, err, is_dsr)，处理3种场景：
+1. 后端是本地ep
+2. 远端ep
+3. 从其他ep返回
+
+nodeport_lb4(ctx, ip4, l3_off, 0, err, is_dsr) // xdp、host tc、overlay tc都会调用这个程序：
+   lb4_lookup_service(&key, false, false) //通过key查找对应的svc
+   svc => // 目标端是svc
+      1. 校验lb4 src range
+      2. svc 是l7lb
+         1. 在xdp里面处理不了直接放行，由 cilium_host上的bpf_host处理(tc ingress); 
+         2. 不在xdp， 说明不是外部访问过来的，有可能是hairpin，自己访问自己的svc。ctx_redirect_to_proxy_hairpin_ipv4(ctx, ip4, (__be16)svc->l7_lb_proxy_port)
+      3. svc是lb4访问lb6： lb4_to_lb6_service(svc), lb4_to_lb6(ctx, ip4, l3_off) => nat_46x64_recirc
+         1. ipv4_to_ipv6： 做地址转换
+      4. lb4_local: 是本地的ep
+         1. saddr作为client查找亲和性
+         2. 如果没有后端svc -> CILIUM_CALL_IPV4_NO_SERVICE = tail_no_service_ipv4
+      5. svc 不可路由： DROP_IS_CLUSTER_IP
+   no svc => 
+      NAT_46X64_RECIRC -> CILIUM_CALL_IPV6_FROM_NETDEV = tail_lb_ipv6
+      XFER_PKT_NO_SVC： 
+      DSR：  => nodeport_dsr_ingress_ipv4()
+      BPF-Masquerading off => 放行
+      NAT64: lb4 to lb6 -> CILIUM_CALL_IPV6_NODEPORT_NAT_INGRESS
+      other: -> CILIUM_CALL_IPV4_NODEPORT_NAT_INGRESS
+
+
+```C
+LB4_SRC_RANGE_MAP // lb4 源地址检查
+LB4_SERVICES_MAP_V2 //保存lb4 svc， 保存lb4_service
+struct lb4_service {
+	union {
+		__u32 backend_id;	/* Backend ID in lb4_backends */
+		__u32 affinity_timeout;	/* In seconds, only for svc frontend */
+		__u32 l7_lb_proxy_port;	/* In host byte order, only when flags2 && SVC_FLAG_L7LOADBALANCER */
+	};
+	/* For the service frontend, count denotes number of service backend
+	 * slots (otherwise zero).
+	 */
+	__u16 count;
+	__u16 rev_nat_index;	/* Reverse NAT ID in lb4_reverse_nat */
+	__u8 flags;
+	__u8 flags2;
+	__u8  pad[2];
+};
+LB4_REVERSE_NAT_MAP // lb4 反向nat地址表， 保存lb4_reverse_nat
+
+struct lb4_reverse_nat {
+	__be32 address;
+	__be16 port;
+} __packed;
+
+struct ipv4_revnat_tuple {
+	__sock_cookie cookie;
+	__be32 address;
+	__be16 port;
+	__u16 pad;
+};
+
+struct ipv4_revnat_entry {
+	__be32 address;
+	__be16 port;
+	__u16 rev_nat_index;
+};
+
+
+LB4_BACKEND_MAP // lb4_backend
+LB4_AFFINITY_MAP//  lb_affinity_val
+LB_AFFINITY_MATCH_MAP // session 亲和性 lb_affinity_match
 ```
