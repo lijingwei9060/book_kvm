@@ -21,10 +21,17 @@ ENABLE_VTEP
 TUNNEL_MODE
 
 ENABLE_CLUSTER_AWARE_ADDRESSING
+
+KubeProxyReplacement: Disabled Cilium 是没有完全替换掉 kube-proxy 的，后面我们会出文章介绍如何实现替换。
+IPv6 BIG TCP: Disabled 该功能要求 Linux Kernel >= 5.19, 所以在 Kernel 4.19.232 状态为禁用。
+BandwidthManager: Disabled 该功能要求 Linux Kernel >= 5.1, 所以目前是禁用的
+Host Routing: Legacy Legacy Host Routing 还是会用到 iptables, 性能较弱；但是 BPF-based host routing 需要 Linux Kernel >= 5.10
+Masquerading: IPtables IP 伪装有几种方式：基于 eBPF 的，和基于 iptables 的。默认使用基于 iptables, 推荐使用 基于 eBPF 的。
+
 ## 
 在Cilium 1.9中引入了基于eBPF的 Host Routing，可以完全绕过iptables和上层主机堆栈，并且与常规的veth设备操作相比，实现了更快的网络命名空间切换。如果你的内核支持这个选项，它会自动启用。要验证你的安装是否运行了eBPF主机路由，请在任何一个Cilium pods中运行cilium status，寻找报告 "Host Routing "状态的行，它应该显示 "BPF"。
 
-进程启动时会进行判断，如果不满足会自动降级为legacy模式，也就是native routing模式: 
+进程启动时会进行判断，如果不满足会自动降级为`legacy模式`，也就是`native routing`模式: 
 ```yaml
 Requirements:
 Kernel >= 5.10
@@ -33,6 +40,20 @@ eBPF-based kube-proxy replacement
 eBPF-based masquerading
 ```
 
+### 配置
+
+```yaml
+kube-proxy-replacement: strict
+k8s-api-server: https://192.168.56.2:6443
+```
+kube-proxy-replacement有如下三个可选值，默认为partial，可参考函数initKubeProxyReplacementOptions
+1. partial: 只使能部分功能，比如使能--enable-node-port，--enable-host-port等
+2. strict: 使能所有功能，如果有不支持的会panic
+3. disabled: 关闭replacement
+
+k8s-api-server：用来指定k8s apiserver。cilium启动时默认会通过kubernetes svc(cluster ip 10.96.0.1)连接k8s，	前面已经把kube-proxy相关的删除了，所以也连不上kubernetes svc，只能通过此参数显示指定，可参考函数createConfig。
+
+### 检查
 在内核 5.11.0 以后，具备了 ​​bpf_redict_peer()​​​ 和 ​​bpf_redict_neigh()​​ 这两个非常重要的 helper 函数的能力。此能力是来自 Cilium host Routing 的 Feature 引入。
 
 在5.11之前使用bpf_redirect(), 只能转发到lxc网卡上，再进行tc的ingress和egress。
@@ -64,7 +85,7 @@ node1上收报文方向时，在enp0s8收到报文执行ebpf程序，查找podma
 
 由此可见bpf_redirect_neigh和bpf_redirect_peer是实现host routing模式的关键。
 
-## datapath
+### datapath
 
 1. eth0(pod1) -> lxc1(tc ingress:from-container) -> enp0s8(master，tc egress:to-netdev)
    1. pod内部发出的报文，最终会调用veth_xmit发出
@@ -84,3 +105,111 @@ node1上收报文方向时，在enp0s8收到报文执行ebpf程序，查找podma
 2. enp0s8(node1)(tc ingress:from-netdev) -> eth0(pod2)
    1. ingress policy： 如果允许通过则将报文重定向到pod的lxc或者peer口
    2. host routing模式下，ENABLE_HOST_ROUTING会被定义，可将报文直接重定向到lxc的peer接口，即pod内部的eth0
+
+
+### 代码
+
+fib_do_redirect(ctx, needs_l2_check, fib_params, use_neigh_map,fib_err, oif) // 将包转发到output网卡上
+   redirect_neigh(*oif, &nh_params, sizeof(nh_params), 0)
+   redirect_neigh(*oif, NULL, 0, 0);
+   ctx_redirect(ctx, *oif, 0);
+
+## native routing
+
+
+
+### 配置
+
+```yaml
+# 修改tunnel 
+  tunnel: disabled
+
+# 添加 pod CIDR，使 node 节点能对 pod CIDR 进行路由
+  native-routing-cidr: "10.0.0.0/16"
+
+# 修改如下选项为 true
+  auto-direct-node-routes: "true"
+```
+
+
+
+## ip masquerading
+
+Pod 使用的 IPv4 地址通常是从 RFC1918 专用地址块中分配的，因此不可公开路由。Cilium 会自动将离开群集的所有流量的源 IP 地址伪装成 node 的 IPv4 地址，因为 node 的 IP 地址已经可以在网络上路由
+
+如果要禁用该选项:
+1. 对于离开主机的 IPv4 流量，可使用选项 enable-ipv4-masquerade：false，
+2. 对于 IPv6 流量，可使用选项 enable-ipv6-masquerade：false
+
+### 配置
+
+默认行为是排除本地节点 IP 分配 CIDR 范围内的任何目的地。如果 pod IP 可通过更广泛的网络进行路由，则可使用选项：ipv4-native-routing-cidr: 10.0.0.0/8（或 IPv6 地址的 ipv6-native-routing-cidr: fd00::/100）指定该网络，在这种情况下，该 CIDR 范围内的所有目的地都 不会 被伪装。
+
+### 验证
+```shell
+$ kubectl -n kube-system exec ds/cilium -- cilium status | grep Masquerading
+Masquerading:            IPTables [IPv4: Enabled, IPv6: Disabled]
+```
+
+基于 eBPF 的实现是 最有效 的实现。它需要 Linux 内核 4.19，并可通过 bpf.masquerade=true。伪装只能在运行 eBPF 伪装程序的网卡设备上进行。这意味着，如果输出网卡设备运行了该程序，从 pod 发送到外部地址的数据包将被伪装（伪装到输出网卡设备的 IPv4 地址）。如果未指定，程序将自动连接到 BPF NodePort 网卡设备检测机制 选择的网卡设备上。要手动更改，请使用devices helm 选项。
+
+```shell
+$ kubectl -n kube-system exec ds/cilium -- cilium status | grep Masquerading
+Masquerading:            BPF   [eth0]   10.0.0.0/22 [IPv4: Enabled, IPv6: Disabled]
+```
+
+基于 eBPF 的伪装可伪装以下 IPv4 L4 协议的数据包：TCP，UDP，ICMP（仅 Echo request 和 Echo reply）。默认情况下，除了发往其他集群节点的数据包外，所有从 pod 发往 ipv4-native-routing-cidr 范围之外 IP 地址的数据包都会被伪装。排除的 CIDR 显示在上述 cilium status（10.0.0.0/22）输出中。
+
+为实现更精细的控制，Cilium 在 eBPF 中实现了 [ip-masq-agent](https://github.com/kubernetes-sigs/ip-masq-agent)，可通过 ipMasqAgent.enabled=true helm 选项启用。基于 eBPF 的 ip-masq-agent 支持在配置文件中设置 nonMasqueradeCIDRs 和 masqLinkLocal 选项。从 pod 发送到属于 nonMasqueradeCIDRs 中任何 CIDR 的目的地的数据包都不会被伪装。
+
+
+cil_to_netdev(struct __ctx_buff *ctx) // host
+   ret = handle_nat_fwd(ctx, 0, &trace, &ext_err);
+cil_to_overlay(struct __ctx_buff *ctx) // overlay
+   ret = handle_nat_fwd(ctx, cluster_id, &trace, &ext_err);
+
+      ->CILIUM_CALL_IPV4_NODEPORT_NAT_FWD = tail_handle_nat_fwd_ipv4(struct __ctx_buff *ctx)
+         ret = handle_nat_fwd_ipv4(ctx, &trace, &ext_err)
+            __handle_nat_fwd_ipv4(ctx, cluster_id, trace, ext_err)
+               ret = nodeport_rev_dnat_fwd_ipv4(ctx, trace, ext_err);
+               ->CILIUM_CALL_IPV4_NODEPORT_SNAT_FWD = tail_handle_snat_fwd_ipv4(ctx)
+                  ret = nodeport_snat_fwd_ipv4(ctx, cluster_id, &saddr, &trace, &ext_err)
+                     ret = snat_v4_needs_masquerade(ctx, &tuple, ip4, l4_off, &target)
+                     ret = snat_v4_nat(ctx, &tuple, ip4, l4_off, ipv4_has_l4_header(ip4), &target, trace, ext_err)
+                     ctx_snat_done_set(ctx)
+                     egress_gw_fib_lookup_and_redirect(ctx, target.addr, tuple.daddr, ext_err);
+
+
+
+## Egress gateway
+
+kernel ≥ 5.2
+
+egress gateway可以将从pod到集群外部的流量集中到特定的节点上，这些节点就是egress gateway。使能之后，从pod出去外部的流量将伪装成网关节点，
+
+限制：
+1. 使能BPF masquerading 
+2. 使能the kube-proxy replacement
+3. egress gateway policies 延迟生效，需要访问外部的流量进行出站策略，变更成egress gateway ip有延迟。
+4. 与l7 的policy会发生冲突，不生效。
+5. 不兼容cluster mesh， 必须和pods在一个cluster。
+6. 不兼容CiliumEndpointSlice 
+7. 不支持ipv6
+
+### 配置
+```yaml
+enable-bpf-masquerade: true
+enable-ipv4-egress-gateway: true
+enable-l7-proxy: false
+kube-proxy-replacement: true
+```
+
+
+### 验证
+
+```shell
+kubectl -n kube-system exec ds/cilium -- cilium-dbg bpf egress list
+Defaulted container "cilium-agent" out of: cilium-agent, config (init), mount-cgroup (init), apply-sysctl-overwrites (init), mount-bpf-fs (init), wait-for-node-init (init), clean-cilium-state (init)
+Source IP    Destination CIDR    Egress IP   Gateway IP
+192.168.2.23 192.168.60.13/32    0.0.0.0     192.168.60.12
+```
