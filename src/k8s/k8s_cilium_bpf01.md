@@ -101,6 +101,7 @@ Key               Value                                                    State
 ### pod lxc ingress: pod出流量
 cil_from_container(ctx)
    validate_ethertype(ctx, &proto)
+   带宽管控
    IPV6 -> CILIUM_CALL_IPV6_FROM_LXC = 
    IPv4 -> CILIUM_CALL_IPV4_FROM_LXC = tail_handle_ipv4(ctx) => __tail_handle_ipv4(ctx)
    Arp passthrough => CTX_ACT_OK
@@ -115,12 +116,57 @@ cil_from_container(ctx)
       5. lb service
       6. 
 
+网络流量行为分类：
+1. 组播
+2. 多播
+3. hairpin：自己访问自己的svc cluster ip，根据路由协议会发出来。
+   1. 判断：
+   2. 行为：
+      1. 跳过：skip_policy_enforcement， 否则要定义自己访问自己的网络策略
+      2. CT_NEW ? => ct_create4
+4. 自己是l7lb:
+   1. 如何判断:proxy_port >0
+   2. 行为：
+      1. 跳过：skip_policy_enforcement
+5. 自己是L4LB的回包：
+   1. 如何判断： 
+      1. ct_status == CT_REPLY || ct_status == CT_RELATED
+      2. proxy_port > 0
+   2. 行为：
+      1. ctx_redirect_to_proxy4(ctx, tuple, 0, false);
+      2. dsr回包，转到对应的veth上：ct_state->dsr_internal => xlate_dsr_v4(ctx, tuple, l4_off, has_l4_header);
+      3. nodeport回包, 往外发：  ct_state->node_port -> CILIUM_CALL_IPV4_NODEPORT_REVNAT
+6. 自己是回包
+   1. 判断：ct_status == CT_REPLY || ct_status == CT_RELATED
+   2. 行为：
+      1. 跳过：skip_policy_enforcement
+      2. 反向nat： lb4_rev_nat(ctx, ETH_HLEN, l4_off, ct_state->rev_nat_index, true, tuple, has_l4_header)
+7. 集群内部： 也可能是hairpin
+   1. 判断
+   2. action:
+      1. policy_can_egress4
+      2. CT_NEW ? => ct_create4
+8. 访问主机host：to_host, 转到主机的网卡上； 什么情况下？
+   1. 判断：
+   2. action：
+      1. policy_can_egress4，去主机的要进行cidr policy check
+      2. CT_NEW ? => ct_create4
+9. 访问外部
+   1.  判断
+   2.  action
+       1.  policy_can_egress4，去外部的要进行cidr policy check
+       2.  CT_NEW ? => ct_create4
+10. pass_to_stack
+11. ipsec && tunnel：
+
+
+
 handle_ipv4_from_lxc： 从容器到宿主机的packet
 
 __tail_handle_ipv4
 1. revalidate data pull
 2. ipv4 is fragment: 如果没有启用fragmentation，收到的是fragmentation，就丢掉
-3. valid src ipv4： 在生成bpf程序的时候已经把地址写入到程序中，验证这个地址想不想等
+3. valid src ipv4： 源地址验证：在生成bpf程序的时候已经把地址写入到程序中，验证这个地址相不相等。
 4. ip4->protocol == IPPROTO_IGMP => 组播， mcast_ipv4_handle_igmp(ctx, ipv4, data, data_end), 成员管理
 5. ip4->daddr is multicast -> CILIUM_CALL_MULTICAST_EP_DELIVERY = tail_mcast_ep_delivery(ctx)
 6. per packet lb => __per_packet_lb_svc_xlate_4(ctx, ip4) // 每个包都进行负载均衡
@@ -157,8 +203,9 @@ map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
          // nodeport -tail-> CILIUM_CALL_IPV4_NODEPORT_REVNAT
          // RevNAT for replies on a loopback connection: lb4_rev_nat(ctx, ETH_HLEN, l4_off, ct_state->rev_nat_index, true, tuple, has_l4_header);
       // ENABLE_SRV6
-      // L7 LB does L7 policy enforcement, so we only redirect packets NOT from L7 LB. => ctx_redirect_to_proxy4
+      // L7 LB does L7 policy enforcement, so we only redirect packets NOT from L7 LB. => ctx_redirect_to_proxy4      
       // if the destination is the local host and per-endpoint routes are enabled, jump to the bpf_host program to enforce ingress host policies.
+      ENABLE_HOST_FIREWALL && !ENABLE_ROUTING 去往本主机 -> tail_call_static(ctx, POLICY_CALL_MAP, HOST_EP_ID)
 	   // If the packet is from L7 LB it is coming from the host
       // If the packet is destined to an entity inside the cluster, either EP or node, it should not be forwarded to an egress gateway since only traffic leaving the cluster is supposed to be masqueraded with an egress IP.
       // Send the packet to egress gateway node through a tunnel. => __encap_and_redirect_lxc(ctx, tunnel_endpoint, 0, SECLABEL_IPV4,  *dst_sec_identity, &trace);

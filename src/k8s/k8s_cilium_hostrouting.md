@@ -1,4 +1,27 @@
-# intro
+# 网络模式
+
+1. 封装模式：tunnel: true
+   1. vxlan
+   2. geneve
+2. 路由模式： tunnel: disabled​​
+   1. host routing： 跳过iptables，使用主机的路由表
+   2. native routing： 使用主机的路由表，经过iptables
+
+ENABLE_NODEPORT
+ENABLE_DSR
+
+ENABLE_ROUTING
+ENABLE_HOST_ROUTING
+ENABLE_HOST_FIREWALL
+
+ENABLE_EGRESS_GATEWAY_COMMON
+ENABLE_HIGH_SCALE_IPCACHE
+
+ENABLE_VTEP
+TUNNEL_MODE
+
+ENABLE_CLUSTER_AWARE_ADDRESSING
+## 
 在Cilium 1.9中引入了基于eBPF的 Host Routing，可以完全绕过iptables和上层主机堆栈，并且与常规的veth设备操作相比，实现了更快的网络命名空间切换。如果你的内核支持这个选项，它会自动启用。要验证你的安装是否运行了eBPF主机路由，请在任何一个Cilium pods中运行cilium status，寻找报告 "Host Routing "状态的行，它应该显示 "BPF"。
 
 进程启动时会进行判断，如果不满足会自动降级为legacy模式，也就是native routing模式: 
