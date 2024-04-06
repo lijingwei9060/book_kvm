@@ -41,6 +41,23 @@ Cilium 的 bandwidth manager:
    4. FQ+MQ 基本实现了一个 timing-wheel 调度器，根据 skb->tstamp 调度发包。
    5. bpf map 存储 aggregate 信息
 
+```C
+THROTTLE_MAP
+struct edt_id aggregate;
+struct edt_info *info;
+
+edt_set_aggregate(ctx, LXC_ID)
+   ctx->queue_mapping = aggregate
+
+edt_sched_departure()
+   info = map_lookup_elem(&THROTTLE_MAP, &aggregate);
+   now = ktime_get_ns();
+   t = ctx->tstamp;
+   delay = ((__u64)ctx_wire_len(ctx)) * NSEC_PER_SEC / info->bps; // 数据包根据长度可以delay的时间
+	t_next = READ_ONCE(info->t_last) + delay; // 计算最晚发送时间
+   t_next - now >= info->t_horizon_drop // 如果比较晚，就丢掉drop
+   ctx->tstamp = t_next; // 设置一个最晚时间，应该是给后续的to_netdev/to_overlay使用
+```
 
 ## EDT 还能支持 BBR
 
