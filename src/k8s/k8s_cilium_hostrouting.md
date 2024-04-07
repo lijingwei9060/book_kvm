@@ -179,8 +179,92 @@ cil_to_overlay(struct __ctx_buff *ctx) // overlay
                      ctx_snat_done_set(ctx)
                      egress_gw_fib_lookup_and_redirect(ctx, target.addr, tuple.daddr, ext_err);
 
+```c
+struct ipv4_nat_entry {
+	struct nat_entry common{
+   __u64 created;    // 创建时间 bpf_mono_now()
+	__u64 needs_ct;		/* Only single bit used. */
+	__u64 pad1;		/* Future use. */
+	__u64 pad2;		/* Future use. */
+   };
+	union {
+		struct lb4_reverse_nat nat_info{
+         __be32 address;
+	      __be16 port;
+      };
+		struct {
+			__be32 to_saddr;
+			__be16 to_sport;
+		};
+		struct {
+			__be32 to_daddr;
+			__be16 to_dport;
+		};
+	};
+};
+struct ipv4_nat_target {
+	__be32 addr;
+	const __u16 min_port; /* host endianness */
+	const __u16 max_port; /* host endianness */
+	bool from_local_endpoint;
+	bool egress_gateway; /* NAT is needed because of an egress gateway policy */
+	__u32 cluster_id;
+	bool needs_ct;
+};
+struct ipv4_ct_tuple
 
+struct {
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__type(key, struct ipv4_ct_tuple);
+	__type(value, struct ipv4_nat_entry);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
+	__uint(max_entries, SNAT_MAPPING_IPV4_SIZE);
+} SNAT_MAPPING_IPV4 __section_maps_btf;
 
+struct per_cluster_snat_mapping_ipv4_inner_map {
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__type(key, struct ipv4_ct_tuple);
+	__type(value, struct ipv4_nat_entry);
+	__uint(max_entries, SNAT_MAPPING_IPV4_SIZE);
+};
+
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
+	__type(key, __u32);
+	__type(value, __u32);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
+	__uint(max_entries, 256);
+	__array(values, struct per_cluster_snat_mapping_ipv4_inner_map);
+} PER_CLUSTER_SNAT_MAPPING_IPV4
+
+struct {
+	__uint(type, BPF_MAP_TYPE_LPM_TRIE);
+	__type(key, struct lpm_v4_key);
+	__type(value, struct lpm_val);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
+	__uint(max_entries, 16384);
+	__uint(map_flags, BPF_F_NO_PREALLOC);
+} IP_MASQ_AGENT_IPV4 __section_maps_btf;
+```
+
+ret = snat_v4_nat(ctx, &tuple, ip4, l4_off, ipv4_has_l4_header(ip4), &target, trace, ext_err)
+1. udp、tcp、sctp:
+   1. map管理：
+      1. get_cluster_snat_map_v4(target->cluster_id)
+      2. __snat_lookup(map, tuple)
+      3. ipv4_ct_tuple_swap_addrs(&tuple_snat)
+      4. ret = ct_lazy_lookup4(get_ct_map4(&tuple_snat), &tuple_snat, ctx, ipv4_is_fragment(ip4), off, has_l4_header, CT_EGRESS, SCOPE_FORWARD, CT_ENTRY_ANY, NULL, &trace->monitor);
+      5. ret = ct_create4(get_ct_map4(&tuple_snat), NULL, &tuple_snat, ctx, CT_EGRESS, NULL, ext_err);
+      6. barrier_data(*state);
+      7. snat_v4_new_mapping(ctx, map, tuple, tmp, target, needs_ct, ext_err)
+         1. port = __snat_try_keep_port(target->min_port, target->max_port, bpf_ntohs(otuple->sport))
+         2. port = __snat_clamp_port_range(target->min_port, target->max_port, retries ? port + 1 : (__u16)get_prandom_u32()) // 在min和max之间找一个端口，第一次是随机一个端口
+         3. ret = __snat_update(map, otuple, ostate, &rtuple, &rstate); // 创建SNAT和RevSNAT条目，哪个map？
+   2. update header: sport/sip/l4 checksum/l3 checksum
+2. icmp协议： 
+   1. echo： 
+   2. reply
+   3. unreachable
 ## Egress gateway
 
 kernel ≥ 5.2

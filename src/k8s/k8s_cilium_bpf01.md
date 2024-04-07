@@ -182,9 +182,9 @@ tuple->daddr = ip4->daddr;
 tuple->saddr = ip4->saddr;
 ct_buffer.l4_off = ETH_HLEN + ipv4_hdrlen(ip4);	
 
-select_ct_map4(ctx, CT_EGRESS, tuple) : 连接状态跟踪，五元组（源IP、源端口、目的IP、目的端口、协议类型）、连接创建时间、到期时间、连接状态（新建、已建立、关闭等）和其他可能的标记信息。
-ct_buffer.ret = ct_lookup4(map, tuple, ctx, ip4, ct_buffer.l4_off,	CT_EGRESS, ct_state, &ct_buffer.monitor)
-map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
+map = select_ct_map4(ctx, CT_EGRESS, tuple)// 查找对应的ct_entry管理map，ip层有CT_MAP_ANY4，PER_CLUSTER_CT_ANY4(支持cluster分区)。
+ct_buffer.ret = ct_lookup4(map, tuple, ctx, ip4, ct_buffer.l4_off, CT_EGRESS, ct_state, &ct_buffer.monitor)// 查找ct_entry, 返回CT_NEW、CT_ESTABLISHED、CT_REOPENED 转译成CT_RELATED、CT_REPLY
+map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0) // 设置当前packet的ct_buffer数据
 -> tail_handle_ipv4_cont
    => handle_ipv4_from_lxc(ctx, &dst_sec_identity, &ext_err)
       union macaddr router_mac = NODE_MAC // 网关的mac地址也是写死的
@@ -196,12 +196,15 @@ map_update_elem(&CT_TAIL_CALL_BUFFER4, &zero, &ct_buffer, 0)
       // 正在建立连接、去往集群内部需要策略检查，去host或者外部需要cidr检查
       verdict = policy_can_egress4(ctx, &POLICY_MAP, tuple, l4_off, SECLABEL_IPV4, *dst_sec_identity, &policy_match_type, &audited, ext_err, &proxy_port);
       // Emit verdict if drop or if allow for CT_NEW or CT_REOPENED.
-      CT_NEW =>  ct_create4(ct_map, ct_related_map, tuple, ctx, CT_EGRESS, &ct_state_new, ext_err)
+      CT_NEW =>  ct_create4(ct_map, ct_related_map, tuple, ctx, CT_EGRESS, &ct_state_new, ext_err) // 创建双向的ct_buffer
       CT_REOPENED | CT_ESTABLISHED
       CT_RELATED | CT_REPLY:
-         // dsr => 
-         // nodeport -tail-> CILIUM_CALL_IPV4_NODEPORT_REVNAT
-         // RevNAT for replies on a loopback connection: lb4_rev_nat(ctx, ETH_HLEN, l4_off, ct_state->rev_nat_index, true, tuple, has_l4_header);
+         // dsr => xlate_dsr_v4(ctx, tuple, l4_off, has_l4_header) // dsr回包，进行RevDNAT。查找SNAT_MAPPING_IPV4表，找到了要进行snat header修改
+         // nodeport -tail-> CILIUM_CALL_IPV4_NODEPORT_REVNAT = tail_nodeport_rev_dnat_ingress_ipv4(ctx)// 本机的nodeport回包，直接RevDNAT
+            修改snat
+            如果是egress gateway或者tunnel就进行封装发送
+            最后就是routing了，通过fib转发到对应的接口上。
+         // RevNAT for hairpin: lb4_rev_nat(ctx, ETH_HLEN, l4_off, ct_state->rev_nat_index, true, tuple, has_l4_header);
       // ENABLE_SRV6
       // L7 LB does L7 policy enforcement, so we only redirect packets NOT from L7 LB. => ctx_redirect_to_proxy4      
       // if the destination is the local host and per-endpoint routes are enabled, jump to the bpf_host program to enforce ingress host policies.
