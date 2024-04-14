@@ -14,7 +14,7 @@
             2. 读取cilium_xdp_scratch[RECIRC_MARKER]， 
             3. dsr geneve
             4. nodeport_lb4()
-               1. svc => nodeport_svc_lb4
+               1. svc => nodeport_svc_lb4 // 通过目标IP和目标端口查询svc
                2. ENABLE_NAT_46X64_GATEWAY -> CILIUM_CALL_IPV46_RFC8215
                3. XFER_PKT_NO_SVC = 1
                4. dsr => nodeport_dsr_ingress_ipv4()
