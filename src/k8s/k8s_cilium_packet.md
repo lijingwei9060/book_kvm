@@ -15,13 +15,14 @@
             3. dsr geneve
             4. nodeport_lb4()
                1. svc => nodeport_svc_lb4 // 通过目标IP和目标端口查询svc
-               2. ENABLE_NAT_46X64_GATEWAY -> CILIUM_CALL_IPV46_RFC8215
-               3. XFER_PKT_NO_SVC = 1
-               4. dsr => nodeport_dsr_ingress_ipv4()
-               5. no ip masquerade => ok???
-               6. CB_SRC_LABEL = src_sec_identity
-               7. nat64 -> CILIUM_CALL_IPV6_NODEPORT_NAT_INGRESS
-               8. nat -> CILIUM_CALL_IPV4_NODEPORT_NAT_INGRESS
+               2. lb4_lookup_service() : 查找对应的svc，查表LB4_SERVICES_MAP_V2
+               3. ENABLE_NAT_46X64_GATEWAY -> CILIUM_CALL_IPV46_RFC8215
+               4. XFER_PKT_NO_SVC = 1
+               5. dsr => nodeport_dsr_ingress_ipv4()
+               6. no ip masquerade => ok???
+               7. CB_SRC_LABEL = src_sec_identity
+               8. nat64 -> CILIUM_CALL_IPV6_NODEPORT_NAT_INGRESS
+               9. nat -> CILIUM_CALL_IPV4_NODEPORT_NAT_INGRESS
 
 
    
