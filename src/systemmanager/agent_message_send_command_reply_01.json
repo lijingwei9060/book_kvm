@@ -1,0 +1,33 @@
+{
+    "additionalInfo": {
+      "agent": {
+        "lang": "en-US",
+        "name": "amazon-ssm-agent",
+        "os": "",
+        "osver": "1",
+        "ver": ""
+      },
+      "dateTime": "2024-10-30T01:04:57.913Z",
+      "runId": "",
+      "runtimeStatusCounts": {
+        "Skipped": 1
+      }
+    },
+    "documentStatus": "InProgress",
+    "documentTraceOutput": "",
+    "runtimeStatus": {
+      "PatchWindows": {
+        "status": "Skipped",
+        "code": 0,
+        "name": "aws:runPowerShellScript",
+        "output": "Step execution skipped due to unsatisfied preconditions: '\"StringEquals\": [platformType, Windows]'. Step name: PatchWindows",
+        "startDateTime": "2024-10-30T01:04:57.912Z",
+        "endDateTime": "2024-10-30T01:04:57.912Z",
+        "outputS3BucketName": "",
+        "outputS3KeyPrefix": "",
+        "stepName": "",
+        "standardOutput": "",
+        "standardError": ""
+      }
+    }
+  }
