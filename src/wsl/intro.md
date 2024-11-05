@@ -180,3 +180,38 @@ casoul@casoul:~/workspace/bpftool/src$ sudo bpftool prog list
         loaded_at 2024-03-17T18:10:28+0800  uid 0
         xlated 64B  jited 54B  memlock 4096B
 ```
+
+
+
+## remove windows path
+
+```shell
+$ sudo vi /etc/wsl.conf
+
+[interop]
+appendWindowsPath = false
+
+$ exit
+c:\Users\user> wsl --shutdown
+c:\Users\user wsl
+
+$ echo $PATH
+```
+
+
+## enable localhost proxy
+
+在windows系统的%userprofile%创建文件.wslconfig, 保存后重启wsl服务
+
+```shell
+#vim .wslconfig
+[experimental]
+autoMemoryReclaim=gradual # 开启自动回收内存，可在 gradual, dropcache, disabled 之间选择
+networkingMode=mirrored # 开启镜像网络
+dnsTunneling=true # 开启 DNS Tunneling
+firewall=true # 开启 Windows 防火墙
+autoProxy=true # 开启自动同步代理
+sparseVhd=true # 开启自动释放 WSL2 虚拟硬盘空间
+
+
+```
