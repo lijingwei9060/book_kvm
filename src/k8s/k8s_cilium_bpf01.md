@@ -421,7 +421,7 @@ SNAT: 外部网络通过nodeport访问pod服务，pod出流量经过host snat过
 入口都在xdp程序的nodeport_lb4(ctx, ip4, l3_off, 0, err, is_dsr)，处理3种场景：
 1. 后端是本地ep
 2. 远端ep
-3. 从其他ep返回
+3. 从其他ep的回包
 
 nodeport_lb4(ctx, ip4, l3_off, 0, err, is_dsr) // xdp、host tc、overlay tc都会调用这个程序：
    lb4_lookup_service(&key, false, false) //通过key查找对应的svc
