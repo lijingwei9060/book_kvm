@@ -3,6 +3,13 @@
 1. [1pannel](https://1panel.cn/)
 
 
+## daas
+
+
+https://github.com/openebs/openebs
+https://rook.io/
+
+
 ## 不明觉厉
 KubeVela 
 OpenKruise
@@ -81,6 +88,8 @@ Wazuh
 https://www.hikunpeng.com/document/detail/zh/kunpengdbs/ecosystemEnable/autodeploytool/kunpengdbsolution_06_0001.html
 
 https://github.com/radondb
+https://github.com/apecloud/kubeblocks
+https://kubedb.com/
 
 ## finan
 
@@ -93,3 +102,24 @@ https://github.com/radondb
 
 
 
+## paas
+
+[coolify:  An open-source & self-hostable Heroku / Netlify / Vercel alternative.](https://coolify.io/)
+支持： 
+- Applications
+- Databases
+- Services
+
+
+
+## IaC
+
+
+https://kestra.io/
+
+## flow chart
+
+https://vueflow.dev/： 支持嵌套，自定义的card功能弱，手工指定位置
+
+https://reactflow.dev/learn/customization/custom-nodes
+https://app.doubleloop.app/strategy/2236/map
