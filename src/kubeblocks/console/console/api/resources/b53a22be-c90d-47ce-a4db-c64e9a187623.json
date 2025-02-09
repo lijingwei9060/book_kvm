@@ -1,0 +1,591 @@
+{
+    "uuid": "b53a22be-c90d-47ce-a4db-c64e9a187623",
+    "title": "默认模版",
+    "queryMocks": "",
+    "schema": {
+        "version": "1.0.0",
+        "componentsMap": [
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Icon",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Icon"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Input",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Input"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Space",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Space"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Table",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Table"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Box",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Box"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Block",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Block"
+            },
+            {
+                "devMode": "lowCode",
+                "componentName": "Page"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Button",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Button"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Text",
+                "componentName": "Typography.Text"
+            }
+        ],
+        "componentsTree": [
+            {
+                "componentName": "Page",
+                "id": "b53a22be-c90d-47ce-a4db-c64e9a187623",
+                "props": {},
+                "title": "",
+                "isLocked": false,
+                "condition": true,
+                "conditionGroup": "",
+                "state": {
+                    "loading": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "createVisible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "searchKey": {
+                        "type": "JSExpression",
+                        "value": "''"
+                    },
+                    "templateList": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "initialTemplateList": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    }
+                },
+                "methods": {
+                    "getTemplate": {
+                        "type": "JSFunction",
+                        "value": "async function getTemplate() {\n  this.setState({\n    loading: true\n  });\n  const reg = new RegExp(`.*${this.state.searchKey}.*`);\n  const res = await this.dataSourceMap.listParamTpl.load();\n  const items = (res === null || res === void 0 ? void 0 : res.items) || [];\n  this.setState({\n    templateList: items.filter(n => this.state.searchKey ? reg.test(n === null || n === void 0 ? void 0 : n.name) : true),\n    initialTemplateList: items,\n    loading: false\n  });\n}",
+                        "source": "async function getTemplate() {\n  this.setState({\n    loading: true\n  });\n  const reg = new RegExp(`.*${this.state.searchKey}.*`);\n  const res = await this.dataSourceMap.listParamTpl.load();\n  const items = res?.items || [];\n  this.setState({\n    templateList: items.filter(n => this.state.searchKey ? reg.test(n?.name) : true),\n    initialTemplateList: items,\n    loading: false\n  });\n}"
+                    },
+                    "search": {
+                        "type": "JSFunction",
+                        "value": "function search() {\n  const {\n    initialTemplateList,\n    searchKey\n  } = this.state;\n  const reg = new RegExp(`.*${searchKey}.*`);\n  let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n === null || n === void 0 ? void 0 : n.name) : true);\n  this.setState({\n    templateList\n  });\n}",
+                        "source": "function search() {\n  const {\n    initialTemplateList,\n    searchKey\n  } = this.state;\n  const reg = new RegExp(`.*${searchKey}.*`);\n  let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n?.name) : true);\n  this.setState({\n    templateList\n  });\n}"
+                    },
+                    "onSearch": {
+                        "type": "JSFunction",
+                        "value": "function onSearch(event) {\n  const value = event.target.value;\n  const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n  this.setState({\n    searchKey\n  }, this.search);\n}",
+                        "source": "function onSearch(event) {\n  const value = event.target.value;\n  const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n  this.setState({\n    searchKey\n  }, this.search);\n}"
+                    },
+                    "goToDetail": {
+                        "type": "JSFunction",
+                        "value": "function goToDetail(e, record) {\n  if (this.utils.isDev()) return;\n  this.history.push(`/templates/default/${record === null || record === void 0 ? void 0 : record.name}?partition=default`);\n}",
+                        "source": "function goToDetail(e, record) {\n  if (this.utils.isDev()) return;\n  this.history.push(`/templates/default/${record?.name}?partition=default`);\n}"
+                    }
+                },
+                "lifeCycles": {
+                    "componentDidMount": {
+                        "type": "JSFunction",
+                        "value": "function componentDidMount() {\n  this.getTemplate();\n}",
+                        "source": "function componentDidMount() {\n  this.getTemplate();\n}"
+                    }
+                },
+                "originCode": "class Page extends Component {\n  state = {\n    loading: false,\n    createVisible: false,\n    searchKey: '',\n    templateList: [],\n    initialTemplateList: [],\n  }\n\n  async getTemplate() {\n    this.setState({ loading: true })\n    const reg = new RegExp(`.*${this.state.searchKey}.*`);\n    const res = await this.dataSourceMap.listParamTpl.load();\n    const items = res?.items || [];\n    this.setState({\n      templateList: items.filter(n => this.state.searchKey ? reg.test(n?.name) : true),\n      initialTemplateList: items,\n      loading: false,\n    })\n  }\n\n  search() {\n    const { initialTemplateList, searchKey } = this.state;\n    const reg = new RegExp(`.*${searchKey}.*`);\n    let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n?.name) : true);\n    this.setState({ templateList })\n  }\n\n  onSearch(event) {\n    const value = event.target.value;\n    const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n    this.setState({\n      searchKey,\n    }, this.search)\n  }\n\n  goToDetail(e, record) {\n    if (this.utils.isDev()) return;\n    this.history.push(`/templates/default/${record?.name}?partition=default`);\n  }\n\n  componentDidMount() {\n    this.getTemplate();\n  }\n\n}",
+                "css": "",
+                "dataSource": {
+                    "list": [
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "paramTplName": "paramTplName"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "delete",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls/{paramTplName}"
+                            },
+                            "id": "deleteParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "partition": "default"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls"
+                            },
+                            "id": "listParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        }
+                    ]
+                },
+                "children": [
+                    {
+                        "componentName": "Box",
+                        "id": "node_oclty7p0ya1",
+                        "props": {
+                            "id": "box-538dad6ab849",
+                            "padding": "",
+                            "margin": "",
+                            "twinkle": false,
+                            "bordered": false,
+                            "hoverable": false,
+                            "loading": false,
+                            "style": {
+                                "display": "block"
+                            },
+                            "ref": "box-cce8501c",
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "this.utils.hasPermission(\"paramtpl.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclpkymtzl1",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "horizontal",
+                                    "wrap": false,
+                                    "style": {
+                                        "display": "flex",
+                                        "justifyContent": "space-between",
+                                        "marginBottom": "20px"
+                                    }
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Input",
+                                        "id": "node_oclpkzn5v71",
+                                        "props": {
+                                            "placeholder": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('input')",
+                                                "mock": "请输入"
+                                            },
+                                            "bordered": true,
+                                            "disabled": false,
+                                            "size": "middle",
+                                            "allowClear": true,
+                                            "suffix": "",
+                                            "_unsafe_MixedSetter_suffix_select": "SlotSetter",
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onChange",
+                                                        "relatedEventName": "onSearch"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onChange",
+                                                        "template": "onChange(event,${extParams}){\n// 输入框内容变化时的回调\nconsole.log('onChange',event);}",
+                                                        "disabled": true
+                                                    },
+                                                    {
+                                                        "name": "onPressEnter",
+                                                        "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onFocus",
+                                                        "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyDown",
+                                                        "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyPress",
+                                                        "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyUp",
+                                                        "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onBlur",
+                                                        "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                        "disabled": false
+                                                    }
+                                                ]
+                                            },
+                                            "onChange": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.onSearch.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            },
+                                            "prefix": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Icon",
+                                                        "id": "node_oclpkzn6672",
+                                                        "props": {
+                                                            "type": "SearchOutlined",
+                                                            "size": 16,
+                                                            "color": "#4a4a4a",
+                                                            "rotate": 0,
+                                                            "spin": false,
+                                                            "style": {
+                                                                "paddingRight": "8px"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclr8mbdh41"
+                                            },
+                                            "_unsafe_MixedSetter_prefix_select": "SlotSetter"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Table",
+                                "id": "node_oclpkzn7601",
+                                "props": {
+                                    "dataSource": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.templateList",
+                                        "mock": [
+                                            {
+                                                "id": "1",
+                                                "name": "胡彦斌",
+                                                "age": 32,
+                                                "address": "西湖区湖底公园1号"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "name": "王一博",
+                                                "age": 28,
+                                                "address": "滨江区网商路699号"
+                                            }
+                                        ]
+                                    },
+                                    "columns": [
+                                        {
+                                            "dataIndex": "name",
+                                            "key": "name",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Button",
+                                                        "id": "node_oclpl0hbqv2",
+                                                        "props": {
+                                                            "type": "link",
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            },
+                                                            "htmlType": "button",
+                                                            "size": "middle",
+                                                            "shape": "default",
+                                                            "icon": "",
+                                                            "block": false,
+                                                            "danger": false,
+                                                            "ghost": false,
+                                                            "disabled": false,
+                                                            "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onClick",
+                                                                        "relatedEventName": "goToDetail",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onClick",
+                                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                        "disabled": true
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "onClick": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.goToDetail.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclpl0hbqv1"
+                                            }
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "family",
+                                            "key": "family",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('family')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter"
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('desc')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "dataIndex": "description",
+                                            "key": "description",
+                                            "filteredValue": [],
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclw637ug62",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text ? JSON.parse(this.text)?.[this.utils.locale] : ''",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclw637ug61"
+                                            }
+                                        }
+                                    ],
+                                    "rowKey": "id",
+                                    "pagination": {
+                                        "pageSize": 10,
+                                        "size": "default"
+                                    },
+                                    "loading": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.loading",
+                                        "mock": false
+                                    },
+                                    "showHeader": true,
+                                    "size": "default",
+                                    "tableLayout": "",
+                                    "scroll": {
+                                        "scrollToFirstRowOnChange": true
+                                    },
+                                    "bordered": true
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": ""
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Block",
+                        "id": "node_oclty7p0ya2",
+                        "props": {
+                            "uuid": "412b426d-cd1c-4f59-a1c2-ea16c08f523e",
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "!this.utils.hasPermission(\"paramtpl.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ]
+                    }
+                ]
+            }
+        ],
+        "i18n": {
+            "zh-CN": {
+                "create": "创建模板",
+                "input": "搜索模板名称",
+                "name": "名称",
+                "desc": "描述",
+                "family": "版本",
+                "tplType": "类型",
+                "action": "操作",
+                "delete": "删除"
+            },
+            "en-US": {
+                "create": "Create Template",
+                "input": "Search Template Name",
+                "name": "Name",
+                "desc": "Description",
+                "family": "Family",
+                "tplType": "Type",
+                "action": "Action",
+                "delete": "Delete"
+            }
+        }
+    },
+    "thumbnails": "platform/6c8905d2-2c32-4374-9620-21da20d91054/thumbnails/b53a22be-c90d-47ce-a4db-c64e9a187623.png",
+    "tags": [
+        "根目录"
+    ],
+    "description": null,
+    "platformUuid": "6c8905d2-2c32-4374-9620-21da20d91054",
+    "type": "page",
+    "createdAt": "2023-11-30T08:54:45.738Z",
+    "updatedAt": "2024-05-16T10:02:40.914Z"
+}

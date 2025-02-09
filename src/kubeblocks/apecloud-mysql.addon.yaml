@@ -1,0 +1,54 @@
+apiVersion: extensions.kubeblocks.io/v1alpha1
+kind: Addon
+metadata:
+  annotations:
+    addon.kubeblocks.io/kubeblocks-version: '>=0.7.0'
+    addons.extensions.kubeblocks.io/default-is-empty: "true"
+    helm.sh/resource-policy: keep
+    meta.helm.sh/release-name: kubeblocks
+    meta.helm.sh/release-namespace: kb-system
+  creationTimestamp: "2025-02-07T03:04:13Z"
+  finalizers:
+  - addon.kubeblocks.io/finalizer
+  generation: 3
+  labels:
+    addon.kubeblocks.io/model: RDBMS
+    addon.kubeblocks.io/name: apecloud-mysql
+    addon.kubeblocks.io/provider: apecloud
+    addon.kubeblocks.io/version: 0.9.0
+    app.kubernetes.io/instance: kubeblocks
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kubeblocks
+  name: apecloud-mysql
+  resourceVersion: "96190"
+  uid: 2f33c144-b115-4a9d-bf87-da260d08571b
+spec:
+  defaultInstallValues:
+  - enabled: true
+    resources: {}
+  description: ApeCloud MySQL is a database that is compatible with MySQL syntax and
+    achieves high availability through the utilization of the RAFT consensus protocol.
+  helm:
+    chartLocationURL: file:///apecloud-mysql-0.9.0.tgz
+    chartsImage: apecloud-registry.cn-zhangjiakou.cr.aliyuncs.com/apecloud/kubeblocks-charts:0.9.2
+    chartsPathInImage: /charts
+    installValues: {}
+    valuesMapping:
+      jsonMap: {}
+      valueMap: {}
+  install:
+    enabled: true
+    resources: {}
+  installable:
+    autoInstall: true
+  type: Helm
+status:
+  conditions:
+  - lastTransitionTime: "2025-02-07T03:05:43Z"
+    message: ""
+    observedGeneration: 3
+    reason: AddonEnabled
+    status: "True"
+    type: Succeed
+  observedGeneration: 3
+  phase: Enabled

@@ -1,0 +1,79 @@
+{
+    "availabilityZones": [
+        "ap-northeast-1c"
+    ],
+    "backup": {
+        "autoBackup": true,
+        "autoBackupMethod": "xtrabackup",
+        "cronExpression": "0 18 * * *",
+        "pitrEnabled": true,
+        "retentionPeriod": "7d",
+        "retentionPolicy": "LastOne"
+    },
+    "cloudProvider": "aws",
+    "cloudRegion": "ap-northeast-1",
+    "codeShort": "1c2g",
+    "components": [
+        {
+            "classCode": "mysql.replication.mysql.1c2g.g",
+            "classSeries": "general",
+            "component": "mysql",
+            "componentDef": "mysql-8.0",
+            "cpu": 1,
+            "memory": 2,
+            "monitor": true,
+            "replicas": 2,
+            "storage": "20Gi",
+            "storageClass": "ape-local-hostpath-sc",
+            "volumes": [
+                {
+                    "name": "data",
+                    "storage": 20
+                }
+            ]
+        }
+    ],
+    "cpu": 1,
+    "createdAt": "2025-02-06T02:00:26Z",
+    "engine": "mysql",
+    "environmentId": "fb5a1ad7-97cf-4885-97b8-eb90a2bf667f",
+    "environmentName": "apecloud-demo",
+    "environmentType": "public",
+    "hash": "kubeblocks-cloud-ns/garli-6d7cfdf56f",
+    "id": "428789445911642113",
+    "initOptions": [
+        {
+            "component": "mysql",
+            "initParams": {
+                "pool_buffer_size": "{{- $pool_buffer_size := ( callBufferSizeByResource ( index $.podSpec.containers 0 ) true ) }}"
+            },
+            "specName": "mysql-replication-config"
+        }
+    ],
+    "internetEndpointEnabled": false,
+    "memory": 2,
+    "mode": "replication",
+    "monitorEnabled": true,
+    "name": "garlic15",
+    "namespace": "kubeblocks-cloud-ns",
+    "orgName": "lijingwei9060",
+    "paramTpls": [
+        {
+            "component": "mysql",
+            "paramTplName": "garlic15-mysql-temp",
+            "paramTplPartition": "custom"
+        }
+    ],
+    "podAntiAffinityEnabled": false,
+    "project": "kubeblocks-cloud-ns",
+    "replicas": 2,
+    "singleZone": true,
+    "status": "Creating",
+    "storage": 20,
+    "terminationPolicy": "Delete",
+    "tlsEnabled": false,
+    "tolerations": "node-role.cloud.kubeblocks.io/data-plane:NoSchedule,node-role.cloud.kubeblocks.io/control-plane:NoSchedule",
+    "updatedAt": "2025-02-09T02:06:59Z",
+    "version": "8.0.39",
+    "vpcEndpointEnabled": false
+}

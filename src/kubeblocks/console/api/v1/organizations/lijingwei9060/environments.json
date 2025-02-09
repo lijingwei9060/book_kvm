@@ -1,0 +1,28 @@
+{
+    "items": [
+        {
+            "availabilityZones": [
+                "ap-northeast-1c"
+            ],
+            "createdAt": "2024-12-20T10:20:45.085Z",
+            "defaultStorageClass": "ape-local-hostpath-sc",
+            "displayName": "apecloud-demo",
+            "id": "fb5a1ad7-97cf-4885-97b8-eb90a2bf667f",
+            "imageRegistry": "docker.io",
+            "name": "apecloud-demo",
+            "namespaces": null,
+            "networkConfig": {
+                "internetLBEnabled": true,
+                "lbEnabled": true,
+                "nodePortEnabled": true
+            },
+            "orgName": "lijingwei9060",
+            "podAntiAffinityEnabled": false,
+            "provider": "aws",
+            "region": "ap-northeast-1",
+            "state": "READY",
+            "type": "public",
+            "updatedAt": "2025-02-08T22:40:01.642Z"
+        }
+    ]
+}

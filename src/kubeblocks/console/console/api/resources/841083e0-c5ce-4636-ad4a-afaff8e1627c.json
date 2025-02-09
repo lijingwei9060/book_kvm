@@ -1,0 +1,2703 @@
+{
+    "uuid": "841083e0-c5ce-4636-ad4a-afaff8e1627c",
+    "title": "备份仓库",
+    "queryMocks": "",
+    "schema": {
+        "version": "1.0.0",
+        "componentsMap": [
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Title",
+                "componentName": "Typography.Title"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Text",
+                "componentName": "Typography.Text"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Space",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Space"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Col",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Col"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Illustration",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Illustration"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Row",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Row"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Card",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Card"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Icon",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Icon"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Input",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Input"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "ApeSelect",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "ApeSelect"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Button",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Button"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Box",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Box"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Avatar",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Avatar"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Table",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Table"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Block",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Block"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "MonacoEditor",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "MonacoEditor"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Modal",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Modal"
+            },
+            {
+                "devMode": "lowCode",
+                "componentName": "Page"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Descriptions",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Descriptions"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Descriptions",
+                "main": "",
+                "destructuring": true,
+                "subName": "Item",
+                "componentName": "Descriptions.Item"
+            }
+        ],
+        "componentsTree": [
+            {
+                "componentName": "Page",
+                "id": "841083e0-c5ce-4636-ad4a-afaff8e1627c",
+                "props": {},
+                "title": "",
+                "isLocked": false,
+                "condition": true,
+                "conditionGroup": "",
+                "dataSource": {
+                    "list": [
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "environmentName": "environmentName",
+                                    "backupRepoName": "backupRepoName",
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    }
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/environments/{environmentName}/backupRepo/{backupRepoName}"
+                            },
+                            "id": "getBackupRepo",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    }
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/backupRepo"
+                            },
+                            "id": "listBackupRepos",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "environmentId": "environmentId"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/storageProvider"
+                            },
+                            "id": "listStorageProviders",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    }
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/environments"
+                            },
+                            "id": "listEnvironment",
+                            "type": "fetch",
+                            "isInit": false
+                        }
+                    ]
+                },
+                "originCode": "class Page extends Component {\n\n  state = {\n    loading: false,\n    isEdit: false,\n    visible: false,\n    detailVisible: false,\n    prociderLoading: false,\n    detailData: {},\n    backupRepos: [],\n    envOptions: [],\n    searchKey: '',\n    options: [],\n    filterEnv: undefined,\n    environments: [],\n    storage_type: {\n      cloud: ['cos', 'oss', 'obs', 'gcs-s3comp', 's3'],\n      local: ['minio', 'nfs', 'ftp']\n    }\n  }\n\n  sorter_createdAt(a, b) {\n    return new Date(a?.createdAt).getTime() - new Date(b?.createdAt).getTime()\n  }\n\n  //根据环境名称过滤\n  onEnvChange(value, option) {\n    this.setState({\n      filterEnv: value\n    }, this.getFilterBackupRepos)\n  }\n  applyFilters(list, searchKey, filterEnv) {\n    const reg = new RegExp(`.*${searchKey}.*`);\n    return list.filter(n => {\n      const envMatch = filterEnv ? filterEnv.includes(n?.environmentId) : true;\n      const nameMatch = searchKey ? reg.test(n?.name) : true;\n      return nameMatch && envMatch;\n    });\n  };\n\n  async getFilterBackupRepos() {\n    this.setState({ loading: true })\n    const { filterEnv, searchKey } = this.state;\n    const { items } = (await this.dataSourceMap.listBackupRepos.load()) ?? {}\n    const sortItems = items ? _.sortBy(items, (item) => item.createdAt).reverse() : [];\n    this.setState({\n      loading: false,\n      backupRepos: this.applyFilters(sortItems, searchKey, filterEnv),\n    })\n  }\n\n  //列表搜索\n  onSearch(event) {\n    const value = event.target.value || \"\";\n    this.setState({\n      searchKey: _.trim(value),\n    }, this.getFilterBackupRepos)\n  }\n\n  //环境\n  async listEnvironments() {\n    const { items: environments } = await this.dataSourceMap.listEnvironment.load();\n    const _environments = environments.filter(n => n.state == 'READY');\n    const envOptions = _environments.map((e) => {\n      return {\n        label: `${e.name} (${e.provider})`,\n        value: e.id,\n      }\n    })\n    this.setState({\n      envOptions,\n      environments,\n    })\n  }\n\n  //存储供应商\n  async listStorageProviders(id) {\n    this.setState({ prociderLoading: true })\n    const res = await this.dataSourceMap.listStorageProviders.load({ environmentId: id });\n    const new_res = res.map((it) => {\n      let filteredParams = {};\n      if (it.credential === null) {\n        filteredParams = it.params;\n      } else {\n        filteredParams = Object.keys(it.params)\n          .filter(param => !it.credential.includes(param))\n          .reduce((obj, key) => {\n            obj[key] = it.params[key];\n            return obj;\n          }, {});\n      }\n      const _filteredParams = _.omit(filteredParams, ['geesefsMemoryLimit', 'geesefsReadAheadLarge']);\n      let paramsArray = Object.entries(_filteredParams)\n        .map(([name, other]) => ({\n          name, desc: other?.description, type: other?.type, defaultVal: other?.default\n        }));\n      if (it.required !== null) {\n        const requiredKeysSet = new Set(it.required);\n        paramsArray = paramsArray.sort((a, b) => (\n          requiredKeysSet.has(a.name) ? -1 : 1) - (requiredKeysSet.has(b.name) ? -1 : 1)\n        );\n      }\n      it.new_parmas = paramsArray\n      return it\n    });\n    const cloudOptions = [], localOptions = [];\n    res.map(it => {\n      const obj = {\n        label: it ? this.utils.storage_profile?.[it.name]?.title?.[this.utils.locale] || '' : '',\n        value: it?.name || '',\n      }\n      if (this.state.storage_type.cloud.indexOf(it?.name) != -1) {\n        cloudOptions.push(obj)\n      } else {\n        localOptions.push(obj)\n      }\n    });\n    const options = [{\n      label: this.i18n('cloud'),\n      options: cloudOptions,\n    }, {\n      label: this.i18n('local'),\n      options: localOptions,\n    }]\n    this.setState({\n      storageProviders: new_res,\n      options,\n      prociderLoading: false\n    })\n  }\n\n  //查看详情\n  async onDetail(e, record) {\n    const res = await this.dataSourceMap.getBackupRepo.load({ backupRepoName: record?.name, environmentName: record?.environmentName })\n    this.setState({\n      detailVisible: true,\n      detailData: res,\n    })\n  }\n  onDetailCancel() {\n    this.setState({ detailVisible: false, detailData: {} })\n  }\n\n  onRefresh() {\n    this.getFilterBackupRepos();\n  }\n\n  intervalBackupRepos() {\n    if (this.state.backupRepos.find(n => n.status !== 'Ready' && n.status !== 'Failed')) {\n      this.getFilterBackupRepos()\n    }\n  }\n\n  async componentDidMount() {\n    await this.getFilterBackupRepos();\n    await this.listEnvironments();\n  }\n\n  componentWillUnmount() {\n  }\n\n}",
+                "css": "",
+                "state": {
+                    "loading": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "isEdit": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "visible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "detailVisible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "prociderLoading": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "detailData": {
+                        "type": "JSExpression",
+                        "value": "{}"
+                    },
+                    "backupRepos": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "envOptions": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "searchKey": {
+                        "type": "JSExpression",
+                        "value": "''"
+                    },
+                    "options": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "filterEnv": {
+                        "type": "JSExpression",
+                        "value": "undefined"
+                    },
+                    "environments": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "storage_type": {
+                        "type": "JSExpression",
+                        "value": "{\n  cloud: ['cos', 'oss', 'obs', 'gcs-s3comp', 's3'],\n  local: ['minio', 'nfs', 'ftp']\n}"
+                    }
+                },
+                "methods": {
+                    "sorter_createdAt": {
+                        "type": "JSFunction",
+                        "value": "function sorter_createdAt(a, b) {\n  return new Date(a === null || a === void 0 ? void 0 : a.createdAt).getTime() - new Date(b === null || b === void 0 ? void 0 : b.createdAt).getTime();\n}",
+                        "source": "function sorter_createdAt(a, b) {\n  return new Date(a?.createdAt).getTime() - new Date(b?.createdAt).getTime();\n}"
+                    },
+                    "onEnvChange": {
+                        "type": "JSFunction",
+                        "value": "function onEnvChange(value, option) {\n  this.setState({\n    filterEnv: value\n  }, this.getFilterBackupRepos);\n}",
+                        "source": "function onEnvChange(value, option) {\n  this.setState({\n    filterEnv: value\n  }, this.getFilterBackupRepos);\n}"
+                    },
+                    "applyFilters": {
+                        "type": "JSFunction",
+                        "value": "function applyFilters(list, searchKey, filterEnv) {\n  const reg = new RegExp(`.*${searchKey}.*`);\n  return list.filter(n => {\n    const envMatch = filterEnv ? filterEnv.includes(n === null || n === void 0 ? void 0 : n.environmentId) : true;\n    const nameMatch = searchKey ? reg.test(n === null || n === void 0 ? void 0 : n.name) : true;\n    return nameMatch && envMatch;\n  });\n}",
+                        "source": "function applyFilters(list, searchKey, filterEnv) {\n  const reg = new RegExp(`.*${searchKey}.*`);\n  return list.filter(n => {\n    const envMatch = filterEnv ? filterEnv.includes(n?.environmentId) : true;\n    const nameMatch = searchKey ? reg.test(n?.name) : true;\n    return nameMatch && envMatch;\n  });\n}"
+                    },
+                    "getFilterBackupRepos": {
+                        "type": "JSFunction",
+                        "value": "async function getFilterBackupRepos() {\n  this.setState({\n    loading: true\n  });\n  const {\n    filterEnv,\n    searchKey\n  } = this.state;\n  const {\n    items\n  } = (await this.dataSourceMap.listBackupRepos.load()) ?? {};\n  const sortItems = items ? _.sortBy(items, item => item.createdAt).reverse() : [];\n  this.setState({\n    loading: false,\n    backupRepos: this.applyFilters(sortItems, searchKey, filterEnv)\n  });\n}",
+                        "source": "async function getFilterBackupRepos() {\n  this.setState({\n    loading: true\n  });\n  const {\n    filterEnv,\n    searchKey\n  } = this.state;\n  const {\n    items\n  } = (await this.dataSourceMap.listBackupRepos.load()) ?? {};\n  const sortItems = items ? _.sortBy(items, item => item.createdAt).reverse() : [];\n  this.setState({\n    loading: false,\n    backupRepos: this.applyFilters(sortItems, searchKey, filterEnv)\n  });\n}"
+                    },
+                    "onSearch": {
+                        "type": "JSFunction",
+                        "value": "function onSearch(event) {\n  const value = event.target.value || \"\";\n  this.setState({\n    searchKey: _.trim(value)\n  }, this.getFilterBackupRepos);\n}",
+                        "source": "function onSearch(event) {\n  const value = event.target.value || \"\";\n  this.setState({\n    searchKey: _.trim(value)\n  }, this.getFilterBackupRepos);\n}"
+                    },
+                    "listEnvironments": {
+                        "type": "JSFunction",
+                        "value": "async function listEnvironments() {\n  const {\n    items: environments\n  } = await this.dataSourceMap.listEnvironment.load();\n  const _environments = environments.filter(n => n.state == 'READY');\n  const envOptions = _environments.map(e => {\n    return {\n      label: `${e.name} (${e.provider})`,\n      value: e.id\n    };\n  });\n  this.setState({\n    envOptions,\n    environments\n  });\n}",
+                        "source": "async function listEnvironments() {\n  const {\n    items: environments\n  } = await this.dataSourceMap.listEnvironment.load();\n  const _environments = environments.filter(n => n.state == 'READY');\n  const envOptions = _environments.map(e => {\n    return {\n      label: `${e.name} (${e.provider})`,\n      value: e.id\n    };\n  });\n  this.setState({\n    envOptions,\n    environments\n  });\n}"
+                    },
+                    "listStorageProviders": {
+                        "type": "JSFunction",
+                        "value": "async function listStorageProviders(id) {\n  this.setState({\n    prociderLoading: true\n  });\n  const res = await this.dataSourceMap.listStorageProviders.load({\n    environmentId: id\n  });\n  const new_res = res.map(it => {\n    let filteredParams = {};\n    if (it.credential === null) {\n      filteredParams = it.params;\n    } else {\n      filteredParams = Object.keys(it.params).filter(param => !it.credential.includes(param)).reduce((obj, key) => {\n        obj[key] = it.params[key];\n        return obj;\n      }, {});\n    }\n    const _filteredParams = _.omit(filteredParams, ['geesefsMemoryLimit', 'geesefsReadAheadLarge']);\n    let paramsArray = Object.entries(_filteredParams).map(([name, other]) => ({\n      name,\n      desc: other === null || other === void 0 ? void 0 : other.description,\n      type: other === null || other === void 0 ? void 0 : other.type,\n      defaultVal: other === null || other === void 0 ? void 0 : other.default\n    }));\n    if (it.required !== null) {\n      const requiredKeysSet = new Set(it.required);\n      paramsArray = paramsArray.sort((a, b) => (requiredKeysSet.has(a.name) ? -1 : 1) - (requiredKeysSet.has(b.name) ? -1 : 1));\n    }\n    it.new_parmas = paramsArray;\n    return it;\n  });\n  const cloudOptions = [],\n    localOptions = [];\n  res.map(it => {\n    var _this$utils$storage_p;\n    const obj = {\n      label: it ? ((_this$utils$storage_p = this.utils.storage_profile) === null || _this$utils$storage_p === void 0 || (_this$utils$storage_p = _this$utils$storage_p[it.name]) === null || _this$utils$storage_p === void 0 || (_this$utils$storage_p = _this$utils$storage_p.title) === null || _this$utils$storage_p === void 0 ? void 0 : _this$utils$storage_p[this.utils.locale]) || '' : '',\n      value: (it === null || it === void 0 ? void 0 : it.name) || ''\n    };\n    if (this.state.storage_type.cloud.indexOf(it === null || it === void 0 ? void 0 : it.name) != -1) {\n      cloudOptions.push(obj);\n    } else {\n      localOptions.push(obj);\n    }\n  });\n  const options = [{\n    label: this.i18n('cloud'),\n    options: cloudOptions\n  }, {\n    label: this.i18n('local'),\n    options: localOptions\n  }];\n  this.setState({\n    storageProviders: new_res,\n    options,\n    prociderLoading: false\n  });\n}",
+                        "source": "async function listStorageProviders(id) {\n  this.setState({\n    prociderLoading: true\n  });\n  const res = await this.dataSourceMap.listStorageProviders.load({\n    environmentId: id\n  });\n  const new_res = res.map(it => {\n    let filteredParams = {};\n    if (it.credential === null) {\n      filteredParams = it.params;\n    } else {\n      filteredParams = Object.keys(it.params).filter(param => !it.credential.includes(param)).reduce((obj, key) => {\n        obj[key] = it.params[key];\n        return obj;\n      }, {});\n    }\n    const _filteredParams = _.omit(filteredParams, ['geesefsMemoryLimit', 'geesefsReadAheadLarge']);\n    let paramsArray = Object.entries(_filteredParams).map(([name, other]) => ({\n      name,\n      desc: other?.description,\n      type: other?.type,\n      defaultVal: other?.default\n    }));\n    if (it.required !== null) {\n      const requiredKeysSet = new Set(it.required);\n      paramsArray = paramsArray.sort((a, b) => (requiredKeysSet.has(a.name) ? -1 : 1) - (requiredKeysSet.has(b.name) ? -1 : 1));\n    }\n    it.new_parmas = paramsArray;\n    return it;\n  });\n  const cloudOptions = [],\n    localOptions = [];\n  res.map(it => {\n    const obj = {\n      label: it ? this.utils.storage_profile?.[it.name]?.title?.[this.utils.locale] || '' : '',\n      value: it?.name || ''\n    };\n    if (this.state.storage_type.cloud.indexOf(it?.name) != -1) {\n      cloudOptions.push(obj);\n    } else {\n      localOptions.push(obj);\n    }\n  });\n  const options = [{\n    label: this.i18n('cloud'),\n    options: cloudOptions\n  }, {\n    label: this.i18n('local'),\n    options: localOptions\n  }];\n  this.setState({\n    storageProviders: new_res,\n    options,\n    prociderLoading: false\n  });\n}"
+                    },
+                    "onDetail": {
+                        "type": "JSFunction",
+                        "value": "async function onDetail(e, record) {\n  const res = await this.dataSourceMap.getBackupRepo.load({\n    backupRepoName: record === null || record === void 0 ? void 0 : record.name,\n    environmentName: record === null || record === void 0 ? void 0 : record.environmentName\n  });\n  this.setState({\n    detailVisible: true,\n    detailData: res\n  });\n}",
+                        "source": "async function onDetail(e, record) {\n  const res = await this.dataSourceMap.getBackupRepo.load({\n    backupRepoName: record?.name,\n    environmentName: record?.environmentName\n  });\n  this.setState({\n    detailVisible: true,\n    detailData: res\n  });\n}"
+                    },
+                    "onDetailCancel": {
+                        "type": "JSFunction",
+                        "value": "function onDetailCancel() {\n  this.setState({\n    detailVisible: false,\n    detailData: {}\n  });\n}",
+                        "source": "function onDetailCancel() {\n  this.setState({\n    detailVisible: false,\n    detailData: {}\n  });\n}"
+                    },
+                    "onRefresh": {
+                        "type": "JSFunction",
+                        "value": "function onRefresh() {\n  this.getFilterBackupRepos();\n}",
+                        "source": "function onRefresh() {\n  this.getFilterBackupRepos();\n}"
+                    },
+                    "intervalBackupRepos": {
+                        "type": "JSFunction",
+                        "value": "function intervalBackupRepos() {\n  if (this.state.backupRepos.find(n => n.status !== 'Ready' && n.status !== 'Failed')) {\n    this.getFilterBackupRepos();\n  }\n}",
+                        "source": "function intervalBackupRepos() {\n  if (this.state.backupRepos.find(n => n.status !== 'Ready' && n.status !== 'Failed')) {\n    this.getFilterBackupRepos();\n  }\n}"
+                    }
+                },
+                "lifeCycles": {
+                    "componentDidMount": {
+                        "type": "JSFunction",
+                        "value": "async function componentDidMount() {\n  await this.getFilterBackupRepos();\n  await this.listEnvironments();\n}",
+                        "source": "async function componentDidMount() {\n  await this.getFilterBackupRepos();\n  await this.listEnvironments();\n}"
+                    },
+                    "componentWillUnmount": {
+                        "type": "JSFunction",
+                        "value": "function componentWillUnmount() {}",
+                        "source": "function componentWillUnmount() {}"
+                    }
+                },
+                "children": [
+                    {
+                        "componentName": "Card",
+                        "id": "node_oclu9mcktv1",
+                        "props": {
+                            "bordered": false,
+                            "hoverable": false,
+                            "loading": false,
+                            "size": "small",
+                            "type": "default",
+                            "style": {
+                                "marginBottom": "24px"
+                            },
+                            "_unsafe_MixedSetter_title_select": "StringSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "children": [
+                            {
+                                "componentName": "Row",
+                                "id": "node_oclu9meg6q1",
+                                "props": {
+                                    "align": "top",
+                                    "justify": "start",
+                                    "wrap": false,
+                                    "style": {
+                                        "display": "flex",
+                                        "alignItems": "center",
+                                        "paddingLeft": "12px",
+                                        "paddingRight": "12px"
+                                    }
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Col",
+                                        "id": "node_oclu9meg6q2",
+                                        "props": {
+                                            "span": 20,
+                                            "order": 0
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "Space",
+                                                "id": "node_oclw610jid57",
+                                                "props": {
+                                                    "align": "start",
+                                                    "direction": "vertical",
+                                                    "wrap": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "children": [
+                                                    {
+                                                        "componentName": "Typography.Title",
+                                                        "id": "node_oclw5uqkzkj",
+                                                        "props": {
+                                                            "level": 5,
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n('repositories')",
+                                                                "mock": "四级标题"
+                                                            },
+                                                            "code": false,
+                                                            "copyable": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "editable": false,
+                                                            "ellipsis": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "style": {
+                                                                "marginBottom": "0px"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    },
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclu9meg6q7",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n('desc')",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "type": "secondary",
+                                                            "style": {
+                                                                "opacity": "0.5"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "componentName": "Col",
+                                        "id": "node_oclu9meg6q3",
+                                        "props": {
+                                            "span": 4,
+                                            "order": 0,
+                                            "style": {
+                                                "textAlign": "right"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "Illustration",
+                                                "id": "node_oclu9meg6q4",
+                                                "props": {
+                                                    "defaultCountry": "cn",
+                                                    "type": "notification",
+                                                    "style": {
+                                                        "height": "80px",
+                                                        "width": "80px"
+                                                    }
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Box",
+                        "id": "node_oclty7g8q51",
+                        "props": {
+                            "id": "box-d53ddbfbd082",
+                            "padding": "",
+                            "margin": "",
+                            "twinkle": false,
+                            "bordered": false,
+                            "hoverable": false,
+                            "loading": false,
+                            "ref": "box-0f46caad",
+                            "style": {
+                                "display": "block"
+                            },
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "this.utils.hasPermission(\"backuprepo.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclqc58fuh1",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "horizontal",
+                                    "wrap": false,
+                                    "style": {
+                                        "display": "flex",
+                                        "justifyContent": "space-between",
+                                        "marginBottom": "24px"
+                                    },
+                                    "ref": "space-14b2a8eb"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "Space",
+                                        "id": "node_oclqq8x2t92",
+                                        "props": {
+                                            "align": "start",
+                                            "direction": "horizontal",
+                                            "wrap": false
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "Input",
+                                                "id": "node_oclm7c9jfh36",
+                                                "props": {
+                                                    "placeholder": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('search')",
+                                                        "mock": "请输入"
+                                                    },
+                                                    "bordered": true,
+                                                    "disabled": false,
+                                                    "style": {
+                                                        "width": "200px"
+                                                    },
+                                                    "__events": {
+                                                        "eventDataList": [
+                                                            {
+                                                                "type": "componentEvent",
+                                                                "name": "onChange",
+                                                                "relatedEventName": "onSearch"
+                                                            }
+                                                        ],
+                                                        "eventList": [
+                                                            {
+                                                                "name": "onChange",
+                                                                "template": "onChange(event,${extParams}){\n// 输入框内容变化时的回调\nconsole.log('onChange',event);}",
+                                                                "disabled": true
+                                                            },
+                                                            {
+                                                                "name": "onPressEnter",
+                                                                "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onFocus",
+                                                                "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onKeyDown",
+                                                                "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onKeyPress",
+                                                                "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onKeyUp",
+                                                                "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onBlur",
+                                                                "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                                "disabled": false
+                                                            }
+                                                        ]
+                                                    },
+                                                    "size": "middle",
+                                                    "suffix": "",
+                                                    "_unsafe_MixedSetter_suffix_select": "SlotSetter",
+                                                    "allowClear": true,
+                                                    "ref": "input-d2fc70b4",
+                                                    "prefix": {
+                                                        "type": "JSSlot",
+                                                        "value": [
+                                                            {
+                                                                "componentName": "Icon",
+                                                                "id": "node_oclr8l1cw33",
+                                                                "props": {
+                                                                    "type": "SearchOutlined",
+                                                                    "size": 18,
+                                                                    "rotate": 0,
+                                                                    "spin": false,
+                                                                    "color": "",
+                                                                    "style": {
+                                                                        "paddingRight": "8px",
+                                                                        "opacity": 0.4
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ],
+                                                        "id": "node_oclr8kyd8e1"
+                                                    },
+                                                    "_unsafe_MixedSetter_prefix_select": "SlotSetter",
+                                                    "value": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.searchKey"
+                                                    },
+                                                    "onChange": {
+                                                        "type": "JSFunction",
+                                                        "value": "function(){return this.onSearch.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                                    }
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            },
+                                            {
+                                                "componentName": "ApeSelect",
+                                                "id": "node_oclqq8x2t91",
+                                                "props": {
+                                                    "style": {
+                                                        "minWidth": "200px",
+                                                        "maxWidth": "400px"
+                                                    },
+                                                    "options": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.envOptions"
+                                                    },
+                                                    "allowClear": true,
+                                                    "autoFocus": false,
+                                                    "defaultActiveFirstOption": true,
+                                                    "disabled": false,
+                                                    "labelInValue": false,
+                                                    "mode": "single",
+                                                    "showSearch": true,
+                                                    "size": "middle",
+                                                    "loading": false,
+                                                    "bordered": true,
+                                                    "optionFilterProp": "value",
+                                                    "tokenSeparators": [],
+                                                    "maxTagCount": 10,
+                                                    "maxTagTextLength": 40,
+                                                    "placeholder": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('env_name')"
+                                                    },
+                                                    "__events": {
+                                                        "eventDataList": [
+                                                            {
+                                                                "type": "componentEvent",
+                                                                "name": "onChange",
+                                                                "relatedEventName": "onEnvChange"
+                                                            }
+                                                        ],
+                                                        "eventList": [
+                                                            {
+                                                                "name": "onBlur",
+                                                                "template": "onBlur(${extParams}){\n// 失去焦点时回调\nconsole.log('onBlur');}",
+                                                                "disabled": true
+                                                            },
+                                                            {
+                                                                "name": "onChange",
+                                                                "template": "onChange(value,option,${extParams}){\n// 选中 option，或 input 的 value 变化时，调用此函数\nconsole.log('onChange',value,option);}",
+                                                                "disabled": true
+                                                            },
+                                                            {
+                                                                "name": "onDeselect",
+                                                                "template": "onDeselect(value,${extParams}){\n// 取消选中时调用\nconsole.log('onDeselect',value);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onFocus",
+                                                                "template": "onFocus(${extParams}){\n// 获得焦点时回调\nconsole.log('onFocus');}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onInputKeyDown",
+                                                                "template": "onInputKeyDown(${extParams}){\n// 按键按下时回调\nconsole.log('onInputKeyDown');}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onMouseEnter",
+                                                                "template": "onMouseEnter(${extParams}){\n// 鼠标移入时回调\nconsole.log('onMouseEnter');}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onMouseLeave",
+                                                                "template": "onMouseLeave(${extParams}){\n// 鼠标移出时回调\nconsole.log('onMouseLeave');}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onPopupScroll",
+                                                                "template": "onPopupScroll(${extParams}){\n// 下拉列表滚动时的回调\nconsole.log('onPopupScroll');}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onSearch",
+                                                                "template": "onSearch(value,${extParams}){\n// 文本框值变化时回调\nconsole.log('onSearch',value);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onSelect",
+                                                                "template": "onSelect(value,option,${extParams}){\n// 被选中时调用\nconsole.log('onSelect',value,option);}",
+                                                                "disabled": false
+                                                            },
+                                                            {
+                                                                "name": "onDropdownVisibleChange",
+                                                                "template": "onDropdownVisibleChange(open,${extParams}){\n// 展开下拉菜单的回调\nconsole.log('onDropdownVisibleChange',open);}",
+                                                                "disabled": false
+                                                            }
+                                                        ]
+                                                    },
+                                                    "onChange": {
+                                                        "type": "JSFunction",
+                                                        "value": "function(){return this.onEnvChange.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                                    },
+                                                    "_unsafe_MixedSetter_options_select": "VariableSetter",
+                                                    "value": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.filterEnv"
+                                                    },
+                                                    "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                                    "dropdownMatchSelectWidth": true,
+                                                    "InputEnable": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            },
+                                            {
+                                                "componentName": "Button",
+                                                "id": "node_oclsy8axpm1",
+                                                "props": {
+                                                    "type": "default",
+                                                    "children": "",
+                                                    "htmlType": "button",
+                                                    "size": "middle",
+                                                    "shape": "default",
+                                                    "icon": {
+                                                        "type": "JSSlot",
+                                                        "value": [
+                                                            {
+                                                                "componentName": "Icon",
+                                                                "id": "node_oclsy8axpm3",
+                                                                "props": {
+                                                                    "type": "Loading3QuartersOutlined",
+                                                                    "size": 16,
+                                                                    "rotate": 0,
+                                                                    "spin": false
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ],
+                                                        "id": "node_oclsy8axpm2"
+                                                    },
+                                                    "block": false,
+                                                    "danger": false,
+                                                    "ghost": false,
+                                                    "disabled": false,
+                                                    "__events": {
+                                                        "eventDataList": [
+                                                            {
+                                                                "type": "componentEvent",
+                                                                "name": "onClick",
+                                                                "relatedEventName": "onRefresh"
+                                                            }
+                                                        ],
+                                                        "eventList": [
+                                                            {
+                                                                "name": "onClick",
+                                                                "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                "disabled": true
+                                                            }
+                                                        ]
+                                                    },
+                                                    "onClick": {
+                                                        "type": "JSFunction",
+                                                        "value": "function(){return this.onRefresh.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                                    },
+                                                    "loading": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.loading"
+                                                    },
+                                                    "ref": "button-c3bd6f0f"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": false,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Table",
+                                "id": "node_oclpi6putp1",
+                                "props": {
+                                    "dataSource": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.backupRepos",
+                                        "mock": []
+                                    },
+                                    "columns": [
+                                        {
+                                            "dataIndex": "name",
+                                            "key": "name",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_ocluaoww1d1",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "style": {
+                                                                "display": "block"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclqdqaxr29"
+                                            }
+                                        },
+                                        {
+                                            "dataIndex": "status",
+                                            "key": "status",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('status')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_ocluaoww1d2",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "horizontal",
+                                                            "wrap": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Box",
+                                                                "id": "node_ocluaoww1d3",
+                                                                "props": {
+                                                                    "id": "box-486b9659a88f",
+                                                                    "padding": "",
+                                                                    "margin": "",
+                                                                    "twinkle": false,
+                                                                    "bordered": false,
+                                                                    "hoverable": false,
+                                                                    "loading": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  background: this.utils.getStatusColor(this.record?.status),\n    width: 6,\n      height: 6,\n        position: \"relative\",\n          top: -1,\n            borderRadius: 3\n}"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_ocluaoww1d4",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.text",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  color: this.utils.getStatusColor(this.record?.status)\n}"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclpi6pxth1"
+                                            }
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "storageProvider",
+                                            "key": "storageProvider",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('provider')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter"
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "default",
+                                            "key": "default",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('default')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_ocluaoww1d6",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n(`${this.text}`)",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_ocluaoww1d5"
+                                            }
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('env')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "dataIndex": "env",
+                                            "key": "env",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_ocluaoww1d7",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "horizontal",
+                                                            "wrap": false,
+                                                            "style": {
+                                                                "display": "flex",
+                                                                "alignItems": "center"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Avatar",
+                                                                "id": "node_ocluaoww1d8",
+                                                                "props": {
+                                                                    "src": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "(() => {\n  const res = this.state.environments.length > 0 ? this.state.environments?.find(n => n.id == this.record?.environmentId) : {};\n  return this.utils.getCloudIcon(res?.provider)\n})()",
+                                                                        "mock": "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
+                                                                    },
+                                                                    "shape": "circle",
+                                                                    "size": 30,
+                                                                    "alt": "",
+                                                                    "gap": 0
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_ocluaoww1d9",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.record?.environmentName",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "type": "secondary",
+                                                                    "style": {
+                                                                        "marginLeft": "0px"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclqlsvldm1"
+                                            }
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "createdAt",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclqgczqgj3",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "moment(this.record?.createdAt).format('YYYY-MM-DD HH:mm:ss')",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclplz0udy1"
+                                            },
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('time')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "_unsafe_MixedSetter_sorter_select": "FunctionSetter",
+                                            "sorter": {
+                                                "type": "JSFunction",
+                                                "value": "function(){ return this.sorter_createdAt.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            },
+                                            "key": "createdAt"
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "action",
+                                            "key": "action",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('action')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Button",
+                                                        "id": "node_oclqlsvldm6",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n('detail')"
+                                                            },
+                                                            "htmlType": "button",
+                                                            "type": "link",
+                                                            "size": "small",
+                                                            "shape": "default",
+                                                            "icon": "",
+                                                            "block": false,
+                                                            "danger": false,
+                                                            "ghost": false,
+                                                            "disabled": false,
+                                                            "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onClick",
+                                                                        "relatedEventName": "onDetail",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onClick",
+                                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                        "disabled": true
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "onClick": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onDetail.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "style": {
+                                                                "textAlign": "left"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclqd4ctb41"
+                                            }
+                                        }
+                                    ],
+                                    "rowKey": "id",
+                                    "pagination": {
+                                        "pageSize": 10,
+                                        "size": "default"
+                                    },
+                                    "loading": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.loading",
+                                        "mock": false
+                                    },
+                                    "showHeader": true,
+                                    "size": "default",
+                                    "tableLayout": "",
+                                    "scroll": {
+                                        "scrollToFirstRowOnChange": true
+                                    },
+                                    "footer": "",
+                                    "bordered": true,
+                                    "ref": "table-b9e0fa26"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Block",
+                        "id": "node_oclty7g8q52",
+                        "props": {
+                            "uuid": "412b426d-cd1c-4f59-a1c2-ea16c08f523e",
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "!this.utils.hasPermission(\"backuprepo.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ]
+                    },
+                    {
+                        "componentName": "Modal",
+                        "id": "node_oclqd4uukj1",
+                        "props": {
+                            "title": {
+                                "type": "JSExpression",
+                                "value": "this.i18n('information')"
+                            },
+                            "okText": "确认",
+                            "cancelText": "取消",
+                            "open": {
+                                "type": "JSExpression",
+                                "value": "this.state.detailVisible",
+                                "mock": true
+                            },
+                            "footer": "",
+                            "destroyOnClose": true,
+                            "centered": false,
+                            "closable": true,
+                            "confirmLoading": false,
+                            "forceRender": false,
+                            "keyboard": true,
+                            "mask": true,
+                            "maskClosable": true,
+                            "bodyStyle": {},
+                            "maskStyle": {},
+                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                            "width": "700px",
+                            "__events": {
+                                "eventDataList": [
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onCancel",
+                                        "relatedEventName": "onDetailCancel"
+                                    }
+                                ],
+                                "eventList": [
+                                    {
+                                        "name": "afterClose",
+                                        "templete": "onCancel(${extParams}){\n// 完全关闭后的回调\nconsole.log('afterClose');}",
+                                        "disabled": false
+                                    },
+                                    {
+                                        "name": "onCancel",
+                                        "template": "onCancel(${extParams}){\n// 点击遮罩层或右上角叉或取消按钮的回调\nconsole.log('onCancel');}",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "name": "onOk",
+                                        "template": "onOk(${extParams}){\n// 点击确定回调\nconsole.log('onOk');}",
+                                        "disabled": false
+                                    }
+                                ]
+                            },
+                            "onCancel": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onDetailCancel.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            },
+                            "ref": "modal-6740bcfb"
+                        },
+                        "title": "仓库详情",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Descriptions",
+                                "id": "node_oclz2iky0d1",
+                                "props": {
+                                    "title": "",
+                                    "items": [
+                                        {
+                                            "key": "94v5",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0db6",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.name",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-4ac7d914"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d2"
+                                            }
+                                        },
+                                        {
+                                            "key": "4v5q",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('default')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0db7",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n(`${this.state.detailData?.default}`)",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-717f86b2"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0da"
+                                            }
+                                        },
+                                        {
+                                            "key": "fqfz",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('method')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0db8",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.accessMethod",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-5de88b7c"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dg"
+                                            }
+                                        },
+                                        {
+                                            "key": "ldw",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('provider')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0db9",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.storageProvider",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-17c27f62"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dm"
+                                            }
+                                        },
+                                        {
+                                            "key": "8o4w",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('backupNums')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0dba",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.backupNums",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-278d00f5"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0ds"
+                                            }
+                                        },
+                                        {
+                                            "key": "jr6v",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('totalSize')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0dbb",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.totalSize",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-2ed49f8c"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dy"
+                                            }
+                                        },
+                                        {
+                                            "key": "lenx",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('status')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_oclz2iky0dbc",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "horizontal",
+                                                            "wrap": false,
+                                                            "ref": "space-e161f67d",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.state.detailData?.status"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ],
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Box",
+                                                                "id": "node_oclz2iky0dbd",
+                                                                "props": {
+                                                                    "id": "box-486b9659a88f",
+                                                                    "padding": "",
+                                                                    "margin": "",
+                                                                    "twinkle": false,
+                                                                    "bordered": false,
+                                                                    "hoverable": false,
+                                                                    "loading": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  background: this.utils.getStatusColor(this.state.detailData?.status),\n    width: 6,\n      height: 6,\n        position: \"relative\",\n          top: -1,\n            borderRadius: 3\n}"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_oclz2iky0dbe",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.state.detailData?.status ? this.state.detailData?.status : '--'",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  color: this.utils.getStatusColor(this.state.detailData?.status)\n}"
+                                                                    },
+                                                                    "ref": "typography.text-94b4f7c1"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d6w"
+                                            }
+                                        },
+                                        {
+                                            "key": "8u6f",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('env')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "id": "node_oclz2iky0d7e"
+                                            }
+                                        }
+                                    ],
+                                    "bordered": true,
+                                    "column": 0,
+                                    "size": "small",
+                                    "layout": "horizontal",
+                                    "colon": false
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0d3",
+                                        "props": {
+                                            "key": "94v5",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0d96",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.name",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-4ac7d914"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d4"
+                                            },
+                                            "tab": ""
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0d6",
+                                        "props": {
+                                            "key": "4v5q",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('default')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0d9g",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n(`${this.state.detailData?.default}`)",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-717f86b2"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d7"
+                                            },
+                                            "tab": ""
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0dc",
+                                        "props": {
+                                            "key": "fqfz",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('method')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0d9q",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.accessMethod",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-5de88b7c"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dd"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0di",
+                                        "props": {
+                                            "key": "ldw",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('provider')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0da0",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.storageProvider",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-17c27f62"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dj"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0do",
+                                        "props": {
+                                            "key": "8o4w",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('backupNums')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0daa",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.backupNums",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-278d00f5"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dp"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0du",
+                                        "props": {
+                                            "key": "jr6v",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('totalSize')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclz2iky0dak",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.state.detailData?.totalSize",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-2ed49f8c"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0dv"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0d6g",
+                                        "props": {
+                                            "key": "lenx",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('status')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_oclz2iky0dau",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "horizontal",
+                                                            "wrap": false,
+                                                            "ref": "space-e161f67d",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.state.detailData?.status"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ],
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Box",
+                                                                "id": "node_oclz2iky0dav",
+                                                                "props": {
+                                                                    "id": "box-486b9659a88f",
+                                                                    "padding": "",
+                                                                    "margin": "",
+                                                                    "twinkle": false,
+                                                                    "bordered": false,
+                                                                    "hoverable": false,
+                                                                    "loading": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  background: this.utils.getStatusColor(this.state.detailData?.status),\n    width: 6,\n      height: 6,\n        position: \"relative\",\n          top: -1,\n            borderRadius: 3\n}"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_oclz2iky0daw",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.state.detailData?.status ? this.state.detailData?.status : '--'",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "style": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "{\n  color: this.utils.getStatusColor(this.state.detailData?.status)\n}"
+                                                                    },
+                                                                    "ref": "typography.text-94b4f7c1"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d6h"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Descriptions.Item",
+                                        "id": "node_oclz2iky0d6y",
+                                        "props": {
+                                            "key": "8u6f",
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('env')",
+                                                "mock": "标签项"
+                                            },
+                                            "span": 1,
+                                            "children": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_oclra3gmw91",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "horizontal",
+                                                            "wrap": false,
+                                                            "style": {
+                                                                "display": "flex",
+                                                                "alignItems": "center"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Avatar",
+                                                                "id": "node_oclra3gmw98",
+                                                                "props": {
+                                                                    "src": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "(() => {\n  const res = this.state.environments.length > 0 ? this.state.environments?.find(n => n.id == this.state?.detailData?.environmentId) : {};\n  return this.utils.getCloudIcon(res?.provider)\n})()",
+                                                                        "mock": "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
+                                                                    },
+                                                                    "shape": "circle",
+                                                                    "size": 19,
+                                                                    "alt": "",
+                                                                    "gap": 0,
+                                                                    "ref": "avatar-0632e5e3"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_oclqd69f6kf",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.state.detailData?.environmentName",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "ref": "typography.text-d9537164"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclz2iky0d6z"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclqdfyv0ra",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "vertical",
+                                    "wrap": false,
+                                    "style": {
+                                        "display": "flex",
+                                        "justifyContent": "space-between"
+                                    },
+                                    "ref": "space-5714a1cf",
+                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": {
+                                    "type": "JSExpression",
+                                    "value": "this.state.detailData?.failedReason"
+                                },
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "Typography.Text",
+                                        "id": "node_oclqdfyv0rb",
+                                        "props": {
+                                            "children": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('failedReason')",
+                                                "mock": "text"
+                                            },
+                                            "code": false,
+                                            "delete": false,
+                                            "disabled": false,
+                                            "mark": false,
+                                            "keyboard": false,
+                                            "underline": false,
+                                            "strong": false,
+                                            "style": {
+                                                "display": "block",
+                                                "width": "150px"
+                                            },
+                                            "ref": "typography.text-8d389d29"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ]
+                                    },
+                                    {
+                                        "componentName": "MonacoEditor",
+                                        "id": "node_oclr7dohot2",
+                                        "props": {
+                                            "value": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.detailData?.failedReason"
+                                            },
+                                            "language": "sql",
+                                            "readOnly": true,
+                                            "theme": "dark",
+                                            "fontSize": 12,
+                                            "lineNumbers": false,
+                                            "bordered": true,
+                                            "copyable": true,
+                                            "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                            "style": {
+                                                "height": "100px",
+                                                "width": "100%"
+                                            },
+                                            "suggestions": [],
+                                            "ref": "monacoeditor-d4dafd86",
+                                            "autoScrollToBottom": false
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Box",
+                                "id": "node_oclqd6shew3",
+                                "props": {
+                                    "id": "box-15d22142fe33",
+                                    "padding": "",
+                                    "margin": "",
+                                    "twinkle": false,
+                                    "bordered": false,
+                                    "hoverable": false,
+                                    "loading": false,
+                                    "style": {
+                                        "display": "block"
+                                    },
+                                    "ref": "box-0069c004"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "Space",
+                                        "id": "node_oclr7do4jv1",
+                                        "props": {
+                                            "align": "start",
+                                            "direction": "vertical",
+                                            "wrap": false,
+                                            "style": {
+                                                "display": "block"
+                                            },
+                                            "ref": "space-tawtbjw",
+                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": {
+                                            "type": "JSExpression",
+                                            "value": "this.state.detailData?.failedMessage"
+                                        },
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ],
+                                        "children": [
+                                            {
+                                                "componentName": "Typography.Text",
+                                                "id": "node_oclr7do4jv2",
+                                                "props": {
+                                                    "children": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('failedMessage')",
+                                                        "mock": "text"
+                                                    },
+                                                    "code": false,
+                                                    "delete": false,
+                                                    "disabled": false,
+                                                    "mark": false,
+                                                    "keyboard": false,
+                                                    "underline": false,
+                                                    "strong": false,
+                                                    "style": {
+                                                        "display": "block",
+                                                        "width": "120px"
+                                                    },
+                                                    "ref": "typography.text-risoc8s"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            },
+                                            {
+                                                "componentName": "MonacoEditor",
+                                                "id": "node_oclz2ijihl1",
+                                                "props": {
+                                                    "value": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.detailData?.failedMessage"
+                                                    },
+                                                    "language": "sql",
+                                                    "readOnly": true,
+                                                    "theme": "dark",
+                                                    "fontSize": 12,
+                                                    "lineNumbers": false,
+                                                    "bordered": true,
+                                                    "copyable": true,
+                                                    "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                                    "style": {
+                                                        "height": "300px",
+                                                        "width": "100%"
+                                                    },
+                                                    "suggestions": [],
+                                                    "ref": "monacoeditor-oh3185q",
+                                                    "autoScrollToBottom": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "i18n": {
+            "zh-CN": {
+                "name": "名称",
+                "status": "状态",
+                "method": "访问方法",
+                "provider": "存储提供商",
+                "default": "是否默认",
+                "true": "是",
+                "false": "否",
+                "env": "环境",
+                "create": "创建备份仓库",
+                "ok": "确认",
+                "cancel": "取消",
+                "storage": "存储提供商",
+                "bucket": "桶名",
+                "accessKeyId": "访问密钥 ID",
+                "secretAccessKey": "访问密钥",
+                "default_repo": "设为默认仓库",
+                "select": "请选择",
+                "endpoint": "连接串",
+                "region": "区域",
+                "action": "操作",
+                "edit": "编辑",
+                "detail": "详情",
+                "confirm": "请确认",
+                "delete": "删除",
+                "input": "请输入",
+                "information": "详情信息",
+                "totalSize": "大小",
+                "backupNums": "备份数量",
+                "search": "搜索仓库名称",
+                "created": "创建成功!",
+                "update": "更新备份仓库",
+                "time": "创建时间",
+                "env_name": "选择环境名称",
+                "required": "{item}为必填项",
+                "mountOptions": "挂载选项",
+                "nfsMountOptions": "NFS 挂载选项",
+                "nfsServer": "NFS服务器",
+                "nfsShare": "NFS共享路径",
+                "nfsSubDir": "NFS共享子目录",
+                "ftpHost": "FTP主机",
+                "ftpPort": "FTP端口",
+                "ftpTls": "FTP TLS",
+                "ftpPassword": "密码",
+                "ftpUser": "用户名",
+                "failedReason": "失败原因",
+                "failedMessage": "失败信息",
+                "cloud": "云存储:",
+                "local": "本地存储:",
+                "geesefsMemoryLimit": "geesefsMemoryLimit",
+                "geesefsReadAheadLarge": "geesefsReadAheadLarge",
+                "nopermission": "没有权限",
+                "repositories": "备份仓库",
+                "desc": "备份仓库是保存备份文件的云存储或本地存储，在为集群备份之前请先配置好备份仓库"
+            },
+            "en-US": {
+                "name": "Name",
+                "status": "Status",
+                "method": "Access Method",
+                "provider": "Storage Provider",
+                "default": "Default",
+                "true": "True",
+                "false": "False",
+                "env": "Environment",
+                "create": "Create Backup Repo",
+                "ok": "OK",
+                "cancel": "Cancel",
+                "storage": "Storage Provider",
+                "bucket": "Bucket",
+                "accessKeyId": "Access Key ID",
+                "secretAccessKey": "Secret Access Key",
+                "default_repo": "Default Repo",
+                "select": "Please select",
+                "endpoint": "Endpoint",
+                "region": "Region",
+                "action": "Action",
+                "edit": "Edit",
+                "detail": "Details",
+                "confirm": "Please confirm",
+                "delete": "Delete",
+                "input": "Please input",
+                "information": "Details",
+                "totalSize": "Total Size",
+                "backupNums": "Backup Number",
+                "search": "Search",
+                "created": "Created successfully!",
+                "update": "Update Backup Repo",
+                "time": "Creation Time",
+                "env_name": "Select Environment",
+                "required": "{item} can not be empty",
+                "mountOptions": "MountOptions",
+                "nfsMountOptions": "NFS MountOptions",
+                "nfsServer": "NFS Server",
+                "nfsShare": "NFS SharePath",
+                "nfsSubDir": "NFS SubDir",
+                "ftpHost": "FTP Host",
+                "ftpPort": "FTP Port",
+                "ftpTls": "FTP TLS",
+                "ftpPassword": "Password",
+                "ftpUser": "User",
+                "failedReason": "Failed Reason",
+                "failedMessage": "Failed Message",
+                "cloud": "Cloud Storage:",
+                "local": "Local Storage:",
+                "geesefsMemoryLimit": "geesefsMemoryLimit",
+                "geesefsReadAheadLarge": "geesefsReadAheadLarge",
+                "nopermission": "No permission",
+                "repositories": "Backup Repositories",
+                "desc": "A backup warehouse is a cloud storage device or local storage device that stores backup files. You need to configure the backup warehouse before backing up data for a cluster"
+            }
+        }
+    },
+    "thumbnails": "platform/6c8905d2-2c32-4374-9620-21da20d91054/thumbnails/841083e0-c5ce-4636-ad4a-afaff8e1627c.png",
+    "tags": [
+        "根目录"
+    ],
+    "description": null,
+    "platformUuid": "6c8905d2-2c32-4374-9620-21da20d91054",
+    "type": "page",
+    "createdAt": "2023-11-27T02:12:18.942Z",
+    "updatedAt": "2024-07-26T10:02:51.730Z"
+}

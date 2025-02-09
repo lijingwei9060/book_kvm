@@ -1,0 +1,204 @@
+{
+    "items": [
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for ApeCloud MySQL 8.0\",\"zh-CN\":\"ApeCloud MySQL 8.0的默认参数模板\"}",
+            "family": "ac-mysql-8.0",
+            "name": "apecloud-mysql-8.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.323237Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for ApeCloud MySQL vtgate\",\"zh-CN\":\"ApeCloud MySQL vtgate的默认参数模板\"}",
+            "family": "ac-mysql-vtgate",
+            "name": "apecloud-mysql-vtgate-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.347904Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for ClickHouse 24.0\",\"zh-CN\":\"ClickHouse 24.0的默认参数模板\"}",
+            "family": "clickhouse-24.0",
+            "name": "clickhouse-24.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.35923Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for DamengDB 8.1\",\"zh-CN\":\"DamengDB 8.1的默认参数模板\"}",
+            "family": "damengdb-8.1",
+            "name": "damengdb-8.1-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.401175Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for GaussDB 2.23\",\"zh-CN\":\"GaussDB 2.23的默认参数模板\"}",
+            "family": "gaussdb-2.23",
+            "name": "gaussdb-2.23-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.44529Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for Kafka 3.3\",\"zh-CN\":\"Kafka 3.3的默认参数模板\"}",
+            "family": "kafka-3.3",
+            "name": "kafka-3.3-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.519523Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for Kafka 2.8\",\"zh-CN\":\"Kafka 2.8的默认参数模板\"}",
+            "family": "kafka-2.8",
+            "name": "kafka-2.8-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.505401Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for KingbaseDB\",\"zh-CN\":\"KingbaseDB 默认参数模板\"}",
+            "family": "kingbase",
+            "name": "kingbase-8.6.8-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.535404Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for MySQL 5.7\",\"zh-CN\":\"MySQL 5.7的默认参数模板\"}",
+            "family": "mysql-5.7",
+            "name": "mysql-5.7-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.555658Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for MySQL 8.0\",\"zh-CN\":\"MySQL 8.0的默认参数模板\"}",
+            "family": "mysql-8.0",
+            "name": "mysql-8.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.583819Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for MySQL 8.4\",\"zh-CN\":\"MySQL 8.4的默认参数模板\"}",
+            "family": "mysql-8.4",
+            "name": "mysql-8.4-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.612737Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for OceanBase 4.2\",\"zh-CN\":\"OceanBase 4.2的默认参数模板\"}",
+            "family": "oceanbase-4.2",
+            "name": "oceanbase-4.2-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.659473Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for PostgreSQL 14.0\",\"zh-CN\":\"PostgreSQL 14.0的默认参数模板\"}",
+            "family": "postgresql-14.0",
+            "name": "postgresql-14.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.678186Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for PostgreSQL 12.0\",\"zh-CN\":\"PostgreSQL 12.0的默认参数模板\"}",
+            "family": "postgresql-12.0",
+            "name": "postgresql-12.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.692648Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for PostgreSQL 15.0\",\"zh-CN\":\"PostgreSQL 15.0的默认参数模板\"}",
+            "family": "postgresql-15.0",
+            "name": "postgresql-15.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.706759Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for PostgreSQL 16.0\",\"zh-CN\":\"PostgreSQL 16.0的默认参数模板\"}",
+            "family": "postgresql-16.0",
+            "name": "postgresql-16.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.721523Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for Redis 7.0\",\"zh-CN\":\"Redis 7.0的默认参数模板\"}",
+            "family": "redis-7.0",
+            "name": "redis-7.0-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.73706Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for Redis 7.2\",\"zh-CN\":\"Redis 7.2的默认参数模板\"}",
+            "family": "redis-7.2",
+            "name": "redis-7.2-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.744637Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for Redis 6.2\",\"zh-CN\":\"Redis 6.2的默认参数模板\"}",
+            "family": "redis-6.2",
+            "name": "redis-6.2-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.751968Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for starrocks 3.0 frontend shared data\",\"zh-CN\":\"starrocks 3.0 frontend shared data的默认参数模板\"}",
+            "family": "starrocks-3.0-fe-sd",
+            "name": "starrocks-3.0-fe-sd-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.758077Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for starrocks 3.0 frontend shared nothing\",\"zh-CN\":\"starrocks 3.0 frontend shared nothing的默认参数模板\"}",
+            "family": "starrocks-3.0-fe-sn",
+            "name": "starrocks-3.0-fe-sn-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.773526Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for starrocks 3.0 backend\",\"zh-CN\":\"starrocks 3.0 backend的默认参数模板\"}",
+            "family": "starrocks-3.0-be",
+            "name": "starrocks-3.0-be-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.793262Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for starrocks 3.0 cn\",\"zh-CN\":\"starrocks 3.0 cn的默认参数模板\"}",
+            "family": "starrocks-3.0-cn",
+            "name": "starrocks-3.0-cn-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.806023Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for vastbase 2.2\",\"zh-CN\":\"Vastbase 2.2 的默认参数模板\"}",
+            "family": "vastbase-2.2",
+            "name": "vastbase-2.2-default-parameter-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.819899Z"
+        },
+        {
+            "createdAt": "2024-12-20T08:22:24.802575Z",
+            "description": "{\"en-US\":\"Default parameter template for zookeeper 3.7.2\",\"zh-CN\":\"zookeeper 3.7.2 的默认参数模板\"}",
+            "family": "zookeeper-3",
+            "name": "zookeeper-config-template",
+            "partition": "default",
+            "updatedAt": "2024-12-20T08:23:22.852195Z"
+        }
+    ]
+}

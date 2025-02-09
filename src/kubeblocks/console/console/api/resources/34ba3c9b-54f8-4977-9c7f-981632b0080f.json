@@ -1,0 +1,2252 @@
+{
+    "uuid": "34ba3c9b-54f8-4977-9c7f-981632b0080f",
+    "title": "模版详情（新）",
+    "queryMocks": "templateName=mysql-5.7-default-parameter-template&partition=default",
+    "schema": {
+        "version": "1.0.0",
+        "componentsMap": [
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Text",
+                "componentName": "Typography.Text"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Table",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Table"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Modal",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Modal"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "ApeSelect",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "ApeSelect"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Icon",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Icon"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Input",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Input"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Space",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Space"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Button",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Button"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Divider",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Divider"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Tooltip",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Tooltip"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "InputNumber",
+                "main": "",
+                "destructuring": true,
+                "componentName": "InputNumber"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Box",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Box"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Illustration",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Illustration"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Paragraph",
+                "componentName": "Typography.Paragraph"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Skeleton",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Skeleton"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "CustomMarkdown",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "CustomMarkdown"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Drawer",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Drawer"
+            },
+            {
+                "devMode": "lowCode",
+                "componentName": "Page"
+            }
+        ],
+        "componentsTree": [
+            {
+                "componentName": "Page",
+                "id": "34ba3c9b-54f8-4977-9c7f-981632b0080f",
+                "props": {},
+                "title": "",
+                "isLocked": false,
+                "condition": true,
+                "conditionGroup": "",
+                "originCode": "class Page extends Component {\n  state = {\n    searchKeywords: '',\n    fileOptions: [],\n\n    // 参数列表\n    paramsLoading: false,\n    paramsSaving: false,\n    originalParams: [],\n    params: [],\n    differenceValues: [],\n    differenceValuesVisible: false,\n\n    // 参数分析\n    analyzeVisible: false,\n    aiAnalyzeResult: undefined,\n    analyzing: false\n  }\n\n  // 参数分析\n  async onAnalyzeParam(e, record) {\n    this.setState({ analyzing: true, analyzeVisible: true })\n    const aiAnalyzeResult = await this.dataSourceMap.analyzeParam.load({\n      parameterName: record.name,\n      parameterValue: record.value,\n    })\n    this.setState({ analyzing: false, aiAnalyzeResult })\n  }\n\n  async onAnalyzeClose(e, record) {\n    this.setState({ analyzeVisible: false, aiAnalyzeResult: undefined })\n  }\n\n  // 组件参数搜索值改变事件\n  onSearchKeywordsChange(e, searchKeywords) {\n    this.setState({ searchKeywords: e.currentTarget.value })\n  }\n\n  // 参数值改变后处理逻辑\n  setComponentValue(record) {\n    const params = this.state.params;\n    const index = params.findIndex(param => param.name === record.name);\n    params[index] = record;\n    this.setState({ params });\n  }\n  onComponentParamSelectChange(value, item, record) {\n    this.setComponentValue({ ...record, value })\n  }\n  onComponentParamInputChange(e, record) {\n    this.setComponentValue({ ...record, value: e.currentTarget.value })\n  }\n  onComponentParamNumberChange(value, record) {\n    this.setComponentValue({ ...record, value })\n  }\n\n  // 保存参数预览\n  onSaveParamsPreview(event) {\n    const difference = _.differenceWith(this.state.originalParams, this.state.params, _.isEqual);\n    const differenceValues = difference.map(oldItem => {\n      const newItem = this.state.params.find(item => item.name === oldItem.name);\n      return {\n        name: oldItem.name,\n        oldValue: oldItem.value === undefined ? '' : String(oldItem.value),\n        newValue: newItem.value === undefined ? '' : String(newItem.value),\n        dynamic: oldItem.dynamic\n      }\n    });\n    this.setState({\n      differenceValues,\n      differenceValuesVisible: true,\n    })\n  }\n  // 保存参数\n  async onSaveParams() {\n    const { differenceValues, specName, currentFile } = this.state;\n    const parameters = {};\n\n    differenceValues.forEach(item => {\n      if (item.newValue !== undefined) {\n        parameters[item.name] = item.newValue;\n      }\n    });\n    this.setState({ paramsSaving: true })\n    const res = await this.dataSourceMap.patchParamTpl.load({\n      body: {\n        specName,\n        configFile: currentFile,\n        parameters\n      }\n    })\n    this.setState({ paramsSaving: false })\n    if (res?.name) {\n      setTimeout(() => {\n        this.setState({ differenceValuesVisible: false });\n        this.initialize();\n      }, 1000)\n    }\n  }\n  onCloseParams() {\n    this.setState({ differenceValuesVisible: false })\n  }\n\n  onFileChange(value, option) {\n    this.setState({\n      currentFile: value,\n    })\n    this.getParams(value)\n  }\n\n  //嵌套格式解析\n  flattenObject(obj, prefix = '') {\n    return Object.keys(obj).reduce((acc, key) => {\n      const pre = prefix.length ? `${prefix}.` : '';\n      if (typeof obj[key] === 'object' && obj[key] !== null) {\n        const nestedKeys = flattenObject(obj[key], `${pre}${key}`); Object.keys(nestedKeys).forEach((nestedKey) => {\n          acc[`${pre}${nestedKey}`] = nestedKeys[nestedKey];\n        });\n      } else {\n        acc[`${pre}${key}`] = obj[key];\n      }\n      return acc;\n    }, {})\n  }\n\n  getParams(fileName) {\n    const tpl = this.state.files.find(n => n?.config?.fileName === fileName);\n    let dataString = tpl?.config?.content;\n    const specs = tpl?.parameterSpec?.specs;\n    const regex = eval(tpl?.config?.regex);\n    const specName = tpl?.specName;\n\n    // 解析字符串中的转义字符\n    // dataString = JSON.parse(dataString);\n\n    let config = {};\n    let match;\n    if (specName.indexOf('mongodb') !== -1) {\n      const obj = this.utils.yamljs.parse(dataString);\n      config = this.flattenObject(obj)\n    } else {\n      while (match = regex?.exec(dataString)) {\n        const key = match[1];\n        const value = match[2];\n        config[key] = value.replace(/^'+|'+$/g, '').trim();\n      }\n    }\n\n    const params = _.map(specs || [], (item, key) => {\n      let allowValues = item.enum ? item.enum.join(',') : '';\n      if (item?.minimum != undefined) {\n        allowValues += ` Min:${item.minimum}`;\n      }\n      if (item?.maximum != undefined) {\n        allowValues += ` Max:${item.maximum}`;\n      }\n      // if (item.name === 'alter.log.dirs.replication.quota.window.num'){\n      // }\n      return {\n        name: item.name,\n        value: config?.[item.name] ?? item.default,\n        description: item.description,\n        type: config?.[item.name] && typeof config?.[item.name] === 'string' ? 'string' : item.type,\n        scope: undefined,\n        editable: !item.immutable,\n        dynamic: !item.needRestart,\n        allowValues,\n        enum: item.enum,\n        minimum: item.minimum,\n        maximum: item.maximum,\n      }\n    })\n\n    const sortedData = _.orderBy(params, ['editable', 'name'], ['desc', 'asc']);\n    this.setState({\n      params: sortedData,\n      originalParams: _.cloneDeep(sortedData),\n      differenceValues: [],\n      paramsLoading: false,\n      specName\n    })\n  }\n\n\n  // 获取参数\n  async initialize() {\n    this.setState({ paramsLoading: true })\n\n    const res = await this.dataSourceMap.readParamTpl.load();\n\n    const files = res?.items || [];\n\n    const fileOptions = files.map(item => ({\n      label: item.config?.fileName,\n      value: item.config?.fileName,\n    }))\n\n    const currentFile = fileOptions?.[0]?.value;\n\n    this.setState({\n      files,\n      fileOptions,\n      currentFile\n    }, () => {\n      this.getParams(currentFile)\n    })\n  }\n\n  componentDidMount() {\n    this.initialize()\n  }\n\n}",
+                "css": "",
+                "dataSource": {
+                    "list": [
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user?.organization?.name"
+                                    },
+                                    "partition": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.partition"
+                                    }
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls"
+                            },
+                            "id": "listParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user?.organization?.name"
+                                    },
+                                    "paramTplName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.templateName"
+                                    },
+                                    "body": "body"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "patch",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls/{paramTplName}"
+                            },
+                            "id": "patchParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "paramTplName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.templateName"
+                                    },
+                                    "partition": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.partition"
+                                    },
+                                    "parameterName": "parameterName"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls/{paramTplName}/analyze"
+                            },
+                            "id": "analyzeParam",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user?.organization?.name"
+                                    },
+                                    "paramTplName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.templateName"
+                                    },
+                                    "partition": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.params.partition"
+                                    }
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls/{paramTplName}"
+                            },
+                            "id": "readParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        }
+                    ]
+                },
+                "state": {
+                    "searchKeywords": {
+                        "type": "JSExpression",
+                        "value": "''"
+                    },
+                    "fileOptions": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "paramsLoading": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "paramsSaving": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "originalParams": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "params": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "differenceValues": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "differenceValuesVisible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "analyzeVisible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "aiAnalyzeResult": {
+                        "type": "JSExpression",
+                        "value": "undefined"
+                    },
+                    "analyzing": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    }
+                },
+                "methods": {
+                    "onAnalyzeParam": {
+                        "type": "JSFunction",
+                        "value": "async function onAnalyzeParam(e, record) {\n  this.setState({\n    analyzing: true,\n    analyzeVisible: true\n  });\n  const aiAnalyzeResult = await this.dataSourceMap.analyzeParam.load({\n    parameterName: record.name,\n    parameterValue: record.value\n  });\n  this.setState({\n    analyzing: false,\n    aiAnalyzeResult\n  });\n}",
+                        "source": "async function onAnalyzeParam(e, record) {\n  this.setState({\n    analyzing: true,\n    analyzeVisible: true\n  });\n  const aiAnalyzeResult = await this.dataSourceMap.analyzeParam.load({\n    parameterName: record.name,\n    parameterValue: record.value\n  });\n  this.setState({\n    analyzing: false,\n    aiAnalyzeResult\n  });\n}"
+                    },
+                    "onAnalyzeClose": {
+                        "type": "JSFunction",
+                        "value": "async function onAnalyzeClose(e, record) {\n  this.setState({\n    analyzeVisible: false,\n    aiAnalyzeResult: undefined\n  });\n}",
+                        "source": "async function onAnalyzeClose(e, record) {\n  this.setState({\n    analyzeVisible: false,\n    aiAnalyzeResult: undefined\n  });\n}"
+                    },
+                    "onSearchKeywordsChange": {
+                        "type": "JSFunction",
+                        "value": "function onSearchKeywordsChange(e, searchKeywords) {\n  this.setState({\n    searchKeywords: e.currentTarget.value\n  });\n}",
+                        "source": "function onSearchKeywordsChange(e, searchKeywords) {\n  this.setState({\n    searchKeywords: e.currentTarget.value\n  });\n}"
+                    },
+                    "setComponentValue": {
+                        "type": "JSFunction",
+                        "value": "function setComponentValue(record) {\n  const params = this.state.params;\n  const index = params.findIndex(param => param.name === record.name);\n  params[index] = record;\n  this.setState({\n    params\n  });\n}",
+                        "source": "function setComponentValue(record) {\n  const params = this.state.params;\n  const index = params.findIndex(param => param.name === record.name);\n  params[index] = record;\n  this.setState({\n    params\n  });\n}"
+                    },
+                    "onComponentParamSelectChange": {
+                        "type": "JSFunction",
+                        "value": "function onComponentParamSelectChange(value, item, record) {\n  this.setComponentValue({\n    ...record,\n    value\n  });\n}",
+                        "source": "function onComponentParamSelectChange(value, item, record) {\n  this.setComponentValue({\n    ...record,\n    value\n  });\n}"
+                    },
+                    "onComponentParamInputChange": {
+                        "type": "JSFunction",
+                        "value": "function onComponentParamInputChange(e, record) {\n  this.setComponentValue({\n    ...record,\n    value: e.currentTarget.value\n  });\n}",
+                        "source": "function onComponentParamInputChange(e, record) {\n  this.setComponentValue({\n    ...record,\n    value: e.currentTarget.value\n  });\n}"
+                    },
+                    "onComponentParamNumberChange": {
+                        "type": "JSFunction",
+                        "value": "function onComponentParamNumberChange(value, record) {\n  this.setComponentValue({\n    ...record,\n    value\n  });\n}",
+                        "source": "function onComponentParamNumberChange(value, record) {\n  this.setComponentValue({\n    ...record,\n    value\n  });\n}"
+                    },
+                    "onSaveParamsPreview": {
+                        "type": "JSFunction",
+                        "value": "function onSaveParamsPreview(event) {\n  const difference = _.differenceWith(this.state.originalParams, this.state.params, _.isEqual);\n  const differenceValues = difference.map(oldItem => {\n    const newItem = this.state.params.find(item => item.name === oldItem.name);\n    return {\n      name: oldItem.name,\n      oldValue: oldItem.value === undefined ? '' : String(oldItem.value),\n      newValue: newItem.value === undefined ? '' : String(newItem.value),\n      dynamic: oldItem.dynamic\n    };\n  });\n  this.setState({\n    differenceValues,\n    differenceValuesVisible: true\n  });\n}",
+                        "source": "function onSaveParamsPreview(event) {\n  const difference = _.differenceWith(this.state.originalParams, this.state.params, _.isEqual);\n  const differenceValues = difference.map(oldItem => {\n    const newItem = this.state.params.find(item => item.name === oldItem.name);\n    return {\n      name: oldItem.name,\n      oldValue: oldItem.value === undefined ? '' : String(oldItem.value),\n      newValue: newItem.value === undefined ? '' : String(newItem.value),\n      dynamic: oldItem.dynamic\n    };\n  });\n  this.setState({\n    differenceValues,\n    differenceValuesVisible: true\n  });\n}"
+                    },
+                    "onSaveParams": {
+                        "type": "JSFunction",
+                        "value": "async function onSaveParams() {\n  const {\n    differenceValues,\n    specName,\n    currentFile\n  } = this.state;\n  const parameters = {};\n  differenceValues.forEach(item => {\n    if (item.newValue !== undefined) {\n      parameters[item.name] = item.newValue;\n    }\n  });\n  this.setState({\n    paramsSaving: true\n  });\n  const res = await this.dataSourceMap.patchParamTpl.load({\n    body: {\n      specName,\n      configFile: currentFile,\n      parameters\n    }\n  });\n  this.setState({\n    paramsSaving: false\n  });\n  if (res !== null && res !== void 0 && res.name) {\n    setTimeout(() => {\n      this.setState({\n        differenceValuesVisible: false\n      });\n      this.initialize();\n    }, 1000);\n  }\n}",
+                        "source": "async function onSaveParams() {\n  const {\n    differenceValues,\n    specName,\n    currentFile\n  } = this.state;\n  const parameters = {};\n  differenceValues.forEach(item => {\n    if (item.newValue !== undefined) {\n      parameters[item.name] = item.newValue;\n    }\n  });\n  this.setState({\n    paramsSaving: true\n  });\n  const res = await this.dataSourceMap.patchParamTpl.load({\n    body: {\n      specName,\n      configFile: currentFile,\n      parameters\n    }\n  });\n  this.setState({\n    paramsSaving: false\n  });\n  if (res?.name) {\n    setTimeout(() => {\n      this.setState({\n        differenceValuesVisible: false\n      });\n      this.initialize();\n    }, 1000);\n  }\n}"
+                    },
+                    "onCloseParams": {
+                        "type": "JSFunction",
+                        "value": "function onCloseParams() {\n  this.setState({\n    differenceValuesVisible: false\n  });\n}",
+                        "source": "function onCloseParams() {\n  this.setState({\n    differenceValuesVisible: false\n  });\n}"
+                    },
+                    "onFileChange": {
+                        "type": "JSFunction",
+                        "value": "function onFileChange(value, option) {\n  this.setState({\n    currentFile: value\n  });\n  this.getParams(value);\n}",
+                        "source": "function onFileChange(value, option) {\n  this.setState({\n    currentFile: value\n  });\n  this.getParams(value);\n}"
+                    },
+                    "flattenObject": {
+                        "type": "JSFunction",
+                        "value": "function flattenObject(obj, prefix = '') {\n  return Object.keys(obj).reduce((acc, key) => {\n    const pre = prefix.length ? `${prefix}.` : '';\n    if (typeof obj[key] === 'object' && obj[key] !== null) {\n      const nestedKeys = flattenObject(obj[key], `${pre}${key}`);\n      Object.keys(nestedKeys).forEach(nestedKey => {\n        acc[`${pre}${nestedKey}`] = nestedKeys[nestedKey];\n      });\n    } else {\n      acc[`${pre}${key}`] = obj[key];\n    }\n    return acc;\n  }, {});\n}",
+                        "source": "function flattenObject(obj, prefix = '') {\n  return Object.keys(obj).reduce((acc, key) => {\n    const pre = prefix.length ? `${prefix}.` : '';\n    if (typeof obj[key] === 'object' && obj[key] !== null) {\n      const nestedKeys = flattenObject(obj[key], `${pre}${key}`);\n      Object.keys(nestedKeys).forEach(nestedKey => {\n        acc[`${pre}${nestedKey}`] = nestedKeys[nestedKey];\n      });\n    } else {\n      acc[`${pre}${key}`] = obj[key];\n    }\n    return acc;\n  }, {});\n}"
+                    },
+                    "getParams": {
+                        "type": "JSFunction",
+                        "value": "function getParams(fileName) {\n  var _tpl$config, _tpl$parameterSpec, _tpl$config2;\n  const tpl = this.state.files.find(n => {\n    var _n$config;\n    return (n === null || n === void 0 || (_n$config = n.config) === null || _n$config === void 0 ? void 0 : _n$config.fileName) === fileName;\n  });\n  let dataString = tpl === null || tpl === void 0 || (_tpl$config = tpl.config) === null || _tpl$config === void 0 ? void 0 : _tpl$config.content;\n  const specs = tpl === null || tpl === void 0 || (_tpl$parameterSpec = tpl.parameterSpec) === null || _tpl$parameterSpec === void 0 ? void 0 : _tpl$parameterSpec.specs;\n  const regex = eval(tpl === null || tpl === void 0 || (_tpl$config2 = tpl.config) === null || _tpl$config2 === void 0 ? void 0 : _tpl$config2.regex);\n  const specName = tpl === null || tpl === void 0 ? void 0 : tpl.specName;\n\n  // 解析字符串中的转义字符\n  // dataString = JSON.parse(dataString);\n\n  let config = {};\n  let match;\n  if (specName.indexOf('mongodb') !== -1) {\n    const obj = this.utils.yamljs.parse(dataString);\n    config = this.flattenObject(obj);\n  } else {\n    while (match = regex === null || regex === void 0 ? void 0 : regex.exec(dataString)) {\n      const key = match[1];\n      const value = match[2];\n      config[key] = value.replace(/^'+|'+$/g, '').trim();\n    }\n  }\n  const params = _.map(specs || [], (item, key) => {\n    var _config, _config2, _config3;\n    let allowValues = item.enum ? item.enum.join(',') : '';\n    if ((item === null || item === void 0 ? void 0 : item.minimum) != undefined) {\n      allowValues += ` Min:${item.minimum}`;\n    }\n    if ((item === null || item === void 0 ? void 0 : item.maximum) != undefined) {\n      allowValues += ` Max:${item.maximum}`;\n    }\n    // if (item.name === 'alter.log.dirs.replication.quota.window.num'){\n    // }\n    return {\n      name: item.name,\n      value: ((_config = config) === null || _config === void 0 ? void 0 : _config[item.name]) ?? item.default,\n      description: item.description,\n      type: (_config2 = config) !== null && _config2 !== void 0 && _config2[item.name] && typeof ((_config3 = config) === null || _config3 === void 0 ? void 0 : _config3[item.name]) === 'string' ? 'string' : item.type,\n      scope: undefined,\n      editable: !item.immutable,\n      dynamic: !item.needRestart,\n      allowValues,\n      enum: item.enum,\n      minimum: item.minimum,\n      maximum: item.maximum\n    };\n  });\n  const sortedData = _.orderBy(params, ['editable', 'name'], ['desc', 'asc']);\n  this.setState({\n    params: sortedData,\n    originalParams: _.cloneDeep(sortedData),\n    differenceValues: [],\n    paramsLoading: false,\n    specName\n  });\n}",
+                        "source": "function getParams(fileName) {\n  const tpl = this.state.files.find(n => n?.config?.fileName === fileName);\n  let dataString = tpl?.config?.content;\n  const specs = tpl?.parameterSpec?.specs;\n  const regex = eval(tpl?.config?.regex);\n  const specName = tpl?.specName;\n\n  // 解析字符串中的转义字符\n  // dataString = JSON.parse(dataString);\n\n  let config = {};\n  let match;\n  if (specName.indexOf('mongodb') !== -1) {\n    const obj = this.utils.yamljs.parse(dataString);\n    config = this.flattenObject(obj);\n  } else {\n    while (match = regex?.exec(dataString)) {\n      const key = match[1];\n      const value = match[2];\n      config[key] = value.replace(/^'+|'+$/g, '').trim();\n    }\n  }\n  const params = _.map(specs || [], (item, key) => {\n    let allowValues = item.enum ? item.enum.join(',') : '';\n    if (item?.minimum != undefined) {\n      allowValues += ` Min:${item.minimum}`;\n    }\n    if (item?.maximum != undefined) {\n      allowValues += ` Max:${item.maximum}`;\n    }\n    // if (item.name === 'alter.log.dirs.replication.quota.window.num'){\n    // }\n    return {\n      name: item.name,\n      value: config?.[item.name] ?? item.default,\n      description: item.description,\n      type: config?.[item.name] && typeof config?.[item.name] === 'string' ? 'string' : item.type,\n      scope: undefined,\n      editable: !item.immutable,\n      dynamic: !item.needRestart,\n      allowValues,\n      enum: item.enum,\n      minimum: item.minimum,\n      maximum: item.maximum\n    };\n  });\n  const sortedData = _.orderBy(params, ['editable', 'name'], ['desc', 'asc']);\n  this.setState({\n    params: sortedData,\n    originalParams: _.cloneDeep(sortedData),\n    differenceValues: [],\n    paramsLoading: false,\n    specName\n  });\n}"
+                    },
+                    "initialize": {
+                        "type": "JSFunction",
+                        "value": "async function initialize() {\n  var _fileOptions$;\n  this.setState({\n    paramsLoading: true\n  });\n  const res = await this.dataSourceMap.readParamTpl.load();\n  const files = (res === null || res === void 0 ? void 0 : res.items) || [];\n  const fileOptions = files.map(item => {\n    var _item$config, _item$config2;\n    return {\n      label: (_item$config = item.config) === null || _item$config === void 0 ? void 0 : _item$config.fileName,\n      value: (_item$config2 = item.config) === null || _item$config2 === void 0 ? void 0 : _item$config2.fileName\n    };\n  });\n  const currentFile = fileOptions === null || fileOptions === void 0 || (_fileOptions$ = fileOptions[0]) === null || _fileOptions$ === void 0 ? void 0 : _fileOptions$.value;\n  this.setState({\n    files,\n    fileOptions,\n    currentFile\n  }, () => {\n    this.getParams(currentFile);\n  });\n}",
+                        "source": "async function initialize() {\n  this.setState({\n    paramsLoading: true\n  });\n  const res = await this.dataSourceMap.readParamTpl.load();\n  const files = res?.items || [];\n  const fileOptions = files.map(item => ({\n    label: item.config?.fileName,\n    value: item.config?.fileName\n  }));\n  const currentFile = fileOptions?.[0]?.value;\n  this.setState({\n    files,\n    fileOptions,\n    currentFile\n  }, () => {\n    this.getParams(currentFile);\n  });\n}"
+                    }
+                },
+                "lifeCycles": {
+                    "componentDidMount": {
+                        "type": "JSFunction",
+                        "value": "function componentDidMount() {\n  this.initialize();\n}",
+                        "source": "function componentDidMount() {\n  this.initialize();\n}"
+                    }
+                },
+                "children": [
+                    {
+                        "componentName": "Modal",
+                        "id": "node_oclt3rdqpk1",
+                        "props": {
+                            "title": {
+                                "type": "JSExpression",
+                                "value": "this.i18n(\"previewChange\")"
+                            },
+                            "okText": {
+                                "type": "JSExpression",
+                                "value": "this.i18n(\"ok\")"
+                            },
+                            "cancelText": {
+                                "type": "JSExpression",
+                                "value": "this.i18n(\"cancel\")"
+                            },
+                            "open": {
+                                "type": "JSExpression",
+                                "value": "this.state.differenceValuesVisible",
+                                "mock": true
+                            },
+                            "destroyOnClose": true,
+                            "centered": false,
+                            "closable": true,
+                            "confirmLoading": {
+                                "type": "JSExpression",
+                                "value": "this.state.paramsSaving",
+                                "mock": false
+                            },
+                            "forceRender": false,
+                            "keyboard": true,
+                            "mask": true,
+                            "maskClosable": true,
+                            "bodyStyle": {},
+                            "maskStyle": {},
+                            "__events": {
+                                "eventDataList": [
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onOk",
+                                        "relatedEventName": "onSaveParams"
+                                    },
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onCancel",
+                                        "relatedEventName": "onCloseParams"
+                                    }
+                                ],
+                                "eventList": [
+                                    {
+                                        "name": "afterClose",
+                                        "templete": "onCancel(${extParams}){\n// 完全关闭后的回调\nconsole.log('afterClose');}",
+                                        "disabled": false
+                                    },
+                                    {
+                                        "name": "onCancel",
+                                        "template": "onCancel(${extParams}){\n// 点击遮罩层或右上角叉或取消按钮的回调\nconsole.log('onCancel');}",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "name": "onOk",
+                                        "template": "onOk(${extParams}){\n// 点击确定回调\nconsole.log('onOk');}",
+                                        "disabled": true
+                                    }
+                                ]
+                            },
+                            "onOk": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onSaveParams.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            },
+                            "onCancel": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onCloseParams.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            },
+                            "_unsafe_MixedSetter_cancelText_select": "VariableSetter",
+                            "_unsafe_MixedSetter_okText_select": "VariableSetter",
+                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                            "width": "700px",
+                            "ref": "modal-e5ce0476"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Table",
+                                "id": "node_oclt3sk99x1",
+                                "props": {
+                                    "dataSource": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.differenceValues",
+                                        "mock": [
+                                            {
+                                                "id": "1",
+                                                "name": "胡彦斌",
+                                                "age": 32,
+                                                "address": "西湖区湖底公园1号"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "name": "王一博",
+                                                "age": 28,
+                                                "address": "滨江区网商路699号"
+                                            }
+                                        ]
+                                    },
+                                    "columns": [
+                                        {
+                                            "dataIndex": "name",
+                                            "key": "name",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"paramsName\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter"
+                                        },
+                                        {
+                                            "dataIndex": "oldValue",
+                                            "key": "oldValue",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"oldValue\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter"
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "newValue",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"newValue\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter"
+                                        },
+                                        {
+                                            "dataIndex": "dynamic",
+                                            "align": "center",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"dynamic\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "width": 140,
+                                            "filteredValue": [],
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclw696scx1",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.dynamic === false ? this.i18n('true') : this.i18n('false')",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclw695al51"
+                                            }
+                                        }
+                                    ],
+                                    "rowKey": "id",
+                                    "pagination": false,
+                                    "loading": false,
+                                    "showHeader": true,
+                                    "size": "middle",
+                                    "tableLayout": "",
+                                    "scroll": {
+                                        "scrollToFirstRowOnChange": true
+                                    },
+                                    "ref": "table-91d8c209"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Space",
+                        "id": "node_oclt2iayy71",
+                        "props": {
+                            "align": "start",
+                            "direction": "horizontal",
+                            "wrap": false,
+                            "style": {
+                                "display": "flex",
+                                "justifyContent": "space-between",
+                                "marginBottom": "20px"
+                            },
+                            "ref": "space-d907cedf"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclt2iayy78",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "horizontal",
+                                    "wrap": false,
+                                    "ref": "space-c72410a7"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "ApeSelect",
+                                        "id": "node_oclwou56g71",
+                                        "props": {
+                                            "style": {
+                                                "width": 200
+                                            },
+                                            "options": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.fileOptions"
+                                            },
+                                            "allowClear": false,
+                                            "dropdownMatchSelectWidth": true,
+                                            "autoFocus": false,
+                                            "defaultActiveFirstOption": true,
+                                            "disabled": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.fileOptions.length < 2",
+                                                "mock": false
+                                            },
+                                            "labelInValue": false,
+                                            "showSearch": false,
+                                            "InputEnable": false,
+                                            "loading": false,
+                                            "bordered": true,
+                                            "optionFilterProp": "value",
+                                            "tokenSeparators": [],
+                                            "maxTagCount": 0,
+                                            "maxTagTextLength": 0,
+                                            "_unsafe_MixedSetter_options_select": "VariableSetter",
+                                            "value": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.currentFile"
+                                            },
+                                            "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onChange",
+                                                        "relatedEventName": "onFileChange"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onBlur",
+                                                        "template": "onBlur(${extParams}){\n// 失去焦点时回调\nconsole.log('onBlur');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onChange",
+                                                        "template": "onChange(value,option,${extParams}){\n// 选中 option，或 input 的 value 变化时，调用此函数\nconsole.log('onChange',value,option);}",
+                                                        "disabled": true
+                                                    },
+                                                    {
+                                                        "name": "onDeselect",
+                                                        "template": "onDeselect(value,${extParams}){\n// 取消选中时调用\nconsole.log('onDeselect',value);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onFocus",
+                                                        "template": "onFocus(${extParams}){\n// 获得焦点时回调\nconsole.log('onFocus');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onInputKeyDown",
+                                                        "template": "onInputKeyDown(${extParams}){\n// 按键按下时回调\nconsole.log('onInputKeyDown');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onMouseEnter",
+                                                        "template": "onMouseEnter(${extParams}){\n// 鼠标移入时回调\nconsole.log('onMouseEnter');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onMouseLeave",
+                                                        "template": "onMouseLeave(${extParams}){\n// 鼠标移出时回调\nconsole.log('onMouseLeave');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onPopupScroll",
+                                                        "template": "onPopupScroll(${extParams}){\n// 下拉列表滚动时的回调\nconsole.log('onPopupScroll');}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onSearch",
+                                                        "template": "onSearch(value,${extParams}){\n// 文本框值变化时回调\nconsole.log('onSearch',value);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onSelect",
+                                                        "template": "onSelect(value,option,${extParams}){\n// 被选中时调用\nconsole.log('onSelect',value,option);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onDropdownVisibleChange",
+                                                        "template": "onDropdownVisibleChange(open,${extParams}){\n// 展开下拉菜单的回调\nconsole.log('onDropdownVisibleChange',open);}",
+                                                        "disabled": false
+                                                    }
+                                                ]
+                                            },
+                                            "onChange": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.onFileChange.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Input",
+                                        "id": "node_oclt2iayy7h",
+                                        "props": {
+                                            "placeholder": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"searchHelp\")",
+                                                "mock": ""
+                                            },
+                                            "bordered": true,
+                                            "disabled": false,
+                                            "prefix": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Icon",
+                                                        "id": "node_oclt2ib0gn2",
+                                                        "props": {
+                                                            "type": "SearchOutlined",
+                                                            "size": 14,
+                                                            "rotate": 0,
+                                                            "spin": false,
+                                                            "style": {
+                                                                "opacity": 0.39
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclt2ib0gn1"
+                                            },
+                                            "_unsafe_MixedSetter_prefix_select": "SlotSetter",
+                                            "value": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.searchKeywords"
+                                            },
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onChange",
+                                                        "relatedEventName": "onSearchKeywordsChange"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onChange",
+                                                        "template": "onChange(event,${extParams}){\n// 输入框内容变化时的回调\nconsole.log('onChange',event);}",
+                                                        "disabled": true
+                                                    },
+                                                    {
+                                                        "name": "onPressEnter",
+                                                        "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onFocus",
+                                                        "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyDown",
+                                                        "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyPress",
+                                                        "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyUp",
+                                                        "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onBlur",
+                                                        "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                        "disabled": false
+                                                    }
+                                                ]
+                                            },
+                                            "onChange": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.onSearchKeywordsChange.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclt3qtb1f1",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "horizontal",
+                                    "wrap": false,
+                                    "size": "small",
+                                    "split": {
+                                        "type": "JSSlot",
+                                        "value": [
+                                            {
+                                                "componentName": "Divider",
+                                                "id": "node_oclt3t1y2z1",
+                                                "props": {
+                                                    "dashed": false,
+                                                    "orientation": "left",
+                                                    "type": "vertical",
+                                                    "plain": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ],
+                                        "id": "node_oclt3t1ufc1"
+                                    },
+                                    "style": {
+                                        "display": "flex",
+                                        "alignItems": "center"
+                                    }
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Button",
+                                        "id": "node_oclt3qnyfk1",
+                                        "props": {
+                                            "type": "primary",
+                                            "children": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"save\")"
+                                            },
+                                            "htmlType": "button",
+                                            "size": "middle",
+                                            "shape": "default",
+                                            "icon": "",
+                                            "block": false,
+                                            "danger": false,
+                                            "ghost": false,
+                                            "disabled": {
+                                                "type": "JSExpression",
+                                                "value": "_.isEmpty(_.differenceWith(this.state.originalParams, this.state.params, _.isEqual))",
+                                                "mock": false
+                                            },
+                                            "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onClick",
+                                                        "relatedEventName": "onSaveParamsPreview"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onClick",
+                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                        "disabled": true
+                                                    }
+                                                ]
+                                            },
+                                            "onClick": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.onSaveParamsPreview.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            },
+                                            "ref": "button-ace0d8ac",
+                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": {
+                                            "type": "JSExpression",
+                                            "value": "this.utils.params.partition === 'custom'"
+                                        },
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ]
+                                    },
+                                    {
+                                        "componentName": "Button",
+                                        "id": "node_oclt2saykm1",
+                                        "props": {
+                                            "type": "text",
+                                            "children": "",
+                                            "htmlType": "button",
+                                            "size": "middle",
+                                            "shape": "default",
+                                            "icon": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Icon",
+                                                        "id": "node_oclt2saykm3",
+                                                        "props": {
+                                                            "type": "ReloadOutlined",
+                                                            "size": 16,
+                                                            "rotate": 0,
+                                                            "spin": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclt2saykm2"
+                                            },
+                                            "block": false,
+                                            "danger": false,
+                                            "ghost": false,
+                                            "disabled": false,
+                                            "loading": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.paramsLoading"
+                                            },
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onClick",
+                                                        "relatedEventName": "initialize"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onClick",
+                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                        "disabled": true
+                                                    }
+                                                ]
+                                            },
+                                            "onClick": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.initialize.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            },
+                                            "ref": "button-ac01c83f"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Table",
+                        "id": "node_oclt2jwi1r1",
+                        "props": {
+                            "dataSource": {
+                                "type": "JSExpression",
+                                "value": "this.state.params.filter(param => {\n  return param.name?.match(this.state.searchKeywords)\n})",
+                                "mock": [
+                                    {
+                                        "id": "1",
+                                        "name": "胡彦斌",
+                                        "age": 32,
+                                        "address": "西湖区湖底公园1号"
+                                    },
+                                    {
+                                        "id": "2",
+                                        "name": "王一博",
+                                        "age": 28,
+                                        "address": "滨江区网商路699号"
+                                    }
+                                ]
+                            },
+                            "columns": [
+                                {
+                                    "dataIndex": "name",
+                                    "key": "name",
+                                    "align": "left",
+                                    "fixed": "",
+                                    "title": {
+                                        "type": "JSExpression",
+                                        "value": "this.i18n(\"paramsName\")"
+                                    },
+                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                    "render": {
+                                        "type": "JSSlot",
+                                        "params": [
+                                            "text",
+                                            "record",
+                                            "index"
+                                        ],
+                                        "value": [
+                                            {
+                                                "componentName": "Space",
+                                                "id": "node_oclt2lsali2",
+                                                "props": {
+                                                    "align": "start",
+                                                    "direction": "horizontal",
+                                                    "wrap": false,
+                                                    "ref": "space-5e21dcbc",
+                                                    "style": {
+                                                        "display": "flex",
+                                                        "alignItems": "center"
+                                                    }
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ],
+                                                "children": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclt2lsali5",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.name",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-ed45183a"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    },
+                                                    {
+                                                        "componentName": "Tooltip",
+                                                        "id": "node_oclt2lvq9z6",
+                                                        "props": {
+                                                            "title": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.description || this.i18n('aiAnalysis')"
+                                                            },
+                                                            "defaultOpen": false,
+                                                            "autoAdjustOverflow": true,
+                                                            "arrowPointAtCenter": false,
+                                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                                            "ref": "tooltip-c97dbeea",
+                                                            "_unsafe_MixedSetter____condition____select": "BoolSetter"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ],
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Button",
+                                                                "id": "node_oclt82260e1",
+                                                                "props": {
+                                                                    "type": "text",
+                                                                    "children": "",
+                                                                    "htmlType": "button",
+                                                                    "size": "small",
+                                                                    "shape": "default",
+                                                                    "icon": {
+                                                                        "type": "JSSlot",
+                                                                        "value": [
+                                                                            {
+                                                                                "componentName": "Icon",
+                                                                                "id": "node_oclt81nt0n1",
+                                                                                "props": {
+                                                                                    "type": "QuestionCircleOutlined",
+                                                                                    "size": 14,
+                                                                                    "rotate": 0,
+                                                                                    "spin": false,
+                                                                                    "style": {
+                                                                                        "opacity": "0.5"
+                                                                                    }
+                                                                                },
+                                                                                "title": "",
+                                                                                "isLocked": false,
+                                                                                "condition": true,
+                                                                                "conditionGroup": ""
+                                                                            }
+                                                                        ],
+                                                                        "id": "node_oclt82260e2"
+                                                                    },
+                                                                    "block": false,
+                                                                    "danger": false,
+                                                                    "ghost": false,
+                                                                    "disabled": false,
+                                                                    "__events": {
+                                                                        "eventDataList": [
+                                                                            {
+                                                                                "type": "componentEvent",
+                                                                                "name": "onClick",
+                                                                                "relatedEventName": "onAnalyzeParam",
+                                                                                "paramStr": "this.record"
+                                                                            }
+                                                                        ],
+                                                                        "eventList": [
+                                                                            {
+                                                                                "name": "onClick",
+                                                                                "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                                "disabled": true
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "onClick": {
+                                                                        "type": "JSFunction",
+                                                                        "value": "function(){return this.onAnalyzeParam.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                                    }
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "id": "node_oclt2lsali1"
+                                    }
+                                },
+                                {
+                                    "dataIndex": "value",
+                                    "align": "left",
+                                    "fixed": "",
+                                    "title": {
+                                        "type": "JSExpression",
+                                        "value": "this.i18n(\"paramsValue\")"
+                                    },
+                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                    "width": 200,
+                                    "render": {
+                                        "type": "JSSlot",
+                                        "params": [
+                                            "text",
+                                            "record",
+                                            "index"
+                                        ],
+                                        "value": [
+                                            {
+                                                "componentName": "Box",
+                                                "id": "node_oclt2s7qp01",
+                                                "props": {
+                                                    "id": "box-3272f5dc9e7a",
+                                                    "padding": "",
+                                                    "margin": "",
+                                                    "twinkle": false,
+                                                    "bordered": false,
+                                                    "hoverable": false,
+                                                    "loading": false,
+                                                    "style": {
+                                                        "display": "block",
+                                                        "height": "32px"
+                                                    },
+                                                    "ref": "box-b211354d"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ],
+                                                "children": [
+                                                    {
+                                                        "componentName": "InputNumber",
+                                                        "id": "node_oclt2moi0z1",
+                                                        "props": {
+                                                            "placeholder": "",
+                                                            "autoFocus": false,
+                                                            "disabled": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.utils.params.partition === 'default'",
+                                                                "mock": false
+                                                            },
+                                                            "controls": true,
+                                                            "bordered": true,
+                                                            "ref": "inputnumber-bdeec046",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter",
+                                                            "min": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.minimum"
+                                                            },
+                                                            "max": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.maximum"
+                                                            },
+                                                            "style": {
+                                                                "width": "100%"
+                                                            },
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onChange",
+                                                                        "relatedEventName": "onComponentParamNumberChange",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onChange",
+                                                                        "template": "onChange(value,${extParams}){\n// 变化回调\nconsole.log('onChange',value);}",
+                                                                        "disabled": true
+                                                                    },
+                                                                    {
+                                                                        "name": "onPressEnter",
+                                                                        "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onFocus",
+                                                                        "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyDown",
+                                                                        "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyPress",
+                                                                        "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyUp",
+                                                                        "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onBlur",
+                                                                        "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                                        "disabled": false
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "onChange": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onComponentParamNumberChange.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "value": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            }
+                                                        },
+                                                        "title": "number/integer",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.record.editable === true && _.includes(['integer', 'number'], this.record.type)"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    },
+                                                    {
+                                                        "componentName": "Input",
+                                                        "id": "node_oclt2n12vi1",
+                                                        "props": {
+                                                            "placeholder": "",
+                                                            "bordered": true,
+                                                            "disabled": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.utils.params.partition === 'default'",
+                                                                "mock": false
+                                                            },
+                                                            "ref": "input-684956ee",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter",
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onChange",
+                                                                        "relatedEventName": "onComponentParamInputChange",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onChange",
+                                                                        "template": "onChange(event,${extParams}){\n// 输入框内容变化时的回调\nconsole.log('onChange',event);}",
+                                                                        "disabled": true
+                                                                    },
+                                                                    {
+                                                                        "name": "onPressEnter",
+                                                                        "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onFocus",
+                                                                        "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyDown",
+                                                                        "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyPress",
+                                                                        "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onKeyUp",
+                                                                        "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onBlur",
+                                                                        "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                                        "disabled": false
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "onChange": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onComponentParamInputChange.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "value": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            }
+                                                        },
+                                                        "title": "string",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.record.editable === true && this.record.type === 'string' && _.isEmpty(this.record?.enum)"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    },
+                                                    {
+                                                        "componentName": "ApeSelect",
+                                                        "id": "node_oclt2mkamk2",
+                                                        "props": {
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onChange",
+                                                                        "relatedEventName": "onComponentParamSelectChange",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onBlur",
+                                                                        "template": "onBlur(${extParams}){\n// 失去焦点时回调\nconsole.log('onBlur');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onChange",
+                                                                        "template": "onChange(value,option,${extParams}){\n// 选中 option，或 input 的 value 变化时，调用此函数\nconsole.log('onChange',value,option);}",
+                                                                        "disabled": true
+                                                                    },
+                                                                    {
+                                                                        "name": "onDeselect",
+                                                                        "template": "onDeselect(value,${extParams}){\n// 取消选中时调用\nconsole.log('onDeselect',value);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onFocus",
+                                                                        "template": "onFocus(${extParams}){\n// 获得焦点时回调\nconsole.log('onFocus');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onInputKeyDown",
+                                                                        "template": "onInputKeyDown(${extParams}){\n// 按键按下时回调\nconsole.log('onInputKeyDown');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onMouseEnter",
+                                                                        "template": "onMouseEnter(${extParams}){\n// 鼠标移入时回调\nconsole.log('onMouseEnter');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onMouseLeave",
+                                                                        "template": "onMouseLeave(${extParams}){\n// 鼠标移出时回调\nconsole.log('onMouseLeave');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onPopupScroll",
+                                                                        "template": "onPopupScroll(${extParams}){\n// 下拉列表滚动时的回调\nconsole.log('onPopupScroll');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onSearch",
+                                                                        "template": "onSearch(value,${extParams}){\n// 文本框值变化时回调\nconsole.log('onSearch',value);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onSelect",
+                                                                        "template": "onSelect(value,option,${extParams}){\n// 被选中时调用\nconsole.log('onSelect',value,option);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onDropdownVisibleChange",
+                                                                        "template": "onDropdownVisibleChange(open,${extParams}){\n// 展开下拉菜单的回调\nconsole.log('onDropdownVisibleChange',open);}",
+                                                                        "disabled": false
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "_unsafe_MixedSetter_options_select": "VariableSetter",
+                                                            "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                                            "allowClear": true,
+                                                            "autoFocus": false,
+                                                            "bordered": true,
+                                                            "defaultActiveFirstOption": true,
+                                                            "disabled": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.utils.params.partition === 'default'",
+                                                                "mock": false
+                                                            },
+                                                            "filterOption": true,
+                                                            "labelInValue": false,
+                                                            "loading": false,
+                                                            "maxTagCount": 0,
+                                                            "maxTagTextLength": 0,
+                                                            "mode": "single",
+                                                            "optionFilterProp": "value",
+                                                            "options": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.record.enum?.map(item => ({\n  label: item,\n  value: item\n})) "
+                                                            },
+                                                            "showSearch": true,
+                                                            "style": {
+                                                                "display": "block",
+                                                                "width": "200px"
+                                                            },
+                                                            "tokenSeparators": [],
+                                                            "ref": "apeselect-342c729f",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter",
+                                                            "_unsafe_MixedSetter_defaultValue_select": "StringSetter",
+                                                            "value": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            },
+                                                            "onChange": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onComponentParamSelectChange.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "dropdownMatchSelectWidth": true,
+                                                            "InputEnable": false
+                                                        },
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.record.editable === true && this.record.type === 'string' && !_.isEmpty(this.record?.enum)"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "isLocked": false,
+                                                        "title": "select(string)",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    },
+                                                    {
+                                                        "componentName": "ApeSelect",
+                                                        "id": "node_oclt2mogjf1",
+                                                        "props": {
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onChange",
+                                                                        "relatedEventName": "onComponentParamSelectChange",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onBlur",
+                                                                        "template": "onBlur(${extParams}){\n// 失去焦点时回调\nconsole.log('onBlur');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onChange",
+                                                                        "template": "onChange(value,option,${extParams}){\n// 选中 option，或 input 的 value 变化时，调用此函数\nconsole.log('onChange',value,option);}",
+                                                                        "disabled": true
+                                                                    },
+                                                                    {
+                                                                        "name": "onDeselect",
+                                                                        "template": "onDeselect(value,${extParams}){\n// 取消选中时调用\nconsole.log('onDeselect',value);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onFocus",
+                                                                        "template": "onFocus(${extParams}){\n// 获得焦点时回调\nconsole.log('onFocus');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onInputKeyDown",
+                                                                        "template": "onInputKeyDown(${extParams}){\n// 按键按下时回调\nconsole.log('onInputKeyDown');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onMouseEnter",
+                                                                        "template": "onMouseEnter(${extParams}){\n// 鼠标移入时回调\nconsole.log('onMouseEnter');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onMouseLeave",
+                                                                        "template": "onMouseLeave(${extParams}){\n// 鼠标移出时回调\nconsole.log('onMouseLeave');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onPopupScroll",
+                                                                        "template": "onPopupScroll(${extParams}){\n// 下拉列表滚动时的回调\nconsole.log('onPopupScroll');}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onSearch",
+                                                                        "template": "onSearch(value,${extParams}){\n// 文本框值变化时回调\nconsole.log('onSearch',value);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onSelect",
+                                                                        "template": "onSelect(value,option,${extParams}){\n// 被选中时调用\nconsole.log('onSelect',value,option);}",
+                                                                        "disabled": false
+                                                                    },
+                                                                    {
+                                                                        "name": "onDropdownVisibleChange",
+                                                                        "template": "onDropdownVisibleChange(open,${extParams}){\n// 展开下拉菜单的回调\nconsole.log('onDropdownVisibleChange',open);}",
+                                                                        "disabled": false
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "_unsafe_MixedSetter_options_select": "JsonSetter",
+                                                            "_unsafe_MixedSetter_value_select": "VariableSetter",
+                                                            "allowClear": true,
+                                                            "autoFocus": false,
+                                                            "bordered": true,
+                                                            "defaultActiveFirstOption": true,
+                                                            "disabled": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.utils.params.partition === 'default'",
+                                                                "mock": false
+                                                            },
+                                                            "filterOption": true,
+                                                            "labelInValue": false,
+                                                            "loading": false,
+                                                            "maxTagCount": 0,
+                                                            "maxTagTextLength": 0,
+                                                            "mode": "single",
+                                                            "optionFilterProp": "value",
+                                                            "options": [
+                                                                {
+                                                                    "label": "true",
+                                                                    "value": true
+                                                                },
+                                                                {
+                                                                    "label": "false",
+                                                                    "value": false
+                                                                }
+                                                            ],
+                                                            "showSearch": true,
+                                                            "style": {
+                                                                "display": "block",
+                                                                "width": "200px"
+                                                            },
+                                                            "tokenSeparators": [],
+                                                            "ref": "apeselect-6ecbuqt",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter",
+                                                            "_unsafe_MixedSetter_defaultValue_select": "StringSetter",
+                                                            "value": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            },
+                                                            "onChange": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onComponentParamSelectChange.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "dropdownMatchSelectWidth": true,
+                                                            "InputEnable": false
+                                                        },
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.record.editable === true && this.record?.type === 'boolean'"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "isLocked": false,
+                                                        "title": "select(boolean)",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "id": "node_oclt2mkamk1"
+                                    }
+                                },
+                                {
+                                    "dataIndex": "allowValues",
+                                    "align": "left",
+                                    "fixed": "",
+                                    "title": {
+                                        "type": "JSExpression",
+                                        "value": "this.i18n(\"paramsAllowValues\")"
+                                    },
+                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                    "render": {
+                                        "type": "JSSlot",
+                                        "params": [
+                                            "text",
+                                            "record",
+                                            "index"
+                                        ],
+                                        "value": [
+                                            {
+                                                "componentName": "Tooltip",
+                                                "id": "node_oclt2mfvxp1",
+                                                "props": {
+                                                    "title": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.text"
+                                                    },
+                                                    "defaultOpen": false,
+                                                    "autoAdjustOverflow": true,
+                                                    "arrowPointAtCenter": false,
+                                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                                    "ref": "tooltip-12db0a71",
+                                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": {
+                                                    "type": "JSExpression",
+                                                    "value": "this.text"
+                                                },
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ],
+                                                "children": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclt2mfvxp2",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false,
+                                                            "ref": "typography.text-8f6e3da7",
+                                                            "type": "secondary",
+                                                            "style": {
+                                                                "fontSize": "12px",
+                                                                "width": "280px"
+                                                            },
+                                                            "ellipsis": true
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "id": "node_oclt2m31gs1"
+                                    },
+                                    "width": 280
+                                },
+                                {
+                                    "dataIndex": "dynamic",
+                                    "align": "center",
+                                    "fixed": "",
+                                    "title": {
+                                        "type": "JSExpression",
+                                        "value": "this.i18n(\"dynamic\")"
+                                    },
+                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                    "width": 140,
+                                    "render": {
+                                        "type": "JSSlot",
+                                        "params": [
+                                            "text",
+                                            "record",
+                                            "index"
+                                        ],
+                                        "value": [
+                                            {
+                                                "componentName": "Typography.Text",
+                                                "id": "node_oclw68tvmu1",
+                                                "props": {
+                                                    "children": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.record.dynamic === false ? this.i18n('true') : this.i18n('false')",
+                                                        "mock": "text"
+                                                    },
+                                                    "code": false,
+                                                    "delete": false,
+                                                    "disabled": false,
+                                                    "mark": false,
+                                                    "keyboard": false,
+                                                    "underline": false,
+                                                    "strong": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ],
+                                        "id": "node_oclt2ntexr1"
+                                    },
+                                    "filteredValue": []
+                                },
+                                {
+                                    "dataIndex": "editable",
+                                    "align": "left",
+                                    "fixed": "",
+                                    "filteredValue": [],
+                                    "key": "",
+                                    "title": {
+                                        "type": "JSExpression",
+                                        "value": "this.i18n('editable')"
+                                    },
+                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                    "render": {
+                                        "type": "JSSlot",
+                                        "params": [
+                                            "text",
+                                            "record",
+                                            "index"
+                                        ],
+                                        "value": [
+                                            {
+                                                "componentName": "Typography.Text",
+                                                "id": "node_oclw694p6o1",
+                                                "props": {
+                                                    "children": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.record.editable ? this.i18n('true') : this.i18n('false')",
+                                                        "mock": "text"
+                                                    },
+                                                    "code": false,
+                                                    "delete": false,
+                                                    "disabled": false,
+                                                    "mark": false,
+                                                    "keyboard": false,
+                                                    "underline": false,
+                                                    "strong": false
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ],
+                                        "id": "node_oclw68tvmu2"
+                                    }
+                                }
+                            ],
+                            "rowKey": "id",
+                            "pagination": {
+                                "pageSize": 15,
+                                "showSizeChanger": false
+                            },
+                            "loading": {
+                                "type": "JSExpression",
+                                "value": "this.state.paramsLoading",
+                                "mock": false
+                            },
+                            "showHeader": true,
+                            "size": "default",
+                            "tableLayout": "",
+                            "scroll": {
+                                "scrollToFirstRowOnChange": true
+                            },
+                            "ref": "table-5eede651",
+                            "bordered": true,
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "表格",
+                        "isLocked": false,
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "condition": true
+                    },
+                    {
+                        "componentName": "Drawer",
+                        "id": "node_oclt8bgbof2",
+                        "props": {
+                            "title": {
+                                "type": "JSExpression",
+                                "value": "this.i18n(\"aiAnalysis\")"
+                            },
+                            "open": {
+                                "type": "JSExpression",
+                                "value": "this.state.analyzeVisible",
+                                "mock": true
+                            },
+                            "placement": "right",
+                            "destroyOnClose": true,
+                            "mask": true,
+                            "maskClosable": true,
+                            "autoFocus": true,
+                            "keyboard": true,
+                            "closable": true,
+                            "forceRender": false,
+                            "closeIcon": {
+                                "type": "JSSlot",
+                                "value": [
+                                    {
+                                        "componentName": "Icon",
+                                        "id": "node_oclt8bgbof6",
+                                        "props": {
+                                            "type": "CloseOutlined",
+                                            "size": 16,
+                                            "rotate": 0,
+                                            "spin": false
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    }
+                                ],
+                                "id": "node_oclt8bgbof5"
+                            },
+                            "extra": "",
+                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                            "__events": {
+                                "eventDataList": [
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onClose",
+                                        "relatedEventName": "onAnalyzeClose"
+                                    }
+                                ],
+                                "eventList": [
+                                    {
+                                        "name": "onClose",
+                                        "template": "onClose(event,${extParams}){\n// 点击遮罩层或右上角叉或取消按钮的回调\nconsole.log('onClose',event);}",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "name": "afterOpenChange",
+                                        "template": "afterOpenChange(open,${extParams}){\n// 切换抽屉时动画结束后的回调\nconsole.log('afterOpenChange',open);}",
+                                        "disabled": false
+                                    }
+                                ]
+                            },
+                            "onClose": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onAnalyzeClose.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            }
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "children": [
+                            {
+                                "componentName": "Box",
+                                "id": "node_oclt8c4qyr1",
+                                "props": {
+                                    "id": "box-21adc6702a41",
+                                    "padding": "",
+                                    "margin": "",
+                                    "twinkle": false,
+                                    "bordered": false,
+                                    "hoverable": false,
+                                    "loading": false,
+                                    "style": {
+                                        "display": "block",
+                                        "textAlign": "center"
+                                    },
+                                    "ref": "box-bc0edd8c",
+                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                },
+                                "title": "无分析结果",
+                                "isLocked": false,
+                                "condition": {
+                                    "type": "JSExpression",
+                                    "value": "!this.state.analyzing && _.isEmpty(this.state.aiAnalyzeResult)"
+                                },
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "Illustration",
+                                        "id": "node_oclt8c4qyr2",
+                                        "props": {
+                                            "defaultCountry": "cn",
+                                            "type": "ai",
+                                            "style": {
+                                                "marginBottom": "20px"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Typography.Paragraph",
+                                        "id": "node_oclt8c4qyr3",
+                                        "props": {
+                                            "ellipsis": false,
+                                            "children": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"noAiResult\")",
+                                                "mock": "text"
+                                            },
+                                            "code": false,
+                                            "copyable": false,
+                                            "delete": false,
+                                            "disabled": false,
+                                            "editable": false,
+                                            "mark": false,
+                                            "underline": false,
+                                            "strong": false,
+                                            "type": "secondary",
+                                            "style": {
+                                                "textAlign": "center"
+                                            },
+                                            "ref": "typography.paragraph-b944d92a"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Skeleton",
+                                "id": "node_oclt8c0y201",
+                                "props": {
+                                    "active": true,
+                                    "loading": true,
+                                    "round": true,
+                                    "ref": "skeleton-f55bc9dd",
+                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": {
+                                    "type": "JSExpression",
+                                    "value": "this.state.analyzing"
+                                },
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ]
+                            },
+                            {
+                                "componentName": "Box",
+                                "id": "node_oclt8br00j1",
+                                "props": {
+                                    "id": "box-28358d4051bc",
+                                    "padding": "",
+                                    "margin": "",
+                                    "twinkle": false,
+                                    "bordered": false,
+                                    "hoverable": false,
+                                    "loading": false,
+                                    "style": {
+                                        "display": "block",
+                                        "marginBottom": "20px"
+                                    },
+                                    "ref": "box-e0dfe5c9",
+                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                },
+                                "title": "有分析结果",
+                                "isLocked": false,
+                                "condition": {
+                                    "type": "JSExpression",
+                                    "value": "!this.state.analyzing && !_.isEmpty(this.state.aiAnalyzeResult)"
+                                },
+                                "conditionGroup": "",
+                                "loopArgs": [
+                                    "",
+                                    ""
+                                ],
+                                "children": [
+                                    {
+                                        "componentName": "CustomMarkdown",
+                                        "id": "node_oclw68tebn1",
+                                        "props": {
+                                            "content": {
+                                                "type": "JSExpression",
+                                                "value": "this.state.aiAnalyzeResult?.explanation || ''"
+                                            },
+                                            "_unsafe_MixedSetter_content_select": "VariableSetter"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "i18n": {
+            "zh-CN": {
+                "paramsName": "参数名称",
+                "paramsValue": "参数值",
+                "dynamic": "是否重启",
+                "paramsAllowValues": "参数值范围",
+                "searchHelp": "搜索参数名称",
+                "save": "保存",
+                "ok": "确定",
+                "cancel": "取消",
+                "previewChange": "预览更改",
+                "oldValue": "旧值",
+                "newValue": "新值",
+                "exportTpl": "导出模版",
+                "applyTpl": "应用模版",
+                "tplname": "模板名称",
+                "desc": "描述",
+                "rule": "请输8-64个字符 以字母开头，并且只能包含小写字母、数字和'-'",
+                "ranges": "长度范围 3-200",
+                "successMsg": "操作成功！",
+                "tplParamsNumber": "参数个数",
+                "true": "是",
+                "false": "否",
+                "aiAnalysis": "智能分析",
+                "noAiResult": "无分析结果",
+                "editable": "可编辑"
+            },
+            "en-US": {
+                "paramsName": "Name",
+                "paramsValue": "Value",
+                "dynamic": "Reboot Required",
+                "paramsAllowValues": "Allowed Values",
+                "searchHelp": "Search",
+                "save": "Save",
+                "ok": "Save",
+                "cancel": "Cancel",
+                "previewChange": "Preview Changes",
+                "oldValue": "Old",
+                "newValue": "New",
+                "exportTpl": "Export Template",
+                "applyTpl": "Apply Template",
+                "tplname": "Template Name",
+                "desc": "Description",
+                "rule": "Please enter 8-64 characters starting with a letter, and contain only lowercase letters, numbers, and '-'",
+                "ranges": "The content length from 3 to 200",
+                "successMsg": "Operation Successful!",
+                "tplParamsNumber": "Number of Parameters",
+                "true": "True",
+                "false": "False",
+                "aiAnalysis": "AI Analysis",
+                "noAiResult": "No analysis results",
+                "editable": "Editable"
+            }
+        }
+    },
+    "thumbnails": "platform/6c8905d2-2c32-4374-9620-21da20d91054/thumbnails/34ba3c9b-54f8-4977-9c7f-981632b0080f.png",
+    "tags": [
+        "集群参数配置"
+    ],
+    "description": null,
+    "platformUuid": "6c8905d2-2c32-4374-9620-21da20d91054",
+    "type": "page",
+    "createdAt": "2024-03-01T10:14:50.056Z",
+    "updatedAt": "2024-11-20T06:38:52.969Z"
+}

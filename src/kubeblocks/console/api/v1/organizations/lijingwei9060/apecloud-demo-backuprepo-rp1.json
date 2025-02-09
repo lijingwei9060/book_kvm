@@ -1,0 +1,18 @@
+{
+    "accessMethod": "Tool",
+    "backupNums": 81,
+    "config": {
+        "bucket": "kb-backup",
+        "endpoint": "http://apecl-58db464c66-minio.kb-system.svc.cluster.local:9000"
+    },
+    "createdAt": "2024-12-20T10:24:45Z",
+    "default": true,
+    "environmentId": "fb5a1ad7-97cf-4885-97b8-eb90a2bf667f",
+    "environmentName": "apecloud-demo",
+    "id": "1",
+    "name": "apecloud-demo-backuprepo-rp1",
+    "status": "Ready",
+    "storageID": "1",
+    "storageProvider": "minio",
+    "totalSize": "2.1 GiB"
+}

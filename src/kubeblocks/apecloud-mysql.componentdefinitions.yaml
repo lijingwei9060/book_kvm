@@ -1,0 +1,306 @@
+apiVersion: apps.kubeblocks.io/v1alpha1
+kind: ComponentDefinition
+metadata:
+  annotations:
+    apps.kubeblocks.io/horizontal-scale-backup-policy-template: apecloud-mysql-backup-policy-for-hscale
+    apps.kubeblocks.io/immutable-hash: 69498fb968
+    meta.helm.sh/release-name: kb-addon-apecloud-mysql
+    meta.helm.sh/release-namespace: kb-system
+  creationTimestamp: "2025-02-07T03:05:38Z"
+  finalizers:
+  - componentdefinition.kubeblocks.io/finalizer
+  generation: 2
+  labels:
+    app.kubernetes.io/instance: kb-addon-apecloud-mysql
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: apecloud-mysql
+    app.kubernetes.io/version: 8.0.30
+    config.kubeblocks.io/constraints-mysql8.0-config-constraints: mysql8.0-config-constraints
+    config.kubeblocks.io/tpl-apecloud-mysql-scripts: apecloud-mysql-scripts
+    config.kubeblocks.io/tpl-mysql-consensusset-config: mysql8.0-config-template
+    helm.sh/chart: apecloud-mysql-0.9.0
+  name: apecloud-mysql
+  resourceVersion: "96384"
+  uid: 1c138d8d-7510-48ea-a44f-ab88fdf0b32e
+spec:
+  configs:
+  - constraintRef: mysql8.0-config-constraints
+    name: mysql-consensusset-config
+    namespace: kb-system
+    templateRef: mysql8.0-config-template
+    volumeName: mysql-config
+  description: ApeCloud MySQL is a database that is compatible with MySQL syntax and
+    achieves high availability through the utilization of the RAFT consensus protocol.
+  exporter:
+    containerName: mysql-exporter
+    scrapePath: /metrics
+    scrapePort: http-metrics
+  lifecycleActions:
+    accountProvision:
+      customHandler:
+        exec:
+          args:
+          - -u$(MYSQL_ROOT_USER)
+          - -p$(MYSQL_ROOT_PASSWORD)
+          - -P$(MYSQL_PORT)
+          - -h$(KB_ACCOUNT_ENDPOINT)
+          - -e
+          - $(KB_ACCOUNT_STATEMENT)
+          command:
+          - mysql
+        image: docker.io/apecloud/apecloud-mysql-server:8.0.30-5.beta3.20231215.ge77d836.14
+        matchingKey: leader
+        targetPodSelector: Role
+        timeoutSeconds: 0
+    roleProbe:
+      builtinHandler: wesql
+      periodSeconds: 1
+      timeoutSeconds: 1
+    switchover:
+      scriptSpecSelectors:
+      - name: apecloud-mysql-scripts
+      withCandidate:
+        exec:
+          command:
+          - /scripts/switchover-with-candidate.sh
+        image: docker.io/apecloud/apecloud-mysql-server:8.0.30-5.beta3.20231215.ge77d836.14
+        timeoutSeconds: 0
+      withoutCandidate:
+        exec:
+          command:
+          - /scripts/switchover-without-candidate.sh
+        image: docker.io/apecloud/apecloud-mysql-server:8.0.30-5.beta3.20231215.ge77d836.14
+        timeoutSeconds: 0
+  logConfigs:
+  - filePathPattern: /data/mysql/auditlog/audit.log*
+    name: auditlog
+  - filePathPattern: /data/mysql/log/mysqld-error.log
+    name: error
+  - filePathPattern: /data/mysql/log/mysqld.log
+    name: general
+  - filePathPattern: /data/mysql/log/mysqld-slowquery.log
+    name: slow
+  minReadySeconds: 0
+  provider: kubeblocks.io
+  roleArbitrator: External
+  roles:
+  - name: leader
+    serviceable: true
+    votable: true
+    writable: true
+  - name: follower
+    serviceable: true
+    votable: true
+    writable: false
+  - name: learner
+    serviceable: false
+    votable: false
+    writable: false
+  runtime:
+    containers:
+    - command:
+      - /scripts/setup.sh
+      env:
+      - name: SERVICE_PORT
+        value: "3306"
+      - name: MYSQL_PORT
+        value: "3306"
+      - name: MYSQL_CONSENSUS_PORT
+        value: "13306"
+      - name: MYSQL_ROOT_HOST
+        value: '%'
+      - name: MYSQL_ROOT_USER
+        value: $(MYSQL_USER)
+      - name: MYSQL_ROOT_PASSWORD
+        value: $(MYSQL_PASSWORD)
+      - name: MYSQL_DATABASE
+        value: mydb
+      - name: MYSQL_USER
+        value: u1
+      - name: MYSQL_PASSWORD
+        value: u1
+      - name: CLUSTER_ID
+        value: "1"
+      - name: CLUSTER_START_INDEX
+        value: "1"
+      - name: REPLICATION_USER
+        value: replicator
+      - name: REPLICATION_PASSWORD
+      - name: MYSQL_TEMPLATE_CONFIG
+      - name: MYSQL_CUSTOM_CONFIG
+      - name: MYSQL_DYNAMIC_CONFIG
+      - name: KB_EMBEDDED_WESQL
+        value: "1"
+      - name: KB_MYSQL_VOLUME_DIR
+        value: /data/mysql
+      - name: KB_MYSQL_CONF_FILE
+        value: /opt/mysql/my.cnf
+      - name: KB_MYSQL_CLUSTER_UID
+        value: $(KB_CLUSTER_UID)
+      - name: KB_MYSQL_N
+        value: $(KB_REPLICA_COUNT)
+      image: docker.io/apecloud/apecloud-mysql-server:8.0.30-5.beta3.20231215.ge77d836.14
+      imagePullPolicy: IfNotPresent
+      lifecycle:
+        preStop:
+          exec:
+            command:
+            - /scripts/pre-stop.sh
+      name: mysql
+      ports:
+      - containerPort: 3306
+        name: mysql
+        protocol: TCP
+      - containerPort: 13306
+        name: paxos
+        protocol: TCP
+      resources: {}
+      volumeMounts:
+      - mountPath: /data/mysql
+        name: data
+      - mountPath: /opt/mysql
+        name: mysql-config
+      - mountPath: /scripts
+        name: scripts
+      - mountPath: /etc/annotations
+        name: annotations
+    - command:
+      - /scripts/exporter_start.sh
+      env:
+      - name: MYSQLD_EXPORTER_USER
+        value: $(MYSQL_USER)
+      - name: MYSQLD_EXPORTER_PASSWORD
+        value: $(MYSQL_PASSWORD)
+      - name: EXPORTER_WEB_PORT
+        value: "9104"
+      image: docker.io/apecloud/mysqld-exporter:0.15.1
+      imagePullPolicy: IfNotPresent
+      name: mysql-exporter
+      ports:
+      - containerPort: 9104
+        name: http-metrics
+        protocol: TCP
+      resources: {}
+      volumeMounts:
+      - mountPath: /scripts
+        name: scripts
+    volumes:
+    - downwardAPI:
+        items:
+        - fieldRef:
+            fieldPath: metadata.annotations['cs.apps.kubeblocks.io/leader']
+          path: leader
+        - fieldRef:
+            fieldPath: metadata.annotations['apps.kubeblocks.io/component-replicas']
+          path: component-replicas
+      name: annotations
+  scripts:
+  - defaultMode: 365
+    name: apecloud-mysql-scripts
+    namespace: kb-system
+    templateRef: apecloud-mysql-scripts
+    volumeName: scripts
+  serviceKind: mysql
+  serviceVersion: 8.0.30
+  services:
+  - name: default
+    podService: false
+    roleSelector: leader
+    spec:
+      ports:
+      - name: mysql
+        port: 3306
+        protocol: TCP
+        targetPort: mysql
+  - disableAutoProvision: true
+    name: replication
+    podService: true
+    serviceName: replication
+    spec:
+      ports:
+      - name: paxos
+        port: 13306
+        protocol: TCP
+        targetPort: paxos
+  systemAccounts:
+  - initAccount: true
+    name: root
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+  - initAccount: false
+    name: kbadmin
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+    statement: CREATE USER $(USERNAME) IDENTIFIED BY '$(PASSWD)'; GRANT ALL PRIVILEGES
+      ON *.* TO $(USERNAME);
+  - initAccount: false
+    name: kbdataprotection
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+    statement: CREATE USER $(USERNAME) IDENTIFIED BY '$(PASSWD)';GRANT RELOAD, LOCK
+      TABLES, PROCESS, REPLICATION CLIENT ON *.* TO $(USERNAME); GRANT LOCK TABLES,RELOAD,PROCESS,REPLICATION
+      CLIENT, SUPER,SELECT,EVENT,TRIGGER,SHOW VIEW ON *.* TO $(USERNAME);
+  - initAccount: false
+    name: kbprobe
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+    statement: CREATE USER $(USERNAME) IDENTIFIED BY '$(PASSWD)'; GRANT REPLICATION
+      CLIENT, PROCESS ON *.* TO $(USERNAME); GRANT SELECT ON performance_schema.*
+      TO $(USERNAME);
+  - initAccount: false
+    name: kbmonitoring
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+    statement: CREATE USER $(USERNAME) IDENTIFIED BY '$(PASSWD)'; GRANT REPLICATION
+      CLIENT, PROCESS ON *.* TO $(USERNAME); GRANT SELECT ON performance_schema.*
+      TO $(USERNAME);
+  - initAccount: false
+    name: kbreplicator
+    passwordGenerationPolicy:
+      length: 16
+      letterCase: MixedCases
+      numDigits: 8
+      numSymbols: 0
+    statement: CREATE USER $(USERNAME) IDENTIFIED BY '$(PASSWD)'; GRANT REPLICATION
+      SLAVE ON *.* TO $(USERNAME) WITH GRANT OPTION;
+  updateStrategy: Serial
+  vars:
+  - name: MYSQL_USER
+    valueFrom:
+      credentialVarRef:
+        compDef: apecloud-mysql
+        name: root
+        optional: false
+        username: Required
+  - name: MYSQL_PASSWORD
+    valueFrom:
+      credentialVarRef:
+        compDef: apecloud-mysql
+        name: root
+        optional: false
+        password: Required
+  - name: REPLICATION_ENDPOINT
+    valueFrom:
+      serviceVarRef:
+        host: Required
+        loadBalancer: Required
+        name: replication
+        optional: true
+status:
+  observedGeneration: 2
+  phase: Available

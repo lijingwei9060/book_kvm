@@ -1,0 +1,17 @@
+{
+    "backupStatsEngine": [
+        {
+            "backupNum": 1,
+            "backupSize": "0",
+            "engineName": "mysql"
+        }
+    ],
+    "backupStatsStatus": [
+        {
+            "backupNum": 1,
+            "status": "Failed"
+        }
+    ],
+    "latestBackupStatus": "Failed",
+    "latestBackupTime": "2025-02-06T02:05:50.455349Z"
+}

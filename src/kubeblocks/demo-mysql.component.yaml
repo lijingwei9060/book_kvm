@@ -1,0 +1,101 @@
+apiVersion: apps.kubeblocks.io/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    kubeblocks.io/generation: "2"
+    kubeblocks.io/ops-request: '[{"name":"demo-reconfiguring-z49rd","type":"Reconfiguring"}]'
+  creationTimestamp: "2025-02-07T03:28:59Z"
+  finalizers:
+  - cluster.kubeblocks.io/finalizer
+  - component.kubeblocks.io/finalizer
+  generation: 1
+  labels:
+    app.kubernetes.io/instance: demo
+    app.kubernetes.io/managed-by: kubeblocks
+    apps.kubeblocks.io/cluster-uid: 3235131b-8b70-4792-b5f1-1502a4006d45
+    apps.kubeblocks.io/component-name: mysql
+    clusterdefinition.kubeblocks.io/name: apecloud-mysql
+    clusterversion.kubeblocks.io/name: ac-mysql-8.0.30
+    helm.sh/chart: apecloud-mysql-cluster-0.9.0
+  name: demo-mysql
+  namespace: demo
+  ownerReferences:
+  - apiVersion: apps.kubeblocks.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Cluster
+    name: demo
+    uid: 3235131b-8b70-4792-b5f1-1502a4006d45
+  resourceVersion: "153211"
+  uid: 17f0f678-456f-4af8-94ba-3ecc54061631
+spec:
+  compDef: ""
+  disableExporter: true
+  enabledLogs:
+  - slow
+  - error
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  schedulingPolicy:
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+            - key: kb-data
+              operator: In
+              values:
+              - "true"
+          weight: 100
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: demo
+              apps.kubeblocks.io/component-name: mysql
+          topologyKey: kubernetes.io/hostname
+    tolerations:
+    - effect: NoSchedule
+      key: kb-data
+      operator: Equal
+      value: "true"
+    topologySpreadConstraints:
+    - labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: demo
+          apps.kubeblocks.io/component-name: mysql
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+  volumeClaimTemplates:
+  - name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+status:
+  conditions:
+  - lastTransitionTime: "2025-02-07T03:28:59Z"
+    message: 'The operator has started the provisioning of Cluster: demo-mysql'
+    observedGeneration: 1
+    reason: PreCheckSucceed
+    status: "True"
+    type: ProvisioningStarted
+  - lastTransitionTime: "2025-02-07T07:06:30Z"
+    message: kbadmin,kbdataprotection,kbprobe,kbmonitoring,kbreplicator
+    observedGeneration: 1
+    reason: AllProvisioned
+    status: "True"
+    type: SystemAccountProvision
+  message:
+    InstanceSet/demo-mysql: '["demo-mysql-0"]'
+  observedGeneration: 1
+  phase: Running

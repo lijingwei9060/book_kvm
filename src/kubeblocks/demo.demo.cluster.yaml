@@ -1,0 +1,90 @@
+apiVersion: apps.kubeblocks.io/v1alpha1
+kind: Cluster
+metadata:
+  annotations:
+    kubeblocks.io/reconcile: "2025-02-07T07:33:01.570405331Z"
+  creationTimestamp: "2025-02-07T03:28:59Z"
+  finalizers:
+  - cluster.kubeblocks.io/finalizer
+  generation: 2
+  labels:
+    app.kubernetes.io/instance: demo
+    app.kubernetes.io/version: 8.0.30
+    clusterdefinition.kubeblocks.io/name: apecloud-mysql
+    clusterversion.kubeblocks.io/name: ac-mysql-8.0.30
+    helm.sh/chart: apecloud-mysql-cluster-0.9.0
+  name: demo
+  namespace: demo
+  resourceVersion: "153215"
+  uid: 3235131b-8b70-4792-b5f1-1502a4006d45
+spec:
+  affinity:
+    podAntiAffinity: Required
+    tenancy: SharedNode
+    topologyKeys:
+    - kubernetes.io/hostname
+  clusterDefinitionRef: apecloud-mysql
+  clusterVersionRef: ac-mysql-8.0.30
+  componentSpecs:
+  - componentDefRef: mysql
+    disableExporter: true
+    enabledLogs:
+    - slow
+    - error
+    name: mysql
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    volumeClaimTemplates:
+    - name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+  resources:
+    cpu: "0"
+    memory: "0"
+  storage:
+    size: "0"
+  terminationPolicy: Delete
+status:
+  clusterDefGeneration: 2
+  components:
+    mysql:
+      message:
+        InstanceSet/demo-mysql: '["demo-mysql-0"]'
+      phase: Running
+      podsReady: true
+      podsReadyTime: "2025-02-07T07:56:11Z"
+  conditions:
+  - lastTransitionTime: "2025-02-07T03:28:59Z"
+    message: 'The operator has started the provisioning of Cluster: demo'
+    observedGeneration: 2
+    reason: PreCheckSucceed
+    status: "True"
+    type: ProvisioningStarted
+  - lastTransitionTime: "2025-02-07T03:28:59Z"
+    message: Successfully applied for resources
+    observedGeneration: 2
+    reason: ApplyResourcesSucceed
+    status: "True"
+    type: ApplyResources
+  - lastTransitionTime: "2025-02-07T07:56:11Z"
+    message: all pods of components are ready, waiting for the probe detection successful
+    reason: AllReplicasReady
+    status: "True"
+    type: ReplicasReady
+  - lastTransitionTime: "2025-02-07T07:56:11Z"
+    message: 'Cluster: demo is ready, current phase is Running'
+    reason: ClusterReady
+    status: "True"
+    type: Ready
+  observedGeneration: 2
+  phase: Running

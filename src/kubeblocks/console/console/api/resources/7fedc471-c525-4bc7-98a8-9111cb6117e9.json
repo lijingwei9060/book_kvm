@@ -1,0 +1,1511 @@
+{
+    "uuid": "7fedc471-c525-4bc7-98a8-9111cb6117e9",
+    "title": "自定义模板",
+    "queryMocks": "",
+    "schema": {
+        "version": "1.0.0",
+        "componentsMap": [
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Input",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Input"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Form",
+                "main": "",
+                "destructuring": true,
+                "subName": "Item",
+                "componentName": "Form.Item"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "ApeSelect",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "ApeSelect"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Input",
+                "main": "",
+                "destructuring": true,
+                "subName": "TextArea",
+                "componentName": "Input.TextArea"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Form",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Form"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Modal",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Modal"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Icon",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Icon"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Button",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Button"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Tooltip",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Tooltip"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Space",
+                "main": "",
+                "destructuring": true,
+                "componentName": "Space"
+            },
+            {
+                "package": "@alilc/antd-lowcode-materials",
+                "version": "1.2.2",
+                "exportName": "Typography",
+                "main": "",
+                "destructuring": true,
+                "subName": "Text",
+                "componentName": "Typography.Text"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Table",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Table"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Box",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Box"
+            },
+            {
+                "package": "@infracreate/console-widget",
+                "version": "0.1.0",
+                "exportName": "Block",
+                "main": "src/index.ts",
+                "destructuring": true,
+                "subName": "",
+                "componentName": "Block"
+            },
+            {
+                "devMode": "lowCode",
+                "componentName": "Page"
+            }
+        ],
+        "componentsTree": [
+            {
+                "componentName": "Page",
+                "id": "7fedc471-c525-4bc7-98a8-9111cb6117e9",
+                "props": {},
+                "title": "",
+                "isLocked": false,
+                "condition": true,
+                "conditionGroup": "",
+                "state": {
+                    "loading": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "createVisible": {
+                        "type": "JSExpression",
+                        "value": "false"
+                    },
+                    "searchKey": {
+                        "type": "JSExpression",
+                        "value": "''"
+                    },
+                    "templateList": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "initialTemplateList": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "familyOptions": {
+                        "type": "JSExpression",
+                        "value": "[]"
+                    },
+                    "formData": {
+                        "type": "JSExpression",
+                        "value": "{\n  name: '',\n  family: undefined,\n  desc: ''\n}"
+                    }
+                },
+                "methods": {
+                    "getDefaultTemplate": {
+                        "type": "JSFunction",
+                        "value": "async function getDefaultTemplate() {\n  const {\n    items\n  } = await this.dataSourceMap.listParamTpl.load({\n    partition: 'default'\n  });\n  const sortedItems = items ? items.sort((a, b) => {\n    return a.family.localeCompare(b.family);\n  }) : null;\n  this.setState({\n    familyOptions: sortedItems ? _.uniq(sortedItems.map(item => {\n      return {\n        label: item.family,\n        value: item.family\n      };\n    })) : []\n  });\n}",
+                        "source": "async function getDefaultTemplate() {\n  const {\n    items\n  } = await this.dataSourceMap.listParamTpl.load({\n    partition: 'default'\n  });\n  const sortedItems = items ? items.sort((a, b) => {\n    return a.family.localeCompare(b.family);\n  }) : null;\n  this.setState({\n    familyOptions: sortedItems ? _.uniq(sortedItems.map(item => {\n      return {\n        label: item.family,\n        value: item.family\n      };\n    })) : []\n  });\n}"
+                    },
+                    "getTemplate": {
+                        "type": "JSFunction",
+                        "value": "async function getTemplate() {\n  this.setState({\n    loading: true\n  });\n  const {\n    items\n  } = await this.dataSourceMap.listParamTpl.load({\n    partition: 'custom'\n  });\n  const _items = (items || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());\n  this.setState({\n    loading: false,\n    templateList: _items,\n    initialTemplateList: _items\n  });\n}",
+                        "source": "async function getTemplate() {\n  this.setState({\n    loading: true\n  });\n  const {\n    items\n  } = await this.dataSourceMap.listParamTpl.load({\n    partition: 'custom'\n  });\n  const _items = (items || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());\n  this.setState({\n    loading: false,\n    templateList: _items,\n    initialTemplateList: _items\n  });\n}"
+                    },
+                    "onCreate": {
+                        "type": "JSFunction",
+                        "value": "function onCreate(event) {\n  this.setState({\n    createVisible: true\n  });\n}",
+                        "source": "function onCreate(event) {\n  this.setState({\n    createVisible: true\n  });\n}"
+                    },
+                    "onCancel": {
+                        "type": "JSFunction",
+                        "value": "function onCancel() {\n  this.setState({\n    createVisible: false\n  });\n}",
+                        "source": "function onCancel() {\n  this.setState({\n    createVisible: false\n  });\n}"
+                    },
+                    "onOk": {
+                        "type": "JSFunction",
+                        "value": "async function onOk() {\n  const values = await this.$('form').validateFields();\n  const res = await this.dataSourceMap.createParamTpl.load({\n    body: {\n      name: values.name,\n      family: values.family,\n      description: values.description,\n      tplType: 'cluster parameter'\n    }\n  });\n  if (res !== null && res !== void 0 && res.name) {\n    this.utils.message.success(`${this.i18n('success')}`);\n    this.setState({\n      createVisible: false\n    });\n    this.getTemplate();\n  }\n}",
+                        "source": "async function onOk() {\n  const values = await this.$('form').validateFields();\n  const res = await this.dataSourceMap.createParamTpl.load({\n    body: {\n      name: values.name,\n      family: values.family,\n      description: values.description,\n      tplType: 'cluster parameter'\n    }\n  });\n  if (res?.name) {\n    this.utils.message.success(`${this.i18n('success')}`);\n    this.setState({\n      createVisible: false\n    });\n    this.getTemplate();\n  }\n}"
+                    },
+                    "search": {
+                        "type": "JSFunction",
+                        "value": "function search() {\n  const {\n    initialTemplateList,\n    searchKey\n  } = this.state;\n  const reg = new RegExp(`.*${searchKey}.*`);\n  let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n === null || n === void 0 ? void 0 : n.name) : true);\n  this.setState({\n    templateList\n  });\n}",
+                        "source": "function search() {\n  const {\n    initialTemplateList,\n    searchKey\n  } = this.state;\n  const reg = new RegExp(`.*${searchKey}.*`);\n  let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n?.name) : true);\n  this.setState({\n    templateList\n  });\n}"
+                    },
+                    "onSearch": {
+                        "type": "JSFunction",
+                        "value": "function onSearch(event) {\n  const value = event.target.value;\n  const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n  this.setState({\n    searchKey\n  }, this.search);\n}",
+                        "source": "function onSearch(event) {\n  const value = event.target.value;\n  const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n  this.setState({\n    searchKey\n  }, this.search);\n}"
+                    },
+                    "onDelete": {
+                        "type": "JSFunction",
+                        "value": "async function onDelete(event, record) {\n  this.utils.modal.confirm({\n    title: `${this.i18n('confirm')}`,\n    content: `${this.i18n('delete')} ${record.name}?`,\n    okButtonProps: {\n      danger: true\n    },\n    onOk: async () => {\n      await this.dataSourceMap.deleteParamTpl.load({\n        paramTplName: record.name\n      });\n      this.getTemplate();\n    }\n  });\n}",
+                        "source": "async function onDelete(event, record) {\n  this.utils.modal.confirm({\n    title: `${this.i18n('confirm')}`,\n    content: `${this.i18n('delete')} ${record.name}?`,\n    okButtonProps: {\n      danger: true\n    },\n    onOk: async () => {\n      await this.dataSourceMap.deleteParamTpl.load({\n        paramTplName: record.name\n      });\n      this.getTemplate();\n    }\n  });\n}"
+                    },
+                    "goToDetail": {
+                        "type": "JSFunction",
+                        "value": "function goToDetail(e, record) {\n  if (this.utils.isDev()) return;\n  this.history.push(`/templates/custom/${record === null || record === void 0 ? void 0 : record.name}?partition=custom`);\n}",
+                        "source": "function goToDetail(e, record) {\n  if (this.utils.isDev()) return;\n  this.history.push(`/templates/custom/${record?.name}?partition=custom`);\n}"
+                    }
+                },
+                "lifeCycles": {
+                    "componentDidMount": {
+                        "type": "JSFunction",
+                        "value": "function componentDidMount() {\n  this.getTemplate();\n  this.getDefaultTemplate();\n}",
+                        "source": "function componentDidMount() {\n  this.getTemplate();\n  this.getDefaultTemplate();\n}"
+                    }
+                },
+                "originCode": "class Page extends Component {\n  state = {\n    loading: false,\n    createVisible: false,\n    searchKey: '',\n    templateList: [],\n    initialTemplateList: [],\n    familyOptions: [],\n    formData: {\n      name: '',\n      family: undefined,\n      desc: ''\n    }\n  }\n\n  async getDefaultTemplate() {\n    const { items } = await this.dataSourceMap.listParamTpl.load({ partition: 'default' });\n    const sortedItems = items ? items.sort((a, b) => {\n      return a.family.localeCompare(b.family);\n    }) : null;\n    this.setState({\n      familyOptions: sortedItems ? _.uniq(sortedItems.map(item => {\n        return {\n          label: item.family,\n          value: item.family,\n        }\n      })) : [],\n    })\n  }\n\n  async getTemplate() {\n    this.setState({ loading: true })\n    const { items } = await this.dataSourceMap.listParamTpl.load({ partition : 'custom' });\n    const _items = (items || []).sort((a, b) => (new Date(b.createdAt)).getTime() - (new Date(a.createdAt)).getTime());\n    this.setState({\n      loading: false,\n      templateList: _items,\n      initialTemplateList: _items,\n    })\n  }\n\n  onCreate(event) {\n    this.setState({\n      createVisible: true\n    })\n  }\n\n  onCancel() {\n    this.setState({\n      createVisible: false\n    })\n  }\n\n  async onOk() {\n    const values = await this.$('form').validateFields();\n    const res = await this.dataSourceMap.createParamTpl.load({\n      body: {\n        name: values.name,\n        family: values.family,\n        description: values.description,\n        tplType:'cluster parameter'\n      }\n    })\n    if(res?.name){\n      this.utils.message.success(`${this.i18n('success')}`);\n      this.setState({\n        createVisible: false\n      })\n      this.getTemplate();\n    }\n  }\n\n  search() {\n    const { initialTemplateList, searchKey } = this.state;\n    const reg = new RegExp(`.*${searchKey}.*`);\n    let templateList = initialTemplateList.filter(n => searchKey ? reg.test(n?.name) : true);\n    this.setState({ templateList })\n  }\n\n  onSearch(event) {\n    const value = event.target.value;\n    const searchKey = value.replace(/^\\s+|\\s+$/g, '');\n    this.setState({\n      searchKey,\n    }, this.search)\n  }\n\n  async onDelete(event, record) {\n    this.utils.modal.confirm({\n      title: `${this.i18n('confirm')}`,\n      content: `${this.i18n('delete')} ${record.name}?`,\n      okButtonProps: {\n        danger: true,\n      },\n      onOk: async () => {\n        await this.dataSourceMap.deleteParamTpl.load({\n          paramTplName: record.name\n        });\n        this.getTemplate();\n      }\n    })\n  }\n\n  goToDetail(e, record){\n    if (this.utils.isDev()) return;\n    this.history.push(`/templates/custom/${record?.name}?partition=custom`);\n  }\n\n  componentDidMount() {\n    this.getTemplate();\n    this.getDefaultTemplate();\n  }\n}",
+                "css": "",
+                "dataSource": {
+                    "list": [
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "paramTplName": "paramTplName"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "delete",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls/{paramTplName}"
+                            },
+                            "id": "deleteParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "body": "body"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "post",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls"
+                            },
+                            "id": "createParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        },
+                        {
+                            "dataHandler": {
+                                "type": "JSFunction",
+                                "value": "(response) => {\n  return response;\n}"
+                            },
+                            "errorHandler": {
+                                "type": "JSFunction",
+                                "value": "(err) => {\n\n}"
+                            },
+                            "shouldFetch": {
+                                "type": "JSFunction",
+                                "value": "() => {\n  return true;\n}"
+                            },
+                            "willFetch": {
+                                "type": "JSFunction",
+                                "value": "(options) => {\n  return options;\n}"
+                            },
+                            "options": {
+                                "params": {
+                                    "orgName": {
+                                        "type": "JSExpression",
+                                        "value": "this.utils.user.organization.name"
+                                    },
+                                    "partition": "partition"
+                                },
+                                "headers": {
+                                    "x-data-store": "cloud"
+                                },
+                                "method": "get",
+                                "isCors": true,
+                                "uri": "/api/v1/organizations/{orgName}/paramTpls"
+                            },
+                            "id": "listParamTpl",
+                            "type": "fetch",
+                            "isInit": false
+                        }
+                    ]
+                },
+                "children": [
+                    {
+                        "componentName": "Modal",
+                        "id": "node_oclpl0mspp1",
+                        "props": {
+                            "title": {
+                                "type": "JSExpression",
+                                "value": "this.i18n('create')"
+                            },
+                            "okText": {
+                                "type": "JSExpression",
+                                "value": "this.i18n('save')"
+                            },
+                            "cancelText": {
+                                "type": "JSExpression",
+                                "value": "this.i18n('cancel')"
+                            },
+                            "open": {
+                                "type": "JSExpression",
+                                "value": "this.state.createVisible",
+                                "mock": true
+                            },
+                            "destroyOnClose": true,
+                            "centered": false,
+                            "closable": true,
+                            "confirmLoading": false,
+                            "forceRender": false,
+                            "keyboard": true,
+                            "mask": true,
+                            "maskClosable": false,
+                            "bodyStyle": {},
+                            "maskStyle": {},
+                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                            "_unsafe_MixedSetter_cancelText_select": "VariableSetter",
+                            "_unsafe_MixedSetter_okText_select": "VariableSetter",
+                            "__events": {
+                                "eventDataList": [
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onCancel",
+                                        "relatedEventName": "onCancel"
+                                    },
+                                    {
+                                        "type": "componentEvent",
+                                        "name": "onOk",
+                                        "relatedEventName": "onOk"
+                                    }
+                                ],
+                                "eventList": [
+                                    {
+                                        "name": "afterClose",
+                                        "templete": "onCancel(${extParams}){\n// 完全关闭后的回调\nconsole.log('afterClose');}",
+                                        "disabled": false
+                                    },
+                                    {
+                                        "name": "onCancel",
+                                        "template": "onCancel(${extParams}){\n// 点击遮罩层或右上角叉或取消按钮的回调\nconsole.log('onCancel');}",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "name": "onOk",
+                                        "template": "onOk(${extParams}){\n// 点击确定回调\nconsole.log('onOk');}",
+                                        "disabled": true
+                                    }
+                                ]
+                            },
+                            "onCancel": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onCancel.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            },
+                            "onOk": {
+                                "type": "JSFunction",
+                                "value": "function(){return this.onOk.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                            },
+                            "width": "700px"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": true,
+                        "conditionGroup": "",
+                        "children": [
+                            {
+                                "componentName": "Form",
+                                "id": "node_oclpl0mspp2",
+                                "props": {
+                                    "labelCol": {
+                                        "span": 4
+                                    },
+                                    "wrapperCol": {
+                                        "span": 20
+                                    },
+                                    "onValuesChange": {
+                                        "type": "JSExpression",
+                                        "value": "function() {\n      const self = this;\n      try {\n        return (function onValuesChange(changedValues, allValues) {\n  console.log('onValuesChange', changedValues, allValues);\n}).apply(self, arguments);\n      } catch(e) {\n        console.warn('call function which parsed by lowcode failed: ', e);\n        return e.message;\n      }\n    }"
+                                    },
+                                    "onFinish": {
+                                        "type": "JSExpression",
+                                        "value": "function() {\n      const self = this;\n      try {\n        return (function onFinish(values) {\n  console.log('onFinish', values);\n}).apply(self, arguments);\n      } catch(e) {\n        console.warn('call function which parsed by lowcode failed: ', e);\n        return e.message;\n      }\n    }"
+                                    },
+                                    "onFinishFailed": {
+                                        "type": "JSExpression",
+                                        "value": "function() {\n      const self = this;\n      try {\n        return (function onFinishFailed({ values, errorFields, outOfDate }) {\n  console.log('onFinishFailed', values, errorFields, outOfDate);\n}).apply(self, arguments);\n      } catch(e) {\n        console.warn('call function which parsed by lowcode failed: ', e);\n        return e.message;\n      }\n    }"
+                                    },
+                                    "name": "basic",
+                                    "ref": "form",
+                                    "colon": true,
+                                    "hideRequiredMark": false,
+                                    "preserve": true,
+                                    "scrollToFirstError": true,
+                                    "validateMessages": {
+                                        "required": "'${name}' 不能为空"
+                                    },
+                                    "values": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.formData"
+                                    },
+                                    "size": "middle"
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Form.Item",
+                                        "id": "node_oclpl0mspp3",
+                                        "props": {
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')"
+                                            },
+                                            "labelAlign": "right",
+                                            "colon": true,
+                                            "required": true,
+                                            "noStyle": false,
+                                            "valuePropName": "value",
+                                            "name": "name",
+                                            "requiredobj": {
+                                                "required": true,
+                                                "message": ""
+                                            },
+                                            "typeobj": {
+                                                "type": "",
+                                                "message": ""
+                                            },
+                                            "lenobj": {
+                                                "max": "",
+                                                "min": "",
+                                                "message": ""
+                                            },
+                                            "patternobj": {
+                                                "pattern": "^[a-zA-Z][a-z0-9-]{7,63}$",
+                                                "message": {
+                                                    "type": "JSExpression",
+                                                    "value": "this.i18n('rule')",
+                                                    "mock": ""
+                                                }
+                                            },
+                                            "_unsafe_MixedSetter_label_select": "VariableSetter",
+                                            "labelCol": {
+                                                "span": 5
+                                            },
+                                            "wrapperCol": {
+                                                "span": 19
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "Input",
+                                                "id": "node_oclpl0mspp4",
+                                                "props": {
+                                                    "placeholder": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('entername')",
+                                                        "mock": ""
+                                                    },
+                                                    "bordered": true,
+                                                    "disabled": false,
+                                                    "size": "middle"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "componentName": "Form.Item",
+                                        "id": "node_oclpl0msppb",
+                                        "props": {
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('family')"
+                                            },
+                                            "name": "family",
+                                            "labelAlign": "right",
+                                            "colon": true,
+                                            "required": true,
+                                            "noStyle": false,
+                                            "valuePropName": "value",
+                                            "requiredobj": {
+                                                "required": true,
+                                                "message": ""
+                                            },
+                                            "typeobj": {
+                                                "type": "",
+                                                "message": ""
+                                            },
+                                            "lenobj": {
+                                                "max": "",
+                                                "min": "",
+                                                "message": ""
+                                            },
+                                            "patternobj": {
+                                                "pattern": "",
+                                                "message": ""
+                                            },
+                                            "_unsafe_MixedSetter_label_select": "VariableSetter",
+                                            "labelCol": {
+                                                "span": 5
+                                            },
+                                            "wrapperCol": {
+                                                "span": 19
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "ApeSelect",
+                                                "id": "node_oclq3752wj1",
+                                                "props": {
+                                                    "style": {
+                                                        "width": "100%"
+                                                    },
+                                                    "options": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.state.familyOptions"
+                                                    },
+                                                    "allowClear": false,
+                                                    "autoFocus": false,
+                                                    "defaultActiveFirstOption": true,
+                                                    "disabled": false,
+                                                    "labelInValue": false,
+                                                    "placeholder": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('version')",
+                                                        "mock": ""
+                                                    },
+                                                    "showSearch": false,
+                                                    "size": "middle",
+                                                    "loading": false,
+                                                    "bordered": true,
+                                                    "optionFilterProp": "value",
+                                                    "tokenSeparators": [],
+                                                    "maxTagCount": 0,
+                                                    "maxTagTextLength": 0,
+                                                    "_unsafe_MixedSetter_options_select": "VariableSetter"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "componentName": "Form.Item",
+                                        "id": "node_oclpl0mspph",
+                                        "props": {
+                                            "label": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('desc')"
+                                            },
+                                            "labelAlign": "right",
+                                            "colon": true,
+                                            "required": true,
+                                            "noStyle": false,
+                                            "valuePropName": "value",
+                                            "requiredobj": {
+                                                "required": "",
+                                                "message": ""
+                                            },
+                                            "typeobj": {
+                                                "type": "",
+                                                "message": ""
+                                            },
+                                            "lenobj": {
+                                                "max": 200,
+                                                "min": 3,
+                                                "message": {
+                                                    "type": "JSExpression",
+                                                    "value": "this.i18n('ranges')",
+                                                    "mock": ""
+                                                }
+                                            },
+                                            "patternobj": {
+                                                "pattern": "",
+                                                "message": ""
+                                            },
+                                            "name": "description",
+                                            "_unsafe_MixedSetter_label_select": "VariableSetter",
+                                            "labelCol": {
+                                                "span": 5
+                                            },
+                                            "wrapperCol": {
+                                                "span": 19
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "children": [
+                                            {
+                                                "componentName": "Input.TextArea",
+                                                "id": "node_oclq3688gd1",
+                                                "props": {
+                                                    "autoSize": {
+                                                        "minRows": 3,
+                                                        "maxRows": 5
+                                                    },
+                                                    "placeholder": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('ranges')",
+                                                        "mock": "请输入"
+                                                    },
+                                                    "bordered": true,
+                                                    "disabled": false,
+                                                    "showCount": false,
+                                                    "size": "middle"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": ""
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Box",
+                        "id": "node_oclty7lt3j1",
+                        "props": {
+                            "id": "box-4a4aeabaf0ae",
+                            "padding": "",
+                            "margin": "",
+                            "twinkle": false,
+                            "bordered": false,
+                            "hoverable": false,
+                            "loading": false,
+                            "style": {
+                                "display": "block"
+                            },
+                            "ref": "box-5e346c72",
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "this.utils.hasPermission(\"paramtpl.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ],
+                        "children": [
+                            {
+                                "componentName": "Space",
+                                "id": "node_oclpkymtzl1",
+                                "props": {
+                                    "align": "start",
+                                    "direction": "horizontal",
+                                    "wrap": false,
+                                    "style": {
+                                        "display": "flex",
+                                        "justifyContent": "space-between",
+                                        "marginBottom": "20px"
+                                    }
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": "",
+                                "children": [
+                                    {
+                                        "componentName": "Input",
+                                        "id": "node_oclpkzn5v71",
+                                        "props": {
+                                            "placeholder": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('input')",
+                                                "mock": "请输入"
+                                            },
+                                            "bordered": true,
+                                            "disabled": false,
+                                            "size": "middle",
+                                            "allowClear": true,
+                                            "suffix": "",
+                                            "_unsafe_MixedSetter_suffix_select": "SlotSetter",
+                                            "__events": {
+                                                "eventDataList": [
+                                                    {
+                                                        "type": "componentEvent",
+                                                        "name": "onChange",
+                                                        "relatedEventName": "onSearch"
+                                                    }
+                                                ],
+                                                "eventList": [
+                                                    {
+                                                        "name": "onChange",
+                                                        "template": "onChange(event,${extParams}){\n// 输入框内容变化时的回调\nconsole.log('onChange',event);}",
+                                                        "disabled": true
+                                                    },
+                                                    {
+                                                        "name": "onPressEnter",
+                                                        "template": "onPressEnter(event,${extParams}){\n// 按下回车的回调\nconsole.log('onPressEnter',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onFocus",
+                                                        "template": "onFocus(event,${extParams}){\n// 获取焦点回调\nconsole.log('onFocus',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyDown",
+                                                        "template": "onKeyDown(event,${extParams}){\n// 按键按下时的回调\nconsole.log('onKeyDown',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyPress",
+                                                        "template": "onKeyPress(event,${extParams}){\n// 按键按下后的回调\nconsole.log('onKeyPress',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onKeyUp",
+                                                        "template": "onKeyUp(event,${extParams}){\n// 按键释放回调\nconsole.log('onKeyUp',event);}",
+                                                        "disabled": false
+                                                    },
+                                                    {
+                                                        "name": "onBlur",
+                                                        "template": "onBlur(event,${extParams}){\n// 按键释放回调\nconsole.log('onBlur',event);}",
+                                                        "disabled": false
+                                                    }
+                                                ]
+                                            },
+                                            "onChange": {
+                                                "type": "JSFunction",
+                                                "value": "function(){return this.onSearch.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                            },
+                                            "prefix": {
+                                                "type": "JSSlot",
+                                                "value": [
+                                                    {
+                                                        "componentName": "Icon",
+                                                        "id": "node_oclpkzn6672",
+                                                        "props": {
+                                                            "type": "SearchOutlined",
+                                                            "size": 16,
+                                                            "color": "#4a4a4a",
+                                                            "rotate": 0,
+                                                            "spin": false,
+                                                            "style": {
+                                                                "paddingRight": "8px"
+                                                            }
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclr8ma8aa1"
+                                            },
+                                            "_unsafe_MixedSetter_prefix_select": "SlotSetter"
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": ""
+                                    },
+                                    {
+                                        "componentName": "Tooltip",
+                                        "id": "node_ocltwbx2in2",
+                                        "props": {
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('nopermission')"
+                                            },
+                                            "defaultOpen": false,
+                                            "autoAdjustOverflow": true,
+                                            "arrowPointAtCenter": false,
+                                            "ref": "tooltip-d6b6dfff",
+                                            "_unsafe_MixedSetter____condition____select": "BoolSetter",
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "trigger": "hover",
+                                            "mouseEnterDelay": {
+                                                "type": "JSExpression",
+                                                "value": "!this.utils.hasPermission(\"paramtpl.write\") ? 0 : 1*60*60"
+                                            }
+                                        },
+                                        "title": "",
+                                        "isLocked": false,
+                                        "condition": true,
+                                        "conditionGroup": "",
+                                        "loopArgs": [
+                                            "",
+                                            ""
+                                        ],
+                                        "children": [
+                                            {
+                                                "componentName": "Button",
+                                                "id": "node_oclpkymtzl3",
+                                                "props": {
+                                                    "children": {
+                                                        "type": "JSExpression",
+                                                        "value": "this.i18n('create')"
+                                                    },
+                                                    "htmlType": "button",
+                                                    "type": "primary",
+                                                    "size": "middle",
+                                                    "shape": "default",
+                                                    "icon": "",
+                                                    "block": false,
+                                                    "danger": false,
+                                                    "ghost": false,
+                                                    "disabled": {
+                                                        "type": "JSExpression",
+                                                        "value": "!this.utils.hasPermission(\"paramtpl.write\")",
+                                                        "mock": false
+                                                    },
+                                                    "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                    "__events": {
+                                                        "eventDataList": [
+                                                            {
+                                                                "type": "componentEvent",
+                                                                "name": "onClick",
+                                                                "relatedEventName": "onCreate"
+                                                            }
+                                                        ],
+                                                        "eventList": [
+                                                            {
+                                                                "name": "onClick",
+                                                                "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                "disabled": true
+                                                            }
+                                                        ]
+                                                    },
+                                                    "onClick": {
+                                                        "type": "JSFunction",
+                                                        "value": "function(){return this.onCreate.apply(this,Array.prototype.slice.call(arguments).concat([])) }"
+                                                    },
+                                                    "ref": "button-c00ff99b",
+                                                    "_unsafe_MixedSetter____condition____select": "BoolSetter"
+                                                },
+                                                "title": "",
+                                                "isLocked": false,
+                                                "condition": true,
+                                                "conditionGroup": "",
+                                                "loopArgs": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "componentName": "Table",
+                                "id": "node_oclpkzn7601",
+                                "props": {
+                                    "dataSource": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.templateList",
+                                        "mock": [
+                                            {
+                                                "id": "1",
+                                                "name": "胡彦斌",
+                                                "age": 32,
+                                                "address": "西湖区湖底公园1号"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "name": "王一博",
+                                                "age": 28,
+                                                "address": "滨江区网商路699号"
+                                            }
+                                        ]
+                                    },
+                                    "columns": [
+                                        {
+                                            "dataIndex": "name",
+                                            "key": "name",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('name')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Space",
+                                                        "id": "node_oclpw2fm6t1",
+                                                        "props": {
+                                                            "align": "start",
+                                                            "direction": "vertical",
+                                                            "wrap": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": "",
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Button",
+                                                                "id": "node_oclpl0hbqv2",
+                                                                "props": {
+                                                                    "type": "link",
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.text"
+                                                                    },
+                                                                    "htmlType": "button",
+                                                                    "size": "small",
+                                                                    "shape": "default",
+                                                                    "icon": "",
+                                                                    "block": false,
+                                                                    "danger": false,
+                                                                    "ghost": false,
+                                                                    "disabled": false,
+                                                                    "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                                    "__events": {
+                                                                        "eventDataList": [
+                                                                            {
+                                                                                "type": "componentEvent",
+                                                                                "name": "onClick",
+                                                                                "relatedEventName": "goToDetail",
+                                                                                "paramStr": "this.record"
+                                                                            }
+                                                                        ],
+                                                                        "eventList": [
+                                                                            {
+                                                                                "name": "onClick",
+                                                                                "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                                "disabled": true
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "onClick": {
+                                                                        "type": "JSFunction",
+                                                                        "value": "function(){return this.goToDetail.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                                    },
+                                                                    "style": {
+                                                                        "paddingLeft": "0px",
+                                                                        "paddingRight": "0px",
+                                                                        "paddingTop": "0px",
+                                                                        "paddingBottom": "0px"
+                                                                    },
+                                                                    "ref": "button-2a7af6c7",
+                                                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": {
+                                                                    "type": "JSExpression",
+                                                                    "value": "this.utils.hasPermission(\"paramtpl.write\")"
+                                                                },
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            },
+                                                            {
+                                                                "componentName": "Tooltip",
+                                                                "id": "node_ocltwbx54q4",
+                                                                "props": {
+                                                                    "title": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.i18n('nopermission')"
+                                                                    },
+                                                                    "defaultOpen": false,
+                                                                    "autoAdjustOverflow": true,
+                                                                    "arrowPointAtCenter": false,
+                                                                    "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                                                    "ref": "tooltip-09e453e4",
+                                                                    "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": {
+                                                                    "type": "JSExpression",
+                                                                    "value": "!this.utils.hasPermission(\"paramtpl.write\")"
+                                                                },
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ],
+                                                                "children": [
+                                                                    {
+                                                                        "componentName": "Button",
+                                                                        "id": "node_ocltwbx54q3",
+                                                                        "props": {
+                                                                            "type": "link",
+                                                                            "children": {
+                                                                                "type": "JSExpression",
+                                                                                "value": "this.text"
+                                                                            },
+                                                                            "htmlType": "button",
+                                                                            "size": "small",
+                                                                            "shape": "default",
+                                                                            "icon": "",
+                                                                            "block": false,
+                                                                            "danger": false,
+                                                                            "ghost": false,
+                                                                            "disabled": true,
+                                                                            "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                                            "__events": {
+                                                                                "eventDataList": [
+                                                                                    {
+                                                                                        "type": "componentEvent",
+                                                                                        "name": "onClick",
+                                                                                        "relatedEventName": "goToDetail",
+                                                                                        "paramStr": "this.record"
+                                                                                    }
+                                                                                ],
+                                                                                "eventList": [
+                                                                                    {
+                                                                                        "name": "onClick",
+                                                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                                        "disabled": true
+                                                                                    }
+                                                                                ]
+                                                                            },
+                                                                            "onClick": {
+                                                                                "type": "JSFunction",
+                                                                                "value": "function(){return this.goToDetail.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                                            },
+                                                                            "style": {
+                                                                                "paddingLeft": "0px",
+                                                                                "paddingRight": "0px",
+                                                                                "paddingTop": "0px",
+                                                                                "paddingBottom": "0px"
+                                                                            },
+                                                                            "ref": "button-c6bhuvb"
+                                                                        },
+                                                                        "title": "",
+                                                                        "isLocked": false,
+                                                                        "condition": true,
+                                                                        "conditionGroup": "",
+                                                                        "loopArgs": [
+                                                                            "",
+                                                                            ""
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "componentName": "Typography.Text",
+                                                                "id": "node_oclpw2fm6t8",
+                                                                "props": {
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.record.description",
+                                                                        "mock": "text"
+                                                                    },
+                                                                    "code": false,
+                                                                    "delete": false,
+                                                                    "disabled": false,
+                                                                    "mark": false,
+                                                                    "keyboard": false,
+                                                                    "underline": false,
+                                                                    "strong": false,
+                                                                    "type": "secondary"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": ""
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclpl0hbqv1"
+                                            }
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "dataIndex": "family",
+                                            "key": "family",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('family')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "width": 220
+                                        },
+                                        {
+                                            "dataIndex": "createdAt",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclpw2fm6ta",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "moment(this.record?.createdAt).format('YYYY-MM-DD HH:mm:ss')",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclpw2fm6t9"
+                                            },
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"createdAt\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "width": 220
+                                        },
+                                        {
+                                            "dataIndex": "updatedAt",
+                                            "align": "left",
+                                            "fixed": "",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Typography.Text",
+                                                        "id": "node_oclpw2fm6tb",
+                                                        "props": {
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "moment(this.record?.updatedAt).format('YYYY-MM-DD HH:mm:ss')",
+                                                                "mock": "text"
+                                                            },
+                                                            "code": false,
+                                                            "delete": false,
+                                                            "disabled": false,
+                                                            "mark": false,
+                                                            "keyboard": false,
+                                                            "underline": false,
+                                                            "strong": false
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": true,
+                                                        "conditionGroup": ""
+                                                    }
+                                                ],
+                                                "id": "node_oclpmafnas1"
+                                            },
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n(\"updatedAt\")"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "width": 220
+                                        },
+                                        {
+                                            "align": "left",
+                                            "fixed": "",
+                                            "title": {
+                                                "type": "JSExpression",
+                                                "value": "this.i18n('action')"
+                                            },
+                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                            "dataIndex": "action",
+                                            "key": "action",
+                                            "render": {
+                                                "type": "JSSlot",
+                                                "params": [
+                                                    "text",
+                                                    "record",
+                                                    "index"
+                                                ],
+                                                "value": [
+                                                    {
+                                                        "componentName": "Button",
+                                                        "id": "node_oclpw2fm6tc",
+                                                        "props": {
+                                                            "type": "link",
+                                                            "children": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n('delete')"
+                                                            },
+                                                            "htmlType": "button",
+                                                            "size": "small",
+                                                            "shape": "default",
+                                                            "icon": "",
+                                                            "block": false,
+                                                            "danger": true,
+                                                            "ghost": false,
+                                                            "disabled": false,
+                                                            "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                            "__events": {
+                                                                "eventDataList": [
+                                                                    {
+                                                                        "type": "componentEvent",
+                                                                        "name": "onClick",
+                                                                        "relatedEventName": "onDelete",
+                                                                        "paramStr": "this.record"
+                                                                    }
+                                                                ],
+                                                                "eventList": [
+                                                                    {
+                                                                        "name": "onClick",
+                                                                        "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                        "disabled": true
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "onClick": {
+                                                                "type": "JSFunction",
+                                                                "value": "function(){return this.onDelete.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                            },
+                                                            "ref": "button-2e1d9327",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "this.utils.hasPermission(\"paramtpl.write\")"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    },
+                                                    {
+                                                        "componentName": "Tooltip",
+                                                        "id": "node_ocltwbx54q2",
+                                                        "props": {
+                                                            "title": {
+                                                                "type": "JSExpression",
+                                                                "value": "this.i18n('nopermission')"
+                                                            },
+                                                            "defaultOpen": false,
+                                                            "autoAdjustOverflow": true,
+                                                            "arrowPointAtCenter": false,
+                                                            "_unsafe_MixedSetter_title_select": "VariableSetter",
+                                                            "ref": "tooltip-5245911d",
+                                                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                                                        },
+                                                        "title": "",
+                                                        "isLocked": false,
+                                                        "condition": {
+                                                            "type": "JSExpression",
+                                                            "value": "!this.utils.hasPermission(\"paramtpl.write\")"
+                                                        },
+                                                        "conditionGroup": "",
+                                                        "loopArgs": [
+                                                            "",
+                                                            ""
+                                                        ],
+                                                        "children": [
+                                                            {
+                                                                "componentName": "Button",
+                                                                "id": "node_ocltwbx54q1",
+                                                                "props": {
+                                                                    "type": "link",
+                                                                    "children": {
+                                                                        "type": "JSExpression",
+                                                                        "value": "this.i18n('delete')"
+                                                                    },
+                                                                    "htmlType": "button",
+                                                                    "size": "small",
+                                                                    "shape": "default",
+                                                                    "icon": "",
+                                                                    "block": false,
+                                                                    "danger": true,
+                                                                    "ghost": false,
+                                                                    "disabled": true,
+                                                                    "_unsafe_MixedSetter_children_select": "VariableSetter",
+                                                                    "__events": {
+                                                                        "eventDataList": [
+                                                                            {
+                                                                                "type": "componentEvent",
+                                                                                "name": "onClick",
+                                                                                "relatedEventName": "onDelete",
+                                                                                "paramStr": "this.record"
+                                                                            }
+                                                                        ],
+                                                                        "eventList": [
+                                                                            {
+                                                                                "name": "onClick",
+                                                                                "template": "onClick(event,${extParams}){\n// 点击按钮时的回调\nconsole.log('onClick', event);}",
+                                                                                "disabled": true
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "onClick": {
+                                                                        "type": "JSFunction",
+                                                                        "value": "function(){return this.onDelete.apply(this,Array.prototype.slice.call(arguments).concat([this.record])) }"
+                                                                    },
+                                                                    "ref": "button-38fba47b"
+                                                                },
+                                                                "title": "",
+                                                                "isLocked": false,
+                                                                "condition": true,
+                                                                "conditionGroup": "",
+                                                                "loopArgs": [
+                                                                    "",
+                                                                    ""
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "id": "node_oclpw2amei1"
+                                            },
+                                            "width": 120
+                                        }
+                                    ],
+                                    "rowKey": "id",
+                                    "pagination": {
+                                        "pageSize": 10,
+                                        "total": {
+                                            "type": "JSExpression",
+                                            "value": "this.state.templateList?.length || 0",
+                                            "mock": 15
+                                        },
+                                        "simple": false,
+                                        "showSizeChanger": false
+                                    },
+                                    "loading": {
+                                        "type": "JSExpression",
+                                        "value": "this.state.loading",
+                                        "mock": false
+                                    },
+                                    "showHeader": true,
+                                    "size": "default",
+                                    "tableLayout": "",
+                                    "scroll": {
+                                        "scrollToFirstRowOnChange": true
+                                    },
+                                    "bordered": true
+                                },
+                                "title": "",
+                                "isLocked": false,
+                                "condition": true,
+                                "conditionGroup": ""
+                            }
+                        ]
+                    },
+                    {
+                        "componentName": "Block",
+                        "id": "node_oclty7lt3j2",
+                        "props": {
+                            "uuid": "412b426d-cd1c-4f59-a1c2-ea16c08f523e",
+                            "_unsafe_MixedSetter____condition____select": "VariableSetter"
+                        },
+                        "title": "",
+                        "isLocked": false,
+                        "condition": {
+                            "type": "JSExpression",
+                            "value": "!this.utils.hasPermission(\"paramtpl.read\")"
+                        },
+                        "conditionGroup": "",
+                        "loopArgs": [
+                            "",
+                            ""
+                        ]
+                    }
+                ]
+            }
+        ],
+        "i18n": {
+            "zh-CN": {
+                "create": "创建模板",
+                "input": "搜索模板名称",
+                "name": "模板名称",
+                "desc": "描述",
+                "family": "版本",
+                "tplType": "类型",
+                "action": "操作",
+                "save": "保存",
+                "cancel": "取消",
+                "delete": "删除",
+                "confirm": "请确认",
+                "success": "创建成功!",
+                "createdAt": "创建时间",
+                "updatedAt": "更新时间",
+                "rule": "8-64个字符以字母开头，只含小写字母、数字和'-'",
+                "ranges": "长度范围3-200",
+                "version": "请选择版本",
+                "entername": "输入模板名称",
+                "nopermission": "没有权限"
+            },
+            "en-US": {
+                "create": "Create Template",
+                "input": "Search Template Name",
+                "name": "Template Name",
+                "desc": "Description",
+                "family": "Family",
+                "tplType": "Type",
+                "action": "Action",
+                "save": "Save",
+                "cancel": "Cancel",
+                "delete": "Delete",
+                "confirm": "Confirm",
+                "success": "Created successfully!",
+                "createdAt": "Creation Time",
+                "updatedAt": "Last Update Time",
+                "rule": "8-64 characters starting with a letter, only lowercase letters, numbers, and '-'",
+                "ranges": "The value ranges from 3 to 200",
+                "version": "Select Version",
+                "entername": "Enter Name",
+                "nopermission": "No permission"
+            }
+        }
+    },
+    "thumbnails": "platform/6c8905d2-2c32-4374-9620-21da20d91054/thumbnails/7fedc471-c525-4bc7-98a8-9111cb6117e9.png",
+    "tags": [
+        "根目录"
+    ],
+    "description": null,
+    "platformUuid": "6c8905d2-2c32-4374-9620-21da20d91054",
+    "type": "page",
+    "createdAt": "2023-11-30T09:50:37.802Z",
+    "updatedAt": "2024-11-04T06:42:06.499Z"
+}

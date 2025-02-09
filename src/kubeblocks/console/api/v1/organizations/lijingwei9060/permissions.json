@@ -1,0 +1,93 @@
+{
+    "items": [
+        {
+            "description": "Allow to view alert related resources.",
+            "group": "alert",
+            "name": "alert.read"
+        },
+        {
+            "description": "Allow to change alert configuration.",
+            "group": "alert",
+            "name": "alert.write"
+        },
+        {
+            "description": "Full access to the organization and its resources.",
+            "name": "*.*"
+        },
+        {
+            "description": "Allow to view backup repo information.",
+            "group": "backup",
+            "name": "backuprepo.read"
+        },
+        {
+            "description": "Allow to manage backup repo.",
+            "group": "backup",
+            "name": "backuprepo.write"
+        },
+        {
+            "description": "Allow to view benchmark test resutls.",
+            "group": "bench",
+            "name": "bench.read"
+        },
+        {
+            "description": "Allow to create benchmark test.",
+            "group": "bench",
+            "name": "bench.write"
+        },
+        {
+            "description": "Allow to view clusters information.",
+            "group": "cluster",
+            "name": "cluster.read"
+        },
+        {
+            "description": "Allow to make changes to clusters.",
+            "group": "cluster",
+            "name": "cluster.write"
+        },
+        {
+            "description": "Allow to view data replication related information.",
+            "group": "dataTransform",
+            "name": "datatrans.read"
+        },
+        {
+            "description": "Allow to manage data replication related resources, such as topology, channel.",
+            "group": "dataTransform",
+            "name": "datatrans.write"
+        },
+        {
+            "description": "Allow to view members and invitations information.",
+            "group": "member",
+            "name": "member.read"
+        },
+        {
+            "description": "Allow to manage members.",
+            "group": "member",
+            "name": "member.write"
+        },
+        {
+            "description": "Allow to view all operation logs.",
+            "group": "operationLog",
+            "name": "opslog.read"
+        },
+        {
+            "description": "Allow to view organization information.",
+            "group": "organization",
+            "name": "organization.read"
+        },
+        {
+            "description": "Allow to update organization settings.",
+            "group": "organization",
+            "name": "organization.write"
+        },
+        {
+            "description": "Allow to view parameter templates.",
+            "group": "parameterTemplate",
+            "name": "paramtpl.read"
+        },
+        {
+            "description": "Allow to manage parameter templates.",
+            "group": "parameterTemplate",
+            "name": "paramtpl.write"
+        }
+    ]
+}

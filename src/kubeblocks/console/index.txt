@@ -1,0 +1,96 @@
+
+https://api.kubeblocks.io/api/v1/engineOptions
+https://api.kubeblocks.io/api/v1/user
+https://api.kubeblocks.io/api/v1/invitations
+https://api.kubeblocks.io/api/v1/organizations
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/permissions
+https://console.kubeblocks.io/lowcode/api/resources/86acfcfe-8a9f-4e8b-81be-418b58cc332d
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/alerts/objects
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/backupStats
+
+
+https://console.kubeblocks.io/lowcode/api/resources/ec9599aa-9d12-40d3-9986-eedb0cf7d382
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/tags
+
+
+https://console.kubeblocks.io/lowcode/api/resources/7fedc471-c525-4bc7-98a8-9111cb6117e9 // 参数模板-自定义模板
+https://console.kubeblocks.io/lowcode/api/resources/b53a22be-c90d-47ce-a4db-c64e9a187623 // 参数模板-默认模板
+https://console.kubeblocks.io/lowcode/api/resources/34ba3c9b-54f8-4977-9c7f-981632b0080f // 参数模板-自定义模板-demo-hello1
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/paramTpls?partition=custom
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/paramTpls?partition=default
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/paramTpls/demo-hello1?partition=custom
+
+
+https://console.kubeblocks.io/lowcode/api/resources/2f15c4b4-fc7c-4f9f-9dbe-8896c19a8e16 // 备份中心-备份集
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/backups
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/backups/455
+
+https://console.kubeblocks.io/lowcode/api/resources/841083e0-c5ce-4636-ad4a-afaff8e1627c // 备份中心-备份仓库
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/backupRepo
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/environments
+https://api.kubeblocks.io/api/v1/environments/apecloud-demo/backupRepo/apecloud-demo-backuprepo-rp1?orgName=lijingwei9060 // 备份中心-备份仓库-详情
+
+https://console.kubeblocks.io/lowcode/api/resources/d55bfcb9-9cef-4dac-9947-7162739ad238 // 备份中心-备份历史
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/backups?withDeletedBackups=true // 备份中心-备份历史(备份历史标签页)
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/restore                         // 备份中心-备份历史(恢复历史标签页)   
+
+
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15 // 集群详情
+https://console.kubeblocks.io/lowcode/api/resources/d9abe7d8-a5cc-4584-9492-731673665702
+https://console.kubeblocks.io/lowcode/api/resources/65e6d597-543b-4394-89cf-94e8e8098e6e
+https://console.kubeblocks.io/lowcode/api/resources/a5ef8a1c-44c3-4a66-971f-dd9dbf820add
+https://console.kubeblocks.io/lowcode/api/resources/9f84e19c-d1fd-4a37-85eb-3197e874da7c
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/environments/apecloud-demo
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/environments/apecloud-demo/loadbalancer
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/instances/metrics
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/metrics?query=last_over_time(mysql_replication_heartbeat_relay_delay_seconds%7Bapp_kubernetes_io_instance%3D%22garli-6d7cfdf56f%22,+pod%3D%22garli-6d7cfdf56f-mysql-0%22%7D[2m])&queryType=instant
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/metrics?query=last_over_time(mysql_replication_heartbeat_relay_delay_seconds%7Bapp_kubernetes_io_instance%3D%22garli-6d7cfdf56f%22,+pod%3D%22garli-6d7cfdf56f-mysql-1%22%7D[2m])&queryType=instant
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/instances
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/endpoints
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/manifests/opsrequest
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/events?start=1738841917&end=1739101117&resourceId=428789445911642113&resourceType=cluster
+
+https://api.kubeblocks.io/api/v1/engineLicenses?engineName=mysql
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusterTags?clusterIds=428789445911642113
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/restore
+
+
+// 资源监控
+https://console.kubeblocks.io/dashboard/v1/d-solo/kubelet/resource-utilization?orgId=1&from=now-30m&to=now&var-datasource=fb5a1ad7-97cf-4885-97b8-eb90a2bf667f&var-namespace=kubeblocks-cloud-ns&var-container=mysql&var-cluster=garli-6d7cfdf56f&var-instance=garli-6d7cfdf56f-mysql-0&var-job=oteld-app-metrics&kiosk&theme=dark&panelId=78
+wss://console.kubeblocks.io/dashboard/v1/api/live/ws
+https://console.kubeblocks.io/dashboard/v1/api/dashboards/uid/kubelet
+
+
+https://console.kubeblocks.io/lowcode/api/resources/bce49c27-b934-412e-b801-5ddbf8514e65 // 数据库管理
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/databases // 返回错误看不出来是什么
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/datasource // 数据管理， 返回空
+
+
+日志使用的是loki
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/logs/error?instanceName=garli-6d7cfdf56f-mysql-0&startTime=1739015381440000000&endTime=1739101781440000000&limit=100&sortType=desc
+有运行日志、慢日志、主备切换日志
+an error on the server ("Get \"http://loki-gateway-599bb4b449/loki/api/v1/query_range?query=%7Bcluster_name%3D%22garli-6d7cfdf56f%22%2C+type%3D%22slow%22%7D+%7C%3D+%22%22&limit=100&start=1739015444254000000&end=1739101844254000000&direction=BACKWARD\": dial tcp 172.20.170.187:80: connect: connection refused") has prevented the request from succeeding
+
+sql审计
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/logs/audit?startTime=1739015467363000000&endTime=1739101867363000000&limit=100&sortType=desc
+an error on the server ("Get \"http://loki-gateway-599bb4b449/loki/api/v1/query_range?query=%7Bcluster_name%3D%22garli-6d7cfdf56f%22%2C+type%3D%22auditlog%22%7D+%7C%3D+%22%22&limit=100&start=1739015467363000000&end=1739101867363000000&direction=BACKWARD\": dial tcp 172.20.170.187:80: connect: connection refused") has prevented the request from succeeding
+
+
+
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/configurations?component=mysql
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/parameterSpecs?component=mysql // 参数列表
+
+https://console.kubeblocks.io/lowcode/api/resources/04213df2-fc8b-4f3b-bb26-e784911cd64e // 参数修改历史
+https://api.kubeblocks.io/api/v1/organizations/lijingwei9060/clusters/garlic15/parameterHistories // 参数修改历史
+
+
+https://api.kubeblocks.io/api/v1/features/IPWhiteList // 访问安全

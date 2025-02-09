@@ -1,0 +1,26 @@
+{
+    "items": [
+        {
+            "autoBackup": true,
+            "backupMethod": null,
+            "backupPolicyName": null,
+            "backupType": "Continuous",
+            "cloudProvider": "aws",
+            "clusterId": "428789445911642113",
+            "completionTimestamp": null,
+            "creationTimestamp": "2025-02-06T02:05:50Z",
+            "duration": null,
+            "engine": "mysql",
+            "environmentName": "apecloud-demo",
+            "id": "455",
+            "name": "78f33fce-garli-6d7cfdf56f-mysq-archive-binlog",
+            "orgName": "lijingwei9060",
+            "snapshotVolumes": false,
+            "sourceCluster": "garlic15",
+            "startTimestamp": null,
+            "status": "Failed",
+            "targetPods": null,
+            "totalSize": ""
+        }
+    ]
+}
