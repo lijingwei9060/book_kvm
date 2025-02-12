@@ -4,17 +4,34 @@
             "accessMethod": "Tool",
             "config": {
                 "bucket": "kb-backup",
-                "endpoint": "http://apecl-58db464c66-minio.kb-system.svc.cluster.local:9000"
+                "endpoint": "http://apecl-855c967d68-minio.kb-system.svc.cluster.local:9000"
             },
-            "createdAt": "2024-12-20T10:24:45Z",
-            "default": true,
-            "environmentId": "fb5a1ad7-97cf-4885-97b8-eb90a2bf667f",
+            "createdAt": "2024-12-17T09:42:02Z",
+            "default": false,
+            "environmentId": "e7981d03-a555-423b-b0e7-5f97ab3fd98d",
             "environmentName": "apecloud-demo",
+            "failedReason": "operation error S3: HeadBucket, https response error StatusCode: 0, RequestID: , HostID: , request send failed, Head \"http://apecl-855c967d68-minio.kb-system.svc.cluster.local:9000/kb-backup\": dial tcp: lookup apecl-855c967d68-minio.kb-system.svc.cluster.local on 192.168.0.10:53: no such host",
             "id": "1",
             "name": "apecloud-demo-backuprepo-rp1",
-            "status": "Ready",
+            "status": "Failed",
             "storageID": "1",
             "storageProvider": "minio"
+        },
+        {
+            "accessMethod": "",
+            "config": {
+                "bucket": "kubeblocks-test",
+                "region": "cn-zhangjiakou"
+            },
+            "createdAt": "2025-01-08T07:06:19Z",
+            "default": true,
+            "environmentId": "e7981d03-a555-423b-b0e7-5f97ab3fd98d",
+            "environmentName": "apecloud-demo",
+            "id": "38",
+            "name": "oss",
+            "status": "Ready",
+            "storageID": "35",
+            "storageProvider": "oss"
         }
     ]
 }

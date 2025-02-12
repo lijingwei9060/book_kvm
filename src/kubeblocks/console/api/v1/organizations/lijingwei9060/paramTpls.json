@@ -1,0 +1,12 @@
+{
+  "items": [
+      {
+          "createdAt": "2024-12-17T04:48:13.5953Z",
+          "description": "{\"en-US\":\"Default parameter template for ApeCloud MySQL 8.0\",\"zh-CN\":\"ApeCloud MySQL 8.0的默认参数模板\"}",
+          "family": "ac-mysql-8.0",
+          "name": "apecloud-mysql-8.0-default-parameter-template",
+          "partition": "default",
+          "updatedAt": "2025-02-06T10:43:08.348859Z"
+      }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "component": "minio",
+  "upgradeableVersions": null,
+  "versions": [
+      {
+          "majorVersion": "2024",
+          "minorVersions": [
+              "2024.6.29"
+          ]
+      }
+  ]
+}

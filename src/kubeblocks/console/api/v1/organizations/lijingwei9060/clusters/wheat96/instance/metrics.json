@@ -1,0 +1,16 @@
+{
+  "items": [
+      {
+          "cpuUsage": "0.0296",
+          "diskUsage": "0.1172",
+          "instanceName": "wheat-5f94f8c75f-ch-keeper-0",
+          "memoryUsage": "0.5579"
+      },
+      {
+          "cpuUsage": "0.0269",
+          "diskUsage": "0.0169",
+          "instanceName": "wheat-5f94f8c75f-clickhouse-0",
+          "memoryUsage": "0.5437"
+      }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "items": [
+      {
+          "createdAt": "2025-02-12T14:51:28.500Z",
+          "details": "{\"engineMode\":\"cluster\",\"mode\":\"cluster\",\"environmentName\":\"apecloud-demo\",\"name\":\"wheat96\",\"project\":\"kubeblocks-cloud-ns\",\"singleZone\":true,\"engine\":\"clickhouse\",\"version\":\"24.8.3\",\"terminationPolicy\":\"DoNotTerminate\",\"monitorEnabled\":true,\"vpcEndpointEnabled\":false,\"internetEndpointEnabled\":false,\"createOnlySet\":true,\"paramtpls\":[],\"components\":[{\"component\":\"clickhouse\",\"compNum\":1,\"replicas\":2,\"storage\":\"20Gi\",\"storageClass\":\"apelocal-hostpath-default\",\"classCode\":\"clickhouse.cluster.clickhouse.1c2g.g\"},{\"component\":\"ch-keeper\",\"replicas\":1,\"storage\":\"20Gi\",\"storageClass\":\"apelocal-hostpath-default\",\"classCode\":\"clickhouse.cluster.ch-keeper.1c2g.g\"}],\"backup\":{\"backupRepo\":\"oss\",\"snapshotVolumes\":false}}",
+          "end": "2025-02-12T14:51:28.499Z",
+          "eventName": "CreateCluster",
+          "id": "429736792267161601",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429736792250384385",
+          "resourceName": "wheat96",
+          "resourceType": "cluster",
+          "result": "{\"availabilityZones\":[\"cn-zhangjiakou-b\"],\"backup\":{\"backupRepo\":\"oss\",\"snapshotVolumes\":false},\"cloudProvider\":\"aliyun\",\"cloudRegion\":\"cn-zhangjiakou\",\"codeShort\":\"1c2g\",\"components\":[{\"classCode\":\"clickhouse.cluster.clickhouse.1c2g.g\",\"classSeries\":\"general\",\"compNum\":1,\"component\":\"clickhouse\",\"cpu\":1,\"memory\":2,\"replicas\":2,\"storage\":\"20Gi\",\"storageClass\":\"apelocal-hostpath-default\",\"volumes\":null},{\"classCode\":\"clickhouse.cluster.ch-keeper.1c2g.g\",\"classSeries\":\"general\",\"component\":\"ch-keeper\",\"cpu\":1,\"memory\":2,\"replicas\":1,\"storage\":\"20Gi\",\"storageClass\":\"apelocal-hostpath-default\",\"volumes\":null}],\"cpu\":0.5,\"createdAt\":\"2025-02-12T14:51:28Z\",\"engine\":\"clickhouse\",\"environmentId\":\"e7981d03-a555-423b-b0e7-5f97ab3fd98d\",\"environmentName\":\"apecloud-demo\",\"environmentType\":\"public\",\"hash\":\"kubeblocks-cloud-ns/wheat-5f94f8c75f\",\"id\":\"429736792250384385\",\"internetEndpointEnabled\":false,\"memory\":0.5,\"mode\":\"cluster\",\"monitorEnabled\":true,\"name\":\"wheat96\",\"namespace\":\"kubeblocks-cloud-ns\",\"orgName\":\"lijingwei9060\",\"podAntiAffinityEnabled\":true,\"project\":\"kubeblocks-cloud-ns\",\"replicas\":1,\"singleZone\":true,\"status\":\"Pending\",\"storage\":20,\"terminationPolicy\":\"DoNotTerminate\",\"updatedAt\":\"2025-02-12T14:51:28Z\",\"version\":\"24.8.3\",\"vpcEndpointEnabled\":false}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-12T14:51:27.767Z"
+      },
+      {
+          "createdAt": "2025-02-12T15:01:37.910Z",
+          "details": "{\"component\":\"clickhouse\",\"type\":\"internet\",\"enable\":true,\"portsMapping\":[{\"new\":8001,\"old\":8001}]}",
+          "end": "2025-02-12T15:01:37.909Z",
+          "eventName": "ExposeCluster",
+          "hasTask": true,
+          "id": "429737814687481857",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429736792250384385",
+          "resourceName": "wheat96",
+          "resourceType": "cluster",
+          "result": "{\"opsRequestName\":\"wheat-5f94f8c75f-expose-l87wh\",\"dependentOpsName\":null}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-12T15:01:37.718Z"
+      },
+      {
+          "createdAt": "2025-02-12T15:11:05.519Z",
+          "details": "{\"classCode\":\"clickhouse.cluster.clickhouse.4c16g.g\",\"component\":\"clickhouse\"}",
+          "end": "2025-02-12T15:11:05.518Z",
+          "eventName": "ClusterVScale",
+          "hasTask": true,
+          "id": "429738766962327553",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429736792250384385",
+          "resourceName": "wheat96",
+          "resourceType": "cluster",
+          "result": "{\"opsRequestName\":\"wheat-5f94f8c75f-verticalscaling-tl85k\",\"dependentOpsName\":null}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-12T15:11:05.411Z"
+      },
+      {
+          "createdAt": "2025-02-12T15:15:29.681Z",
+          "details": "{\"component\":\"clickhouse\",\"replicas\":3}",
+          "end": "2025-02-12T15:15:29.681Z",
+          "eventName": "ClusterHScale",
+          "hasTask": true,
+          "id": "429739210165977089",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429736792250384385",
+          "resourceName": "wheat96",
+          "resourceType": "cluster",
+          "result": "{\"opsRequestName\":\"wheat-5f94f8c75f-horizontalscaling-9k9sz\",\"dependentOpsName\":null}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-12T15:15:29.575Z"
+      }
+  ]
+}

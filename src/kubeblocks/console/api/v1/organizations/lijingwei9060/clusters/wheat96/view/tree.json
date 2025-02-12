@@ -1,0 +1,430 @@
+{
+  "children": [
+      {
+          "children": [],
+          "events": [
+              {
+                  "group": "apps.kubeblocks.io",
+                  "kind": "Cluster",
+                  "level": "TimeExceeded",
+                  "message": "update event for Cluster kubeblocks-cloud-ns/wheat-5f94f8c75f",
+                  "name": "wheat-5f94f8c75f",
+                  "namespace": "kubeblocks-cloud-ns",
+                  "owners": [
+                      {
+                          "apiVersion": "v1",
+                          "kind": "Event"
+                      }
+                  ],
+                  "resourceVersion": "437142638",
+                  "time": "2025-02-12T15:01:58.093300Z",
+                  "type": "update",
+                  "version": "v1alpha1"
+              },
+              {
+                  "group": "",
+                  "kind": "Endpoints",
+                  "level": "Normal",
+                  "message": "update event for Endpoints kubeblocks-cloud-ns/wheat-5f94f8c75f-clickhouse-internet",
+                  "name": "wheat-5f94f8c75f-clickhouse-internet",
+                  "namespace": "kubeblocks-cloud-ns",
+                  "owners": [
+                      {
+                          "apiVersion": "v1",
+                          "kind": "Event"
+                      }
+                  ],
+                  "resourceVersion": "437148541",
+                  "time": "2025-02-12T15:11:05.808175Z",
+                  "type": "update",
+                  "version": "v1"
+              }
+          ],
+          "level": "Event"
+      },
+      {
+          "children": [],
+          "events": [],
+          "level": "Backup"
+      },
+      {
+          "children": [
+              {
+                  "children": [
+                      {
+                          "children": [
+                              {
+                                  "children": [],
+                                  "events": [],
+                                  "level": "ConfigMap",
+                                  "name": "wheat-5f94f8c75f-ch-keeper-clickhouse-keeper-tpl",
+                                  "uid": "7fbf94c9-97e6-45fb-8c63-40a5a51fd477"
+                              }
+                          ],
+                          "events": [],
+                          "level": "ConfigMap"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Configuration",
+                  "name": "wheat-5f94f8c75f-ch-keeper",
+                  "uid": "788cff18-7da6-4a7f-a281-0ae4bd0375d4"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "Service",
+                          "name": "wheat-5f94f8c75f-ch-keeper",
+                          "uid": "078ca6a6-3fc9-4432-b1ea-48767c7b851c"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Service"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "ConfigMap",
+                          "name": "wheat-5f94f8c75f-ch-keeper-env",
+                          "uid": "47dcc013-661f-4fbf-b810-228af551ebfb"
+                      }
+                  ],
+                  "events": [],
+                  "level": "ConfigMap"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "Secret",
+                          "name": "wheat-5f94f8c75f-ch-keeper-account-admin",
+                          "uid": "612ff0ab-a4db-4227-8d0f-578468d5e783"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Secret"
+              }
+          ],
+          "events": [
+              {
+                  "group": "",
+                  "kind": "Event",
+                  "level": "Normal",
+                  "message": "component is Updating",
+                  "name": "wheat-5f94f8c75f-ch-keeper.18237e12484d74ea",
+                  "namespace": "kubeblocks-cloud-ns",
+                  "owners": [
+                      {
+                          "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                          "kind": "Component",
+                          "name": "wheat-5f94f8c75f-ch-keeper",
+                          "uid": "6acc4ce1-d266-4bb5-b86e-583fa26d9988"
+                      }
+                  ],
+                  "progress": "0/1",
+                  "reason": "ComponentPhaseTransition",
+                  "resourceVersion": "48831229",
+                  "time": "2025-02-12T15:11:05.703466Z",
+                  "type": "update",
+                  "version": "v1"
+              },
+              {
+                  "group": "",
+                  "kind": "Event",
+                  "level": "Normal",
+                  "message": "component is Running",
+                  "name": "wheat-5f94f8c75f-ch-keeper.18237d866c535356",
+                  "namespace": "kubeblocks-cloud-ns",
+                  "owners": [
+                      {
+                          "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                          "kind": "Component",
+                          "name": "wheat-5f94f8c75f-ch-keeper",
+                          "uid": "6acc4ce1-d266-4bb5-b86e-583fa26d9988"
+                      }
+                  ],
+                  "progress": "0/1",
+                  "reason": "ComponentPhaseTransition",
+                  "resourceVersion": "48831242",
+                  "time": "2025-02-12T15:11:06.184175Z",
+                  "type": "update",
+                  "version": "v1"
+              }
+          ],
+          "level": "Component",
+          "name": "wheat-5f94f8c75f-ch-keeper",
+          "uid": "6acc4ce1-d266-4bb5-b86e-583fa26d9988"
+      },
+      {
+          "children": [
+              {
+                  "children": [
+                      {
+                          "children": [
+                              {
+                                  "children": [],
+                                  "events": [],
+                                  "level": "ConfigMap",
+                                  "name": "wheat-5f94f8c75f-clickhouse-clickhouse-client-tpl",
+                                  "uid": "1c6dd735-11e3-459c-a6c6-16772f22c67a"
+                              },
+                              {
+                                  "children": [],
+                                  "events": [],
+                                  "level": "ConfigMap",
+                                  "name": "wheat-5f94f8c75f-clickhouse-clickhouse-tpl",
+                                  "uid": "d7225780-381e-425b-89c6-539e92e187dc"
+                              },
+                              {
+                                  "children": [],
+                                  "events": [],
+                                  "level": "ConfigMap",
+                                  "name": "wheat-5f94f8c75f-clickhouse-clickhouse-user-tpl",
+                                  "uid": "66b74120-75e9-4087-8c51-8f7b872d2087"
+                              }
+                          ],
+                          "events": [],
+                          "level": "ConfigMap"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Configuration",
+                  "name": "wheat-5f94f8c75f-clickhouse",
+                  "uid": "5bb702e0-5169-4a3d-8394-8f1c58034430"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "Service",
+                          "name": "wheat-5f94f8c75f-clickhouse",
+                          "uid": "fe73ca97-cdee-4dd0-8de7-e4b5c43b0a1c"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Service"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "ConfigMap",
+                          "name": "wheat-5f94f8c75f-clickhouse-env",
+                          "uid": "ada24c97-bcfd-4f54-9633-3d857b0cb3fa"
+                      }
+                  ],
+                  "events": [],
+                  "level": "ConfigMap"
+              },
+              {
+                  "children": [
+                      {
+                          "children": [],
+                          "events": [],
+                          "level": "Secret",
+                          "name": "wheat-5f94f8c75f-clickhouse-account-admin",
+                          "uid": "6589b7a3-80d4-4a7c-910b-9b0db785a1ef"
+                      }
+                  ],
+                  "events": [],
+                  "level": "Secret"
+              },
+              {
+                  "children": [],
+                  "events": [],
+                  "level": "ServiceAccount",
+                  "name": "kb-wheat-5f94f8c75f",
+                  "uid": "04227ad6-5903-4ec2-a52d-44016ecb9291"
+              },
+              {
+                  "children": [],
+                  "events": [],
+                  "level": "RoleBinding",
+                  "name": "kb-wheat-5f94f8c75f",
+                  "uid": "46c4c6ea-02e8-44b1-961e-cd05b4ec9e4c"
+              }
+          ],
+          "events": [
+              {
+                  "group": "",
+                  "kind": "Event",
+                  "level": "Normal",
+                  "message": "component is Updating",
+                  "name": "wheat-5f94f8c75f-clickhouse.18237e124d92f90e",
+                  "namespace": "kubeblocks-cloud-ns",
+                  "owners": [
+                      {
+                          "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                          "kind": "Component",
+                          "name": "wheat-5f94f8c75f-clickhouse",
+                          "uid": "bb4379b6-ae5e-4ba6-8cf8-f07253a4c1ee"
+                      }
+                  ],
+                  "progress": "0/1",
+                  "reason": "ComponentPhaseTransition",
+                  "resourceVersion": "48831243",
+                  "time": "2025-02-12T15:11:06.310831Z",
+                  "type": "update",
+                  "version": "v1"
+              }
+          ],
+          "level": "Component",
+          "name": "wheat-5f94f8c75f-clickhouse",
+          "uid": "bb4379b6-ae5e-4ba6-8cf8-f07253a4c1ee"
+      },
+      {
+          "children": [
+              {
+                  "children": [],
+                  "events": [
+                      {
+                          "group": "",
+                          "kind": "Event",
+                          "level": "Normal",
+                          "message": "Ensured load balancer [lb-8vbumrffqjqosm5wc5usf]",
+                          "name": "wheat-5f94f8c75f-clickhouse-internet.18237e160769829c",
+                          "namespace": "kubeblocks-cloud-ns",
+                          "owners": [
+                              {
+                                  "apiVersion": "v1",
+                                  "kind": "Service",
+                                  "name": "wheat-5f94f8c75f-clickhouse-internet",
+                                  "uid": "db171ea2-8698-4935-ba90-75bc460d7dae"
+                              }
+                          ],
+                          "progress": "0/1",
+                          "reason": "EnsuredLoadBalancer",
+                          "resourceVersion": "48830666",
+                          "time": "2025-02-12T15:01:54.180260Z",
+                          "type": "add",
+                          "version": "v1"
+                      },
+                      {
+                          "group": "",
+                          "kind": "Event",
+                          "level": "Normal",
+                          "message": "There are no available nodes for LoadBalancer",
+                          "name": "wheat-5f94f8c75f-clickhouse-internet.18237e96777bb806",
+                          "namespace": "kubeblocks-cloud-ns",
+                          "owners": [
+                              {
+                                  "apiVersion": "v1",
+                                  "kind": "Service",
+                                  "name": "wheat-5f94f8c75f-clickhouse-internet",
+                                  "uid": "db171ea2-8698-4935-ba90-75bc460d7dae"
+                              }
+                          ],
+                          "progress": "0/1",
+                          "reason": "UnAvailableLoadBalancer",
+                          "resourceVersion": "48831232",
+                          "time": "2025-02-12T15:11:05.813111Z",
+                          "type": "add",
+                          "version": "v1"
+                      }
+                  ],
+                  "level": "Service",
+                  "name": "wheat-5f94f8c75f-clickhouse-internet",
+                  "uid": "db171ea2-8698-4935-ba90-75bc460d7dae"
+              }
+          ],
+          "events": [],
+          "level": "Service"
+      }
+  ],
+  "events": [
+      {
+          "group": "apps.kubeblocks.io",
+          "kind": "Component",
+          "level": "Normal",
+          "message": "update event for Component kubeblocks-cloud-ns/wheat-5f94f8c75f-clickhouse",
+          "name": "wheat-5f94f8c75f-clickhouse",
+          "namespace": "kubeblocks-cloud-ns",
+          "owners": [
+              {
+                  "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                  "kind": "Cluster",
+                  "name": "wheat-5f94f8c75f",
+                  "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+              }
+          ],
+          "resourceVersion": "437148530",
+          "time": "2025-02-12T15:11:05.614794Z",
+          "type": "update",
+          "version": "v1alpha1"
+      },
+      {
+          "group": "apps.kubeblocks.io",
+          "kind": "Component",
+          "level": "Normal",
+          "message": "update event for Component kubeblocks-cloud-ns/wheat-5f94f8c75f-ch-keeper",
+          "name": "wheat-5f94f8c75f-ch-keeper",
+          "namespace": "kubeblocks-cloud-ns",
+          "owners": [
+              {
+                  "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                  "kind": "Cluster",
+                  "name": "wheat-5f94f8c75f",
+                  "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+              }
+          ],
+          "resourceVersion": "437148531",
+          "time": "2025-02-12T15:11:05.623226Z",
+          "type": "update",
+          "version": "v1alpha1"
+      },
+      {
+          "group": "",
+          "kind": "Event",
+          "level": "Normal",
+          "message": "The operator has started the provisioning of Cluster: wheat-5f94f8c75f",
+          "name": "wheat-5f94f8c75f.18237d845b9adbca",
+          "namespace": "kubeblocks-cloud-ns",
+          "owners": [
+              {
+                  "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                  "kind": "Cluster",
+                  "name": "wheat-5f94f8c75f",
+                  "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+              }
+          ],
+          "progress": "0/1",
+          "reason": "PreCheckSucceed",
+          "resourceVersion": "48831227",
+          "time": "2025-02-12T15:11:05.646775Z",
+          "type": "update",
+          "version": "v1"
+      },
+      {
+          "group": "",
+          "kind": "Event",
+          "level": "Normal",
+          "message": "Successfully applied for resources",
+          "name": "wheat-5f94f8c75f.18237d845b9af46b",
+          "namespace": "kubeblocks-cloud-ns",
+          "owners": [
+              {
+                  "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                  "kind": "Cluster",
+                  "name": "wheat-5f94f8c75f",
+                  "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+              }
+          ],
+          "progress": "0/1",
+          "reason": "ApplyResourcesSucceed",
+          "resourceVersion": "48831228",
+          "time": "2025-02-12T15:11:05.653878Z",
+          "type": "update",
+          "version": "v1"
+      }
+  ],
+  "level": "Cluster",
+  "name": "wheat-5f94f8c75f",
+  "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+}

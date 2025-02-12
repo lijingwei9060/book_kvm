@@ -1,0 +1,166 @@
+{
+  "items": [
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 8001,
+          "portName": "http-metrics",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "HTTP Metrics",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 8123,
+          "portName": "http",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "HTTP",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1",
+              "wheat-5f94f8c75f-clickhouse-0"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 8443,
+          "portName": "https",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "HTTPS",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9000,
+          "portName": "tcp",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "Native",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9004,
+          "portName": "tcp-mysql",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "MySQL emulation",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9005,
+          "portName": "tcp-postgresql",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "PostgreSQL emulation",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9009,
+          "portName": "http-intersrv",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "HTTP Intersrv",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1",
+              "wheat-5f94f8c75f-clickhouse-0"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9010,
+          "portName": "https-intersrv",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "HTTPS Intersrv",
+          "type": "LoadBalancer"
+      },
+      {
+          "component": "clickhouse",
+          "hosts": [
+              "47.92.29.124"
+          ],
+          "instances": [
+              "wheat-5f94f8c75f-clickhouse-0",
+              "wheat-5f94f8c75f-clickhouse-2",
+              "wheat-5f94f8c75f-clickhouse-1"
+          ],
+          "mutable": true,
+          "networkType": "Internet",
+          "port": 9440,
+          "portName": "tcp-secure",
+          "serviceName": "wheat-5f94f8c75f-clickhouse-internet",
+          "title": "TCP Secure",
+          "type": "LoadBalancer"
+      }
+  ]
+}

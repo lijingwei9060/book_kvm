@@ -1,0 +1,287 @@
+{
+  "kubernetesManifests": [
+      {
+          "kind": "OpsRequest",
+          "apiVersion": "apps.kubeblocks.io/v1alpha1",
+          "metadata": {
+              "name": "wheat-5f94f8c75f-expose-l87wh",
+              "generateName": "wheat-5f94f8c75f-expose-",
+              "namespace": "kubeblocks-cloud-ns",
+              "uid": "e393886b-ac5a-46c9-8e3e-9b24a02eaa23",
+              "resourceVersion": "437142639",
+              "generation": 1,
+              "creationTimestamp": "2025-02-12T15:01:37Z",
+              "labels": {
+                  "app.kubernetes.io/instance": "wheat-5f94f8c75f",
+                  "cloud.kubeblocks.io/cluster": "wheat96",
+                  "cloud.kubeblocks.io/organization": "lijingwei9060",
+                  "ops.kubeblocks.io/ops-type": "Expose"
+              },
+              "annotations": {
+                  "operations.kubeblocks.io/queue-end-time": "2025-02-12T15:01:37Z"
+              },
+              "ownerReferences": [
+                  {
+                      "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                      "kind": "Cluster",
+                      "name": "wheat-5f94f8c75f",
+                      "uid": "2cd41ad4-b35a-443a-8fda-88d22a66bf7a"
+                  }
+              ],
+              "finalizers": [
+                  "opsrequest.kubeblocks.io/finalizer"
+              ],
+              "managedFields": [
+                  {
+                      "manager": "apiserver",
+                      "operation": "Update",
+                      "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                      "time": "2025-02-12T15:01:37Z",
+                      "fieldsType": "FieldsV1",
+                      "fieldsV1": {
+                          "f:metadata": {
+                              "f:generateName": {},
+                              "f:labels": {
+                                  ".": {},
+                                  "f:cloud.kubeblocks.io/cluster": {},
+                                  "f:cloud.kubeblocks.io/organization": {}
+                              }
+                          },
+                          "f:spec": {
+                              ".": {},
+                              "f:clusterName": {},
+                              "f:enqueueOnForce": {},
+                              "f:expose": {},
+                              "f:preConditionDeadlineSeconds": {},
+                              "f:type": {}
+                          }
+                      }
+                  },
+                  {
+                      "manager": "kubeblocks",
+                      "operation": "Update",
+                      "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                      "time": "2025-02-12T15:01:37Z",
+                      "fieldsType": "FieldsV1",
+                      "fieldsV1": {
+                          "f:metadata": {
+                              "f:annotations": {
+                                  ".": {},
+                                  "f:operations.kubeblocks.io/queue-end-time": {}
+                              },
+                              "f:finalizers": {
+                                  ".": {},
+                                  "v:\"opsrequest.kubeblocks.io/finalizer\"": {}
+                              },
+                              "f:labels": {
+                                  "f:app.kubernetes.io/instance": {},
+                                  "f:ops.kubeblocks.io/ops-type": {}
+                              },
+                              "f:ownerReferences": {
+                                  ".": {},
+                                  "k:{\"uid\":\"2cd41ad4-b35a-443a-8fda-88d22a66bf7a\"}": {}
+                              }
+                          }
+                      }
+                  },
+                  {
+                      "manager": "kubeblocks",
+                      "operation": "Update",
+                      "apiVersion": "apps.kubeblocks.io/v1alpha1",
+                      "time": "2025-02-12T15:01:58Z",
+                      "fieldsType": "FieldsV1",
+                      "fieldsV1": {
+                          "f:status": {
+                              ".": {},
+                              "f:clusterGeneration": {},
+                              "f:completionTimestamp": {},
+                              "f:components": {
+                                  ".": {},
+                                  "f:clickhouse": {
+                                      ".": {},
+                                      "f:phase": {}
+                                  }
+                              },
+                              "f:conditions": {
+                                  ".": {},
+                                  "k:{\"type\":\"Exposing\"}": {
+                                      ".": {},
+                                      "f:lastTransitionTime": {},
+                                      "f:message": {},
+                                      "f:reason": {},
+                                      "f:status": {},
+                                      "f:type": {}
+                                  },
+                                  "k:{\"type\":\"Succeed\"}": {
+                                      ".": {},
+                                      "f:lastTransitionTime": {},
+                                      "f:message": {},
+                                      "f:reason": {},
+                                      "f:status": {},
+                                      "f:type": {}
+                                  },
+                                  "k:{\"type\":\"Validated\"}": {
+                                      ".": {},
+                                      "f:lastTransitionTime": {},
+                                      "f:message": {},
+                                      "f:reason": {},
+                                      "f:status": {},
+                                      "f:type": {}
+                                  },
+                                  "k:{\"type\":\"WaitForProgressing\"}": {
+                                      ".": {},
+                                      "f:lastTransitionTime": {},
+                                      "f:message": {},
+                                      "f:reason": {},
+                                      "f:status": {},
+                                      "f:type": {}
+                                  }
+                              },
+                              "f:lastConfiguration": {
+                                  ".": {},
+                                  "f:components": {
+                                      ".": {},
+                                      "f:clickhouse": {}
+                                  }
+                              },
+                              "f:phase": {},
+                              "f:progress": {},
+                              "f:startTimestamp": {}
+                          }
+                      },
+                      "subresource": "status"
+                  }
+              ]
+          },
+          "spec": {
+              "clusterName": "wheat-5f94f8c75f",
+              "type": "Expose",
+              "preConditionDeadlineSeconds": 10,
+              "expose": [
+                  {
+                      "componentName": "clickhouse",
+                      "switch": "Enable",
+                      "services": [
+                          {
+                              "name": "internet",
+                              "annotations": {
+                                  "cloud.kubeblocks.io/lb-ports-mapping": "8001:8001",
+                                  "service.beta.kubernetes.io/alibaba-cloud-loadbalancer-address-type": "internet",
+                                  "service.beta.kubernetes.io/alibaba-cloud-loadbalancer-charge-type": "",
+                                  "service.beta.kubernetes.io/alibaba-cloud-loadbalancer-spec": "slb.s1.small"
+                              },
+                              "ports": [
+                                  {
+                                      "name": "http-metrics",
+                                      "protocol": "TCP",
+                                      "port": 8001,
+                                      "targetPort": "http-metrics"
+                                  },
+                                  {
+                                      "name": "http",
+                                      "protocol": "TCP",
+                                      "port": 8123,
+                                      "targetPort": "http"
+                                  },
+                                  {
+                                      "name": "https",
+                                      "protocol": "TCP",
+                                      "port": 8443,
+                                      "targetPort": "https"
+                                  },
+                                  {
+                                      "name": "tcp",
+                                      "protocol": "TCP",
+                                      "port": 9000,
+                                      "targetPort": "tcp"
+                                  },
+                                  {
+                                      "name": "tcp-mysql",
+                                      "protocol": "TCP",
+                                      "port": 9004,
+                                      "targetPort": "tcp-mysql"
+                                  },
+                                  {
+                                      "name": "tcp-postgresql",
+                                      "protocol": "TCP",
+                                      "port": 9005,
+                                      "targetPort": "tcp-postgresql"
+                                  },
+                                  {
+                                      "name": "http-intersrv",
+                                      "protocol": "TCP",
+                                      "port": 9009,
+                                      "targetPort": "http-intersrv"
+                                  },
+                                  {
+                                      "name": "https-intersrv",
+                                      "protocol": "TCP",
+                                      "port": 9010,
+                                      "targetPort": "https-intersrv"
+                                  },
+                                  {
+                                      "name": "tcp-secure",
+                                      "protocol": "TCP",
+                                      "port": 9440,
+                                      "targetPort": "tcp-secure"
+                                  }
+                              ],
+                              "serviceType": "LoadBalancer",
+                              "ipFamilyPolicy": "PreferDualStack"
+                          }
+                      ]
+                  }
+              ]
+          },
+          "status": {
+              "clusterGeneration": 3,
+              "phase": "Succeed",
+              "progress": "1/1",
+              "lastConfiguration": {
+                  "components": {
+                      "clickhouse": {}
+                  }
+              },
+              "components": {
+                  "clickhouse": {
+                      "phase": "Updating",
+                      "lastFailedTime": null
+                  }
+              },
+              "startTimestamp": "2025-02-12T15:01:37Z",
+              "completionTimestamp": "2025-02-12T15:01:58Z",
+              "cancelTimestamp": null,
+              "conditions": [
+                  {
+                      "type": "WaitForProgressing",
+                      "status": "True",
+                      "lastTransitionTime": "2025-02-12T15:01:37Z",
+                      "reason": "WaitForProgressing",
+                      "message": "wait for the controller to process the OpsRequest: wheat-5f94f8c75f-expose-l87wh in Cluster: wheat-5f94f8c75f"
+                  },
+                  {
+                      "type": "Validated",
+                      "status": "True",
+                      "lastTransitionTime": "2025-02-12T15:01:37Z",
+                      "reason": "ValidateOpsRequestPassed",
+                      "message": "OpsRequest: wheat-5f94f8c75f-expose-l87wh is validated"
+                  },
+                  {
+                      "type": "Exposing",
+                      "status": "True",
+                      "lastTransitionTime": "2025-02-12T15:01:37Z",
+                      "reason": "ExposeStarted",
+                      "message": "Start to expose the services in Cluster: wheat-5f94f8c75f"
+                  },
+                  {
+                      "type": "Succeed",
+                      "status": "True",
+                      "lastTransitionTime": "2025-02-12T15:01:58Z",
+                      "reason": "OpsRequestProcessedSuccessfully",
+                      "message": "Successfully processed the OpsRequest: wheat-5f94f8c75f-expose-l87wh in Cluster: wheat-5f94f8c75f"
+                  }
+              ]
+          }
+      }
+  ]
+}

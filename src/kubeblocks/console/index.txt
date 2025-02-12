@@ -1,3 +1,47 @@
+https://auth.apecloud.cn/oidc/me
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/environments // 有哪些environment
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/engines?environmentName=apecloud-demo // 获取对应environment支持的engines
+https://cloudapi.apecloud.cn/api/v1/classes // 实例规格
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/backupRepo?environmentName=apecloud-demo // 备份仓库
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/environments/apecloud-demo/availableZones // 获取对应environment支持的zones
+https://cloudapi.apecloud.cn/api/v1/features/ClusterStorageClass   // 存储类型选择功能是否支持
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/environments/apecloud-demo/storageClasses // 获取对应environment支持的storageClasses
+https://cloudapi.apecloud.cn/api/v1/environments/apecloud-demo/projects // ?不明白
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/paramTpls?version=ac-mysql-8.0.30-1&component=mysql&engineName=apecloud-mysql // 获取对应版本的参数模版
+https://cloudapi.apecloud.cn/api/v1/environments/apecloud-demo/engines/minio/serviceVersion?engineMode=distributed // 获取服务版本号
+
+
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96 // clickhourse
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/instances
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/endpoints
+
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/expose // 暴露互联网地址
+-data {"component":"clickhouse","type":"internet","enable":true,"portsMapping":[{"new":8001,"old":8001}]}
+响应： {"opsRequestName":"wheat-5f94f8c75f-expose-l87wh","dependentOpsName":null}
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/manifests/opsrequest 
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/events?start=1739113690&end=1739372890&resourceId=429736792250384385&resourceType=cluster // 集群实践
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/vscale //升级配置
+-Data {"classCode":"clickhouse.cluster.clickhouse.4c16g.g","component":"clickhouse"}
+响应： {
+    "opsRequestName": "wheat-5f94f8c75f-verticalscaling-tl85k",
+    "dependentOpsName": null
+}
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/hscale // 水平伸缩
+-D {"component":"clickhouse","replicas":3}
+响应：{
+    "opsRequestName": "wheat-5f94f8c75f-horizontalscaling-9k9sz",
+    "dependentOpsName": null
+}
+
+
+https://cloudapi.apecloud.cn/api/v1/organizations/lijingwei9060/clusters/wheat96/view/tree // 历史事件
+
+https://cloudapi.apecloud.cn/api/v1/providers
 
 https://api.kubeblocks.io/api/v1/engineOptions
 https://api.kubeblocks.io/api/v1/user

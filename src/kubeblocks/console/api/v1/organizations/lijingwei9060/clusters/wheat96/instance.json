@@ -1,0 +1,108 @@
+{
+  "items": [
+      {
+          "accessMode": "",
+          "cloud": "aliyun",
+          "cluster": "wheat96",
+          "component": "ch-keeper",
+          "componentDef": "ch-keeper-24",
+          "componentName": "ch-keeper",
+          "cpu": "1.0",
+          "createdAt": "2025-02-12T14:51:28Z",
+          "memory": "2.0Gi",
+          "name": "wheat-5f94f8c75f-ch-keeper-0",
+          "node": "cn-zhangjiakou.192.168.2.35",
+          "region": "cn-zhangjiakou",
+          "role": "",
+          "status": {
+              "phase": "Running"
+          },
+          "storage": [
+              {
+                  "name": "data",
+                  "size": "20Gi",
+                  "storageClass": "apelocal-hostpath-default"
+              }
+          ],
+          "zone": "cn-zhangjiakou-b"
+      },
+      {
+          "accessMode": "",
+          "cloud": "aliyun",
+          "cluster": "wheat96",
+          "component": "clickhouse",
+          "componentDef": "clickhouse-24",
+          "componentName": "clickhouse",
+          "cpu": "4.0",
+          "createdAt": "2025-02-12T15:11:12Z",
+          "memory": "16.0Gi",
+          "name": "wheat-5f94f8c75f-clickhouse-0",
+          "node": "cn-zhangjiakou.192.168.2.35",
+          "region": "cn-zhangjiakou",
+          "role": "",
+          "status": {
+              "phase": "Running"
+          },
+          "storage": [
+              {
+                  "name": "data",
+                  "size": "20Gi",
+                  "storageClass": "apelocal-hostpath-default"
+              }
+          ],
+          "zone": "cn-zhangjiakou-b"
+      },
+      {
+          "accessMode": "",
+          "cloud": "aliyun",
+          "cluster": "wheat96",
+          "component": "clickhouse",
+          "componentDef": "clickhouse-24",
+          "componentName": "clickhouse",
+          "cpu": "4.0",
+          "createdAt": "2025-02-12T15:15:30Z",
+          "memory": "16.0Gi",
+          "name": "wheat-5f94f8c75f-clickhouse-1",
+          "node": "cn-zhangjiakou.192.168.2.34",
+          "region": "cn-zhangjiakou",
+          "role": "",
+          "status": {
+              "phase": "Running"
+          },
+          "storage": [
+              {
+                  "name": "data",
+                  "size": "20Gi",
+                  "storageClass": "apelocal-hostpath-default"
+              }
+          ],
+          "zone": "cn-zhangjiakou-b"
+      },
+      {
+          "accessMode": "",
+          "cloud": "aliyun",
+          "cluster": "wheat96",
+          "component": "clickhouse",
+          "componentDef": "clickhouse-24",
+          "componentName": "clickhouse",
+          "cpu": "4.0",
+          "createdAt": "2025-02-12T15:15:30Z",
+          "memory": "16.0Gi",
+          "name": "wheat-5f94f8c75f-clickhouse-2",
+          "node": "cn-zhangjiakou.192.168.2.8",
+          "region": "cn-zhangjiakou",
+          "role": "",
+          "status": {
+              "phase": "Running"
+          },
+          "storage": [
+              {
+                  "name": "data",
+                  "size": "20Gi",
+                  "storageClass": "apelocal-hostpath-default"
+              }
+          ],
+          "zone": "cn-zhangjiakou-b"
+      }
+  ]
+}

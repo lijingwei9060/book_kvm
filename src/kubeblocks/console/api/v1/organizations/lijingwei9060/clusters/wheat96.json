@@ -1,0 +1,75 @@
+{
+  "availabilityZones": [
+      "cn-zhangjiakou-b"
+  ],
+  "backup": {},
+  "cloudProvider": "aliyun",
+  "cloudRegion": "cn-zhangjiakou",
+  "codeShort": "1c2g",
+  "components": [
+      {
+          "classCode": "clickhouse.cluster.clickhouse.1c2g.g",
+          "classSeries": "general",
+          "compNum": 1,
+          "component": "clickhouse",
+          "componentDef": "clickhouse-24",
+          "cpu": 1,
+          "memory": 2,
+          "monitor": true,
+          "replicas": 1,
+          "storage": "20Gi",
+          "storageClass": "apelocal-hostpath-default",
+          "volumes": [
+              {
+                  "name": "data",
+                  "storage": 20
+              }
+          ]
+      },
+      {
+          "classCode": "clickhouse.cluster.ch-keeper.1c2g.g",
+          "classSeries": "general",
+          "component": "ch-keeper",
+          "componentDef": "ch-keeper-24",
+          "cpu": 1,
+          "memory": 2,
+          "monitor": true,
+          "replicas": 1,
+          "storage": "20Gi",
+          "storageClass": "apelocal-hostpath-default",
+          "volumes": [
+              {
+                  "name": "data",
+                  "storage": 20
+              }
+          ]
+      }
+  ],
+  "cpu": 1,
+  "createdAt": "2025-02-12T14:51:28Z",
+  "engine": "clickhouse",
+  "environmentId": "e7981d03-a555-423b-b0e7-5f97ab3fd98d",
+  "environmentName": "apecloud-demo",
+  "environmentType": "public",
+  "hash": "kubeblocks-cloud-ns/wheat-5f94f8c75f",
+  "id": "429736792250384385",
+  "internetEndpointEnabled": false,
+  "memory": 2,
+  "mode": "cluster",
+  "monitorEnabled": true,
+  "name": "wheat96",
+  "namespace": "kubeblocks-cloud-ns",
+  "orgName": "lijingwei9060",
+  "podAntiAffinityEnabled": true,
+  "project": "kubeblocks-cloud-ns",
+  "replicas": 1,
+  "singleZone": true,
+  "status": "Running",
+  "storage": 20,
+  "terminationPolicy": "DoNotTerminate",
+  "tlsEnabled": false,
+  "tolerations": "node-role.cloud.kubeblocks.io/control-plane:NoSchedule,node-role.cloud.kubeblocks.io/data-plane:NoSchedule",
+  "updatedAt": "2025-02-12T14:51:40Z",
+  "version": "24.8.3",
+  "vpcEndpointEnabled": false
+}

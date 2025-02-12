@@ -1,1 +1,53 @@
-{"items":[]}
+{
+  "items": [
+      {
+          "createdAt": "2025-02-10T08:41:18.674Z",
+          "details": "{\"engineMode\":\"raftGroup\",\"mode\":\"raftGroup\",\"environmentName\":\"apecloud-demo\",\"name\":\"bean15\",\"project\":\"kubeblocks-cloud-ns\",\"singleZone\":true,\"engine\":\"apecloud-mysql\",\"version\":\"ac-mysql-8.0.30-1\",\"terminationPolicy\":\"Delete\",\"monitorEnabled\":true,\"vpcEndpointEnabled\":false,\"internetEndpointEnabled\":false,\"createOnlySet\":true,\"proxyEnabled\":false,\"paramtpls\":[],\"initOptions\":[{\"component\":\"mysql\",\"specName\":\"mysql-consensusset-config\",\"initParams\":{\"default-time-zone\":\"+08:00\"}}],\"components\":[{\"component\":\"mysql\",\"replicas\":3,\"storage\":\"20Gi\",\"storageClass\":\"alicloud-disk-essd-pl0\",\"classCode\":\"apecloud-mysql.raftGroup.mysql.2c2g.g\"}],\"backup\":{\"autoBackup\":true,\"autoBackupMethod\":\"xtrabackup\",\"backupRepo\":\"oss\",\"retentionPeriod\":\"7d\",\"retentionPolicy\":\"LastOne\",\"cronExpression\":\"0 18 * * *\",\"snapshotVolumes\":false,\"pitrEnabled\":true}}",
+          "end": "2025-02-10T08:41:18.671Z",
+          "eventName": "CreateCluster",
+          "id": "429409620063158273",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429409620046381057",
+          "resourceName": "bean15",
+          "resourceType": "cluster",
+          "result": "{\"availabilityZones\":[\"cn-zhangjiakou-b\"],\"backup\":{\"autoBackup\":true,\"autoBackupMethod\":\"xtrabackup\",\"backupRepo\":\"oss\",\"cronExpression\":\"0 18 * * *\",\"pitrEnabled\":true,\"retentionPeriod\":\"7d\",\"retentionPolicy\":\"LastOne\",\"snapshotVolumes\":false},\"cloudProvider\":\"aliyun\",\"cloudRegion\":\"cn-zhangjiakou\",\"codeShort\":\"2c2g\",\"components\":[{\"classCode\":\"apecloud-mysql.raftGroup.mysql.2c2g.g\",\"classSeries\":\"general\",\"component\":\"mysql\",\"cpu\":2,\"memory\":2,\"replicas\":3,\"storage\":\"20Gi\",\"storageClass\":\"alicloud-disk-essd-pl0\",\"volumes\":null}],\"cpu\":0.5,\"createdAt\":\"2025-02-10T08:41:18Z\",\"engine\":\"apecloud-mysql\",\"environmentId\":\"e7981d03-a555-423b-b0e7-5f97ab3fd98d\",\"environmentName\":\"apecloud-demo\",\"environmentType\":\"public\",\"hash\":\"kubeblocks-cloud-ns/bean1-7dd667659c\",\"id\":\"429409620046381057\",\"initOptions\":[{\"component\":\"mysql\",\"initParams\":{\"default-time-zone\":\"+08:00\"},\"specName\":\"mysql-consensusset-config\"}],\"internetEndpointEnabled\":false,\"memory\":0.5,\"mode\":\"raftGroup\",\"monitorEnabled\":true,\"name\":\"bean15\",\"namespace\":\"kubeblocks-cloud-ns\",\"orgName\":\"lijingwei9060\",\"paramTpls\":[{\"component\":\"mysql\",\"paramTplName\":\"bean15-mysql-temp\",\"paramTplPartition\":\"custom\"}],\"podAntiAffinityEnabled\":true,\"project\":\"kubeblocks-cloud-ns\",\"replicas\":1,\"singleZone\":true,\"status\":\"Pending\",\"storage\":20,\"terminationPolicy\":\"Delete\",\"updatedAt\":\"2025-02-10T08:41:18Z\",\"version\":\"ac-mysql-8.0.30-1\",\"vpcEndpointEnabled\":false}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-10T08:41:17.937Z"
+      },
+      {
+          "createdAt": "2025-02-10T08:45:57.121Z",
+          "details": "{\"name\":\"casoul\",\"role\":\"SUPERUSER\",\"password\":\"Pass@word1\",\"confirmPassword\":\"Pass@word1\"}",
+          "end": "2025-02-10T08:45:57.119Z",
+          "eventName": "CreateAccount",
+          "id": "429410087224737793",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429409620046381057",
+          "resourceName": "bean15",
+          "resourceType": "cluster",
+          "result": "{\"name\":\"casoul\",\"role\":\"SUPERUSER\"}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-10T08:45:56.253Z"
+      },
+      {
+          "createdAt": "2025-02-10T08:47:28.311Z",
+          "details": "{\"component\":\"mysql\",\"type\":\"vpc\",\"enable\":true,\"vpcServiceType\":\"LoadBalancer\",\"portsMapping\":[{\"new\":3306,\"old\":3306}]}",
+          "end": "2025-02-10T08:47:28.310Z",
+          "eventName": "ExposeCluster",
+          "hasTask": true,
+          "id": "429410240216170497",
+          "operator": "lijingwei9060_gmail.com",
+          "operatorId": "429408938421649409",
+          "resourceId": "429409620046381057",
+          "resourceName": "bean15",
+          "resourceType": "cluster",
+          "result": "{\"opsRequestName\":\"bean1-7dd667659c-expose-n796j\",\"dependentOpsName\":null}",
+          "resultStatus": "success",
+          "source": "user",
+          "start": "2025-02-10T08:47:28.102Z"
+      }
+  ]
+}
