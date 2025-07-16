@@ -1,7 +1,19 @@
 
+1. /kapi 和/kapis 是 KubeSphere 拓展聚合的 API，kapi是kubesphere core api, kapis是kubesphere api groups
+2. /api和 /apis开头的都属于 Kubernetes 原生的 API
+3. /clusters/{cluster}/kapis/{api-group}/{version}/namespaces/{namespace}/{resource}, 会将路径中的clusters/{cluster}删除，转向到multiclusterDispatcher中处理，如果是host集群，就直接放过到后面的资源处理，其他集群则进行代理重定向。4.x版本只支持Direct模式，不支持Proxy模式。
+4. /proxy开头的路径会转向到reserveProxy处理，查找reserveproxies.extensions.kubesphere.io/v1alpha1进行匹配，然后代理。找不到
 
+
+## GlobalResource
+
+User/GlobalRole/GlobalRoleBinding/Workspace/Cluster => group-version-resource 资源
 
 ## api service： apiService，
+
+第三方服务的中转, 解决用户权限隔离的问题：
+1. kapis/monitoring.kubesphere.io/v1beta1/{component_metrics, pod_metrics, container_metrics, node_metrics, persistentvolumeclaim_metrics, workload_metrics, namespace_metrics, workspace_metrics, cluster_metrics}  
+
 
 ```shell
 root@i-f2c59da3:~# kubectl get apiservices.extensions.kubesphere.io
@@ -35,14 +47,82 @@ spec:
   version: v2beta2
 status:
   state: Available
+
+root@i-f2c59da3:~# kubectl get apiservices.extensions.kubesphere.io v1beta1.monitoring.kubesphere.io -o yaml
+apiVersion: extensions.kubesphere.io/v1alpha1
+kind: APIService
+metadata:
+  annotations:
+    meta.helm.sh/release-name: whizard-telemetry
+    meta.helm.sh/release-namespace: extension-whizard-telemetry
+  creationTimestamp: "2025-03-20T07:14:14Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    kubesphere.io/extension-ref: whizard-telemetry
+  name: v1beta1.monitoring.kubesphere.io
+  resourceVersion: "11266"
+  uid: c6d0334d-dba0-468b-ad19-435cdeb6997b
+spec:
+  group: monitoring.kubesphere.io
+  url: http://whizard-telemetry-apiserver.extension-whizard-telemetry.svc:9090
+  version: v1beta1
+status:
+  state: Available
 ```
 
 ## kube_api 处理 /api访问k8s 服务
 
+/apis/autoscaling/v2/namespaces/gpu-operator/horizontalpodautoscalers/gpu-operator
+/apis/autoscaling/v2/namespaces/gpu-operator/horizontalpodautoscalers/gpu-operator-node-feature-discovery-gc
+/apis/autoscaling/v2/namespaces/gpu-operator/horizontalpodautoscalers/gpu-operator-node-feature-discovery-master
+/apis/autoscaling/v2/namespaces/kserve/horizontalpodautoscalers/kserve-controller-manager
+/apis/autoscaling/v2/namespaces/kubesphere-system/horizontalpodautoscalers/extensions-museum
+/apis/autoscaling/v2/namespaces/kubesphere-system/horizontalpodautoscalers/ks-apiserver
+/apis/extensions.kubesphere.io/v1alpha1/extensionentries
+/apis/extensions.kubesphere.io/v1alpha1/jsbundles
+/apis/kubesphere.io/v1alpha1/extensions
+/api/v1/namespaces
+/api/v1/nodes
+
 
 ## reserve_proxy 代理 /proxy
 
+```shell
+root@i-f2c59da3:~# kubectl get reverseproxies
+NAME                           AGE
+prometheus                     33d
+whizard-alerting               33d
+whizard-alerting-agent-ruler   33d
 
+root@i-f2c59da3:~# kubectl get reverseproxies prometheus -o yaml
+apiVersion: extensions.kubesphere.io/v1alpha1
+kind: ReverseProxy
+metadata:
+  annotations:
+    meta.helm.sh/release-name: whizard-monitoring-agent
+    meta.helm.sh/release-namespace: kubesphere-monitoring-system
+  creationTimestamp: "2025-03-20T07:17:22Z"
+  generation: 2
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    kubesphere.io/extension-ref: whizard-monitoring
+  name: prometheus
+  resourceVersion: "12610"
+  uid: d7d74088-e76b-4110-b571-00f18d7b5746
+spec:
+  directives:
+    headerUp:
+    - -Authorization
+    stripPathPrefix: /proxy/prometheus.io
+  matcher:
+    method: '*'
+    path: /proxy/prometheus.io/*
+  upstream:
+    url: http://prometheus-k8s.kubesphere-monitoring-system.svc:9090
+status:
+  state: Available
+```
 
 ## jsBundle 代理 /dist
 
@@ -205,10 +285,10 @@ config.kubesphere.io/v1alpha2/platformconfigs/{config}
 
 ### resource
 
-resources.kubesphere.io/v1alpha3/resources
-resources.kubesphere.io/v1alpha3/resources/name
-resources.kubesphere.io/v1alpha3/namespaces/namespace/resources
-resources.kubesphere.io/v1alpha3/namespaces/namespace/resources/name
+/kapis/resources.kubesphere.io/v1alpha3/resources
+/kapis/resources.kubesphere.io/v1alpha3/resources/name
+/kapis/resources.kubesphere.io/v1alpha3/namespaces/namespace/resources
+/kapis/resources.kubesphere.io/v1alpha3/namespaces/namespace/resources/name
 
 resources.kubesphere.io/v1alpha3/namespaces/namespace/images
 resources.kubesphere.io/v1alpha3/namespaces/namespace/imageconfig
@@ -229,46 +309,46 @@ operations.kubesphere.io/v1alpha2/namespaces/namespace/jobs/job
 
 ### tenant
 
-tenant.kubesphere.io/v1beta1/workspacetemplates
-tenant.kubesphere.io/v1beta1/workspacetemplates/workspace
+/kapis/tenant.kubesphere.io/v1beta1/workspacetemplates
+/kapis/tenant.kubesphere.io/v1beta1/workspacetemplates/workspace
 
-tenant.kubesphere.io/v1beta1/workspaces
-tenant.kubesphere.io/v1beta1/workspaces/workspace
-tenant.kubesphere.io/v1beta1/workspaces/workspace/clusters
-tenant.kubesphere.io/v1beta1/workspaces/workspace/namespaces
-tenant.kubesphere.io/v1beta1/workspaces/workspace/namespaces/namespace
+/kapis/tenant.kubesphere.io/v1beta1/workspaces
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/workspace
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/workspace/clusters
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/workspace/namespaces
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/workspace/namespaces/namespace
 
-tenant.kubesphere.io/v1beta1/workspaces/{workspace}/workspacemembers/{workspacemember}/namespaces
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/{workspace}/workspacemembers/{workspacemember}/namespaces
 
-tenant.kubesphere.io/v1beta1/workspaces/{workspace}/resourcequotas
-tenant.kubesphere.io/v1beta1/workspaces/{workspace}/resourcequotas/{resourcequota}
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/{workspace}/resourcequotas
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/{workspace}/resourcequotas/{resourcequota}
 
-tenant.kubesphere.io/v1beta1/clusters
-tenant.kubesphere.io/v1beta1/namespaces
+/kapis/tenant.kubesphere.io/v1beta1/clusters
+/kapis/tenant.kubesphere.io/v1beta1/namespaces
 
-tenant.kubesphere.io/v1beta1/workspaces/{workspace}/metrics
-tenant.kubesphere.io/v1beta1/metrics
+/kapis/tenant.kubesphere.io/v1beta1/workspaces/{workspace}/metrics
+/kapis/tenant.kubesphere.io/v1beta1/metrics
 
 
 ### terminal
 
-terminal.kubesphere.io/v1alpha2/namespaces/{namespace}/pods/{pod}/exec
-terminal.kubesphere.io/v1alpha2/namespaces/{namespace}/pods/{pod}/file
-terminal.kubesphere.io/v1alpha2/users/{user}/kubectl
-terminal.kubesphere.io/v1alpha2/nodes/{nodename}/exec
+/kapis/terminal.kubesphere.io/v1alpha2/namespaces/{namespace}/pods/{pod}/exec
+/kapis/terminal.kubesphere.io/v1alpha2/namespaces/{namespace}/pods/{pod}/file
+/kapis/terminal.kubesphere.io/v1alpha2/users/{user}/kubectl
+/kapis/terminal.kubesphere.io/v1alpha2/nodes/{nodename}/exec
 
 ### cluster Kapi
 
-cluster.kubesphere.io/v1alpha1/clusters/validation
-cluster.kubesphere.io/v1alpha1/clusters/{cluster}/kubeconfig
-cluster.kubesphere.io/v1alpha1/clusters/{cluster}/grantrequests
-cluster.kubesphere.io/v1alpha1/labels
-cluster.kubesphere.io/v1alpha1/labels/{label}
-cluster.kubesphere.io/v1alpha1/labelbindings
+/kapis/cluster.kubesphere.io/v1alpha1/clusters/validation
+/kapis/cluster.kubesphere.io/v1alpha1/clusters/{cluster}/kubeconfig
+/kapis/cluster.kubesphere.io/v1alpha1/clusters/{cluster}/grantrequests
+/kapis/cluster.kubesphere.io/v1alpha1/labels
+/kapis/cluster.kubesphere.io/v1alpha1/labels/{label}
+/kapis/cluster.kubesphere.io/v1alpha1/labelbindings
 
 
 ### Iam api
-iam.kubesphere.io/v1beta1
+/kapis/iam.kubesphere.io/v1beta1
 
 /users
 /users/{user}
@@ -651,7 +731,7 @@ spec:
 
 ### app api
 
-application.kubesphere.io/v2
+/kapis/application.kubesphere.io/v2
 
 /repos
 /apps
