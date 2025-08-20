@@ -6,7 +6,7 @@ Stage Template Type： Deploy， Build ，Approval， Feature Flag， Security T
 
 Step：
     Build： git provider 支持harness、third-party
-    Utilities: shell script, container step, http , email, wait
+    Utilities: shell script, container step, http , email, wait, EventListener
     Approval: harness Approval, custom Approval, jira approval, serviceNow approval
     Jira: Jira create, jira update
     flowControl: ba4rrier, queue
@@ -16,12 +16,35 @@ Step：
             Canary Deployment、Cananry Delete
             Rolling Deployment
     Git： update Release repo， merge pr，fetch linked apps， 
+    Terraform: Apply, Plan, Rollback, Destroy
+    Cloudformation: create, delete, rollback
+    Azure: 
+    Shell: 
+    Chaos
+    Helm: Delete
+
 
 Stage: 包含 overview、Service、Environment、Execution、Advanced
 
 Overview：
     Name、Description、Tags
     Deployment Type
+
+### container
+    serial
+    loop： 
+    conditions：when
+
+### workflow
+entrypoint
+arguments
+    parameter
+templates： group of steps
+Retry
+
+### Step
+    Container： 
+        name、command、args、resource（limits-cpu、memory）
 
 ## variable
 
