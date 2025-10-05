@@ -5,21 +5,13 @@ chmod +x kk
 
 ./kk create config --with-kubernetes v1.32.0 
 
-10.16.161.21 i-A30BD74E 
-10.16.161.35 i-339CEC54 
-10.16.161.117 i-7FB86232 
-10.16.161.21  i-a30bd74e 
-10.16.161.35  i-339cec54 
-10.16.161.117 i-7fb86232 
+10.203.162.5 bcs-ubuntu-01
+10.203.162.6 bcs-ubuntu-02
+10.203.162.7 bcs-ubuntu-03 
 
-
-i-a30bd74e 10.16.161.21  iT%6,F7cR}w
-i-339cec54 10.16.161.35  wF?3.Pq|3^C
-i-7fb86232 10.16.161.117 bT;2B[UxL.m
-
-- {name: i-a30bd74e, address: 10.16.161.21 , internalAddress: 10.16.161.21 , user: root, password: "iT%6,F7cR}w"}
-- {name: i-339cec54, address: 10.16.161.35 , internalAddress: 10.16.161.35 , user: root, password: "wF?3.Pq|3^C"}
-- {name: i-7fb86232, address: 10.16.161.117, internalAddress: 10.16.161.117, user: root, password: "bT;2B[UxL.m"}
+- {name: bcs-ubuntu-01, address: 10.203.162.5, internalAddress: 10.203.162.5, user: root, password: "pass@word2"}
+- {name: bcs-ubuntu-02, address: 10.203.162.6, internalAddress: 10.203.162.6, user: root, password: "pass@word2"}
+- {name: bcs-ubuntu-03, address: 10.203.162.7, internalAddress: 10.203.162.7, user: root, password: "pass@word2"}
 
 ```yaml
 apiVersion: kubekey.kubesphere.io/v1alpha2
@@ -28,18 +20,18 @@ metadata:
   name: sample
 spec:
   hosts:
-  - {name: i-a30bd74e, address: 10.16.161.21 , internalAddress: 10.16.161.21 , user: root, password: "iT%6,F7cR}w"}
-  - {name: i-339cec54, address: 10.16.161.35 , internalAddress: 10.16.161.35 , user: root, password: "wF?3.Pq|3^C"}
-  - {name: i-7fb86232, address: 10.16.161.117, internalAddress: 10.16.161.117, user: root, password: "bT;2B[UxL.m"}
+  - {name: bcs-ubuntu-01, address: 10.203.162.5, internalAddress: 10.203.162.5, user: root, password: "pass@word2"}
+  - {name: bcs-ubuntu-02, address: 10.203.162.6, internalAddress: 10.203.162.6, user: root, password: "pass@word2"}
+  - {name: bcs-ubuntu-03, address: 10.203.162.7, internalAddress: 10.203.162.7, user: root, password: "pass@word2"}
   roleGroups:
     etcd:
-    - i-a30bd74e
+    - bcs-ubuntu-01
     control-plane:
-    - i-a30bd74e
+    - bcs-ubuntu-01
     worker:
-    - i-a30bd74e
-    - i-339cec54
-    - i-7fb86232
+    - bcs-ubuntu-01
+    - bcs-ubuntu-02
+    - bcs-ubuntu-03
   controlPlaneEndpoint:
     ## Internal loadbalancer for apiservers 
     # internalLoadbalancer: haproxy

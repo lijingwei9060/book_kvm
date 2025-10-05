@@ -3,9 +3,13 @@
 1. [1pannel](https://1panel.cn/)
 
 
+## 中国区chart
+
+https://github.com/sir5kong/helm-charts-hub
+
+https://helm-charts.itboon.top/docs/
+
 ## daas
-
-
 https://github.com/openebs/openebs
 https://rook.io/
 
@@ -32,11 +36,31 @@ deepflow
 ## apm 
 skywalking
 
-## helm 可视化
-helm dashboard
-ChartMuseum： charts 仓库，无
+
+
+## Application Stacks
+
+
+helm dashboard： https://github.com/komodorio/helm-dashboard
+ChartMuseum： charts 仓库，老旧， https://chartmuseum.com/
 https://github.com/rongfengliang/monocular-docker-compose charts 仓库UI
-Kubeapps
+Kubeapps： https://github.com/vmware-tanzu/kubeapps 高
+https://carvel.dev/kapp-controller
+https://docs.bitnami.com/general/apps/
+
+chart 同步工具：
+https://github.com/bitnami/charts-syncer
+
+keptn.sh
+
+## Operator
+https://operatorhub.io/    https://github.com/operator-framework
+
+
+
+## 商业版k8s管理平台
+
+https://komodor.com/
 ## 知识库
 
 1. [maxkb]()
@@ -123,3 +147,10 @@ https://vueflow.dev/： 支持嵌套，自定义的card功能弱，手工指定�
 
 https://reactflow.dev/learn/customization/custom-nodes
 https://app.doubleloop.app/strategy/2236/map
+
+
+## CICD
+https://argoproj.github.io/workflows/ Argo Workflows
+CircleCI
+Travis CI 
+Jenkins
