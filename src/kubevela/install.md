@@ -67,4 +67,17 @@ ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images tag  swr.cn-n
 
 ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/quay.io/spotahome/redis-operator:latest
 ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/quay.io/spotahome/redis-operator:latest  quay.io/spotahome/redis-operator:latest
+
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/redis:6.2.6-alpine
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/redis:6.2.6-alpine  docker.io/library/redis:6.2.6-alpine
 ```
+
+kubectl patch statefulset rfr-redis-001 \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"sentinel","imagePullPolicy":"IfNotPresent"}]}}}}'
+
+
+kubectl patch ReplicaSet rfs-redis-001-5d96b8f877 \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"sentinel","imagePullPolicy":"IfNotPresent"}]}}}}'
+
+kubectl patch ReplicaSet rfs-redis-001-5d96b8f877 \
+  -p '{"spec":{"template":{"spec":{"initContainers":[{"name":"sentinel-config-copy","imagePullPolicy":"IfNotPresent"}]}}}}'
