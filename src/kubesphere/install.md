@@ -20,9 +20,9 @@ metadata:
   name: sample
 spec:
   hosts:
-  - {name: bcs-ubuntu-01, address: 10.203.162.5, internalAddress: 10.203.162.5, user: root, password: "pass@word2"}
-  - {name: bcs-ubuntu-02, address: 10.203.162.6, internalAddress: 10.203.162.6, user: root, password: "pass@word2"}
-  - {name: bcs-ubuntu-03, address: 10.203.162.7, internalAddress: 10.203.162.7, user: root, password: "pass@word2"}
+  - {name: bcs-ubuntu-01, address: 10.203.162.5, internalAddress: 10.203.162.5, user: root, password: "pass@kube02"}
+  - {name: bcs-ubuntu-02, address: 10.203.162.6, internalAddress: 10.203.162.6, user: root, password: "pass@kube02"}
+  - {name: bcs-ubuntu-03, address: 10.203.162.7, internalAddress: 10.203.162.7, user: root, password: "pass@kube02"}
   roleGroups:
     etcd:
     - bcs-ubuntu-01
