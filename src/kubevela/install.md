@@ -45,6 +45,33 @@ pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/do
 pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/cloudshell:v1.7.2
 pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/cloudshell:v1.7.2  docker.io/oamdev/cloudshell:v1.7.2
 
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/vela-workflow:v0.6.2
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/vela-workflow:v0.6.2  docker.io/oamdev/vela-workflow:v0.6.2
+
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/grafana:8.5.3
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/grafana:8.5.3  docker.io/grafana/grafana:8.5.3
+
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/loki:2.6.1
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/loki:2.6.1  docker.io/grafana/loki:2.6.1
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/promtail:2.6.1
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/promtail:2.6.1  docker.io/grafana/promtail:2.6.1
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/vector-controller:0.2.2
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/vector-controller:0.2.2  docker.io/oamdev/vector-controller:0.2.2
+
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/timberio/vector:0.33.0-distroless-libc
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/timberio/vector:0.33.0-distroless-libc  docker.io/timberio/vector:0.33.0-distroless-libc
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/timberio/vector:0.25.2-distroless-libc
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/timberio/vector:0.25.2-distroless-libc  docker.io/timberio/vector:0.25.2-distroless-libc
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/maxrocketinternet/k8s-event-logger:1.7
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/maxrocketinternet/k8s-event-logger:1.7  docker.io/maxrocketinternet/k8s-event-logger:1.7
+
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/prom/prometheus:v2.34.0
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/prom/prometheus:v2.34.0  docker.io/prom/prometheus:v2.34.0
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/prom/prometheus:v2.34.0  docker.io/prometheus/prometheus:v2.34.0
+
+pdsh -g ks ctr -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/quay.io/prometheus/node-exporter:v1.9.1
+pdsh -g ks ctr -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/quay.io/prometheus/node-exporter:v1.9.1  quay.io/prometheus/node-exporter:v1.9.1
+
 ```shell
 
 ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/oamdev/vela-prism:v1.7.0

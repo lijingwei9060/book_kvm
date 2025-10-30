@@ -161,7 +161,7 @@ Application.Status： Parsed -> Revision -> ApplyPolices -> Render -> Workflow -
 各种client
 WorkflowClient 使用 client.Client
 
-Template
+Template: component type 对应的模板，可通过vela def list查看所有template，类型有ComponentDefinition, TraitDefinition,
 
 ### 如何解析Cue
 
