@@ -325,3 +325,71 @@ GetProviders() map[string]cuexruntime.ProviderFn
 wfContext.Context
 monitor.Context
 process.Context
+
+
+### 资源跟踪和管理
+
+要做什么：
+1. 资源跟踪，管理集群、命名空间和资源的对应关系。
+2. 资源维护： 生命周期，回收，dispatch？
+3. 过程： 自动或者手工回收应用程序的资源。从application到资源有个对应关系。
+4. 资源策略： 准入控制、共享和更新策略。
+5. 多集群管理：
+6. 交互管理： cli工具
+
+resourcekeeper： dispatch、delete
+ResourceTracker：通过label
+
+
+ResourceKeeper：
+    ResourceTracker
+    ApplyOncePolicySpec
+    GarbageCollectPolicySpec
+    SharedResourcePolicySpec
+    TakeOverPolicySpec
+    ReadOnlyPolicySpec
+    ResourceUpdatePolicySpec
+    Applicator
+    Cache
+
+
+#### GC： 回收资源和处理finalizer
+
+1. mark：哪些资源需要回收？rootRT、currentRT会进行标记，historyRT确认管理的资源可回收。工作在拟合阶段。
+2. sweep
+3. finalize：
+
+
+
+#### 资源查看
+
+[kubevela_deepwiki](https://deepwiki.com/search/resourcekeeper_b76f6df4-a8e0-4c47-b288-e65f6dc8f77f)
+
+```shell
+root@bcs-ubuntu-01:~# vela status addon-loki  -n vela-system --tree
+CLUSTER       NAMESPACE       RESOURCE                                 STATUS    
+local     ─┬─ -           ─┬─ ClusterRole/o11y-system:log-event        updated   
+           │               ├─ ClusterRole/o11y-system:vector           updated   
+           │               ├─ ClusterRoleBinding/o11y-system:log-event updated   
+           │               └─ ClusterRoleBinding/o11y-system:vector    updated   
+           ├─ o11y-system ─┬─ ConfigMap/loki                           updated   
+           │               ├─ ConfigMap/vector                         updated   
+           │               ├─ Service/loki                             updated   
+           │               ├─ ServiceAccount/log-event                 updated   
+           │               ├─ ServiceAccount/vector                    updated   
+           │               ├─ DaemonSet/vector                         updated   
+           │               ├─ Deployment/event-log                     updated   
+           │               ├─ Deployment/loki                          updated   
+           │               ├─ Role/vector                              updated   
+           │               └─ RoleBinding/vector                       updated   
+           └─ vela-system ─── Secret/loki-vela                         updated 
+```
+
+首先从集群中加载指定的 Application 对象，然后调用 ListApplicationResourceTrackers() 获取该应用的所有 ResourceTracker。
+ResourceTracker 是 KubeVela 的核心资源追踪机制，每个应用会有多个类型的 ResourceTracker：
+- 根 RT：记录与应用生命周期绑定的资源
+- 当前 RT：记录最新版本应用的资源
+- 历史 RT：记录旧版本应用的资源
+- 组件 RT：记录组件修订版本信息
+
+从当前和历史 ResourceTracker 中加载所有资源行, 添加应该部署但尚未部署的集群信息，按集群、命名空间和资源类型排序， 以树状结构输出，使用 Unicode 绘图字符显示层级关系
