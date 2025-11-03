@@ -17,6 +17,19 @@ docker run -d \
   --restart always \
   harness/harness:3.2.0
 
+nerdctl -n k8s.io run -d \
+  -p 80:3000 \
+  -p 3022:3022 \
+  -v /var/run/containerd/containerd.sock:/var/run/docker.sock \
+  -e GITNESS_URL_BASE=http://10.203.161.69.nip.io \
+  -e GITNESS_URL_CONTAINER=http://10.203.161.69.nip.io \
+  -e GITNESS_URL_REGISTRY=http://10.203.161.69.nip.io \
+  -e GITNESS_DEBUG=true \
+  -v /opt/data/harness:/data \
+  --name harness \
+  --restart always \
+  docker.1ms.run/harness/harness:3.3.0
+
 
 ## 功能列表
 
