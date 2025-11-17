@@ -242,3 +242,15 @@ K100e80fb2f38d28b8be838e0e714d56ad9df9a20cb2329b6d3a51ad03459d8469c::server:b7ca
 🔑 To access the cluster, set KUBECONFIG:
     export KUBECONFIG=$(velad kubeconfig --name default --host)
 ```
+
+
+## k3s install nvidia gpu
+
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nvcr.io/nvidia/k8s-device-plugin:v0.18.0
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nvcr.io/nvidia/k8s-device-plugin:v0.18.0  nvcr.io/nvidia/k8s-device-plugin:v0.18.0
+
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/registry.k8s.io/nfd/node-feature-discovery:v0.17.3  registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+
+helm upgrade -i nvidia-device-plugin nvidia-device-plugin/nvidia-device-plugin --version 0.18.0 --set runtimeClassName=nvidia --namespace kube-system --create-namespace
+helm upgrade -i nvidia-device-discovery nvidia-device-plugin/gpu-feature-discovery --version 0.18.0 --namespace gpu-feature-discovery --create-namespace --set runtimeClassName=nvidia
